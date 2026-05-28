@@ -208,7 +208,7 @@ fieldset{
 
           <fieldset class="clearfix">
 
-            <p ><span class="fa fa-user"></span><input type="text"  name="user" Placeholder="Username" required></p> <!-- JS because of IE support; better: placeholder="Username" -->
+            <p ><span class="fa fa-user"></span><input type="text"  name="user" Placeholder="janvier" required></p> <!-- JS because of IE support; better: placeholder="Username" -->
             <p><span class="fa fa-lock"></span><input type="password"  name="password" Placeholder="Password" required></p> <!-- JS because of IE support; better: placeholder="Password" -->
             
              <div>
