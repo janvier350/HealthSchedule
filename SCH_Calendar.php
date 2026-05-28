@@ -278,7 +278,7 @@ while ($row = $resultado->fetch_assoc()) {
                                     </div>
                                     <div>
                                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#editModal">
-                                Agendar Cita saludos
+                                Agendar Cita
                                 </button> 
                                         <div class="page-title-subheading">Citas agendadas.
                                         </div>
