@@ -25,3 +25,4 @@ jobs:
           **/node_modules*
           **/__MACOSX*
           **/.DS_Store*
+          **/PHPMailer*
