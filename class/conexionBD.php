@@ -4,7 +4,7 @@ function conectarse()
 
 {
 
-$db_host="localhost"; // Host BD al que conectarse, habitualmente es localhost
+$db_host="127.0.0.1"; // Host BD al que conectarse, habitualmente es localhost
 
 $db_nombre="srossnut_agenda"; // Nombre de la Base de Datos que se desea utilizar
 
