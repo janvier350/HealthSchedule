@@ -811,7 +811,11 @@ function cargarInfoPacienteCita(idPaciente) {
                     var informeHtml = '';
                     if (td.length > 6) {
                         var btn = td[6].querySelector('button');
-                        if (btn) informeHtml = btn.outerHTML;
+                        if (btn) {
+                            // Importante: forzar type="button" para que NO envíe el formulario de la cita
+                            btn.setAttribute('type', 'button');
+                            informeHtml = btn.outerHTML;
+                        }
                     }
                     out += '<div class="cita-hist-card">' +
                                '<div class="cita-hist-main">' +
