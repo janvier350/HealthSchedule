@@ -30,11 +30,13 @@ $query = "SELECT
             A.HORA_FIN,
             A.ESTADO_CITA,
             A.COMENTARIO,
-            CONCAT(D.NOMBRES, ' ', D.APELLIDOS) AS DOCTOR
+            CONCAT(D.NOMBRES, ' ', D.APELLIDOS) AS DOCTOR,
+            E.DESCRIPCION AS AGENCIA
           FROM AG_CITA A
           INNER JOIN AG_PACIENTE B     ON A.IDPACIENTE      = B.IDPACIENTE
           INNER JOIN AG_TIPOCONSULTA C ON A.IDTIPOCONSULTA  = C.IDTIPOCONSULTA
           INNER JOIN ADM_USUARIO D     ON A.IDDOCTOR        = D.IDADM_USUARIO
+          LEFT  JOIN ADM_AGENCIA E     ON A.IDAGENCIA       = E.IDAGENCIA
           WHERE A.ESTADO = 'A'";
 
 $resultado = $conexion->query($query);
@@ -71,6 +73,7 @@ while ($row = $resultado->fetch_assoc()) {
             'consulta'  => $row['TIPO_CONSULTA'],
             'telefono'  => $row['TELEFONO'],
             'comentario'=> $row['COMENTARIO'],
+            'agencia'   => $row['AGENCIA'],
         )
     );
 }
@@ -167,6 +170,12 @@ while ($d = $resultDoctores->fetch_assoc()) {
         .fc-event-time-custom { font-weight: 700; font-size: 0.78em; }
         .fc-event-title-custom { font-weight: 600; font-size: 0.82em; white-space: normal; word-break: break-word; }
         .fc-event-sub-custom { font-size: 0.72em; opacity: 0.95; white-space: normal; }
+
+        /* Vista de Mes: mostrar las citas como bloques legibles (no líneas) */
+        .fc-daygrid-event { white-space: normal !important; align-items: stretch; }
+        .fc-daygrid-event .fc-event-main-custom { padding: 3px 5px; }
+        .fc-daygrid-event-harness { margin-bottom: 2px; }
+        .fc-daygrid-day-events { min-height: 2em; }
 
         /* Lista de citas para móvil (Vista por Doctor) */
         .cv-list { display: none; }
@@ -305,22 +314,27 @@ while ($d = $resultDoctores->fetch_assoc()) {
 
                 <div class="main-card mb-3 card" id="viewFullCalendar">
                     <div class="card-body">
-                        <!-- Leyenda de colores -->
-                        <div class="leyenda-calendario">
-                            <span class="leyenda-label">Estado (relleno):</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
-                        </div>
-                        <div class="leyenda-calendario">
-                            <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
-                            <?php foreach ($tiposConsultaActivos as $tc): ?>
-                                <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
-                            <?php endforeach; ?>
+                        <!-- Leyenda de colores (colapsable, para ganar espacio arriba) -->
+                        <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#leyendaColores1" aria-expanded="false">
+                            <i class="bi bi-palette"></i> Ver leyenda de colores
+                        </button>
+                        <div class="collapse" id="leyendaColores1">
+                            <div class="leyenda-calendario">
+                                <span class="leyenda-label">Estado (relleno):</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
+                            </div>
+                            <div class="leyenda-calendario">
+                                <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
+                                <?php foreach ($tiposConsultaActivos as $tc): ?>
+                                    <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                         <div id="calendar1"></div>
                     </div>
@@ -328,22 +342,27 @@ while ($d = $resultDoctores->fetch_assoc()) {
 
                 <div class="main-card mb-3 card d-none" id="viewPorDoctor">
                     <div class="card-body">
-                        <!-- Leyenda de colores -->
-                        <div class="leyenda-calendario">
-                            <span class="leyenda-label">Estado (relleno):</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
-                        </div>
-                        <div class="leyenda-calendario">
-                            <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
-                            <?php foreach ($tiposConsultaActivos as $tc): ?>
-                                <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
-                            <?php endforeach; ?>
+                        <!-- Leyenda de colores (colapsable, para ganar espacio arriba) -->
+                        <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#leyendaColores2" aria-expanded="false">
+                            <i class="bi bi-palette"></i> Ver leyenda de colores
+                        </button>
+                        <div class="collapse" id="leyendaColores2">
+                            <div class="leyenda-calendario">
+                                <span class="leyenda-label">Estado (relleno):</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
+                            </div>
+                            <div class="leyenda-calendario">
+                                <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
+                                <?php foreach ($tiposConsultaActivos as $tc): ?>
+                                    <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                         <div class="cv-toolbar d-flex align-items-center gap-2 mb-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="cvToday">Hoy</button>
@@ -730,9 +749,9 @@ document.addEventListener('DOMContentLoaded', function () {
         eventMinHeight: 70,
         events: eventosAll,
 
-        // Render personalizado en vista de día/semana: hora, paciente, doctor y tipo sin recortar
+        // Render personalizado en TODAS las vistas (mes, semana y día):
+        // hora inicio-fin, paciente, doctor y location sin recortar
         eventContent: function (arg) {
-            if (!arg.view.type.startsWith('timeGrid')) return true;
             var p = arg.event.extendedProps;
             var esc = function (s) {
                 return (s == null ? '' : String(s))
@@ -748,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<div class="fc-event-time-custom">' + rango + '</div>' +
                 '<div class="fc-event-title-custom">' + esc(arg.event.title) + '</div>' +
                 '<div class="fc-event-sub-custom">Dr. ' + esc(p.medico || '') + '</div>' +
-                (p.consulta ? '<div class="fc-event-sub-custom">' + esc(p.consulta) + '</div>' : '');
+                '<div class="fc-event-sub-custom">L: ' + esc(p.agencia || 'Sin asignar') + '</div>';
             return { domNodes: [div] };
         },
 
