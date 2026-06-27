@@ -183,6 +183,15 @@ while ($d = $resultDoctores->fetch_assoc()) {
         .fc .fc-timegrid-slot { height: 2.8em; }
         .fc .fc-timegrid-slot-label { font-size: 0.8rem; }
 
+        /* Lista de consultas anteriores en el modal de cita (estilo tarjetas) */
+        .cita-hist-lista { max-height: 280px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; }
+        .cita-hist-card { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f1f1f1; }
+        .cita-hist-card:last-child { border-bottom: none; }
+        .cita-hist-main { flex: 1 1 auto; min-width: 0; }
+        .cita-hist-fecha { font-weight: 600; font-size: 0.82rem; color: #343a40; }
+        .cita-hist-sub { font-size: 0.74rem; color: #777; white-space: normal; }
+        .cita-hist-estado { flex: 0 0 auto; }
+
         /* Lista de citas para móvil (Vista por Doctor) */
         .cv-list { display: none; }
         .cv-list-day { font-weight: 700; font-size: 0.9rem; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 2px solid #dee2e6; color: #343a40; }
@@ -754,11 +763,41 @@ function cargarInfoPacienteCita(idPaciente) {
         .then(function (html) {
             var tmp = document.createElement('div');
             tmp.innerHTML = html;
-            var style = tmp.querySelector('style');           // estilos (.info-label, etc.)
+            var style = tmp.querySelector('style');           // estilos (.info-label, .badge-atendida, etc.)
             var info  = tmp.querySelector('.border-bottom');   // bloque superior: datos + estadísticas
-            cont.innerHTML = info
-                ? '<div class="border rounded overflow-hidden">' + (style ? style.outerHTML : '') + info.outerHTML + '</div>'
-                : '';
+            var filas = tmp.querySelectorAll('table tbody tr'); // consultas del paciente
+
+            var out = '';
+            if (info) {
+                out += '<div class="border rounded overflow-hidden">' + (style ? style.outerHTML : '') + info.outerHTML + '</div>';
+            }
+
+            // Consultas anteriores como tarjetas (estilo agenda)
+            if (filas.length) {
+                out += '<div class="mt-3">' +
+                       '<div class="fw-semibold mb-2"><i class="bi bi-clock-history"></i> Consultas (' + filas.length + ')</div>' +
+                       '<div class="cita-hist-lista">';
+                filas.forEach(function (tr) {
+                    var td = tr.querySelectorAll('td');
+                    if (td.length < 5) return;
+                    var fecha  = td[0].textContent.trim();
+                    var hora   = td[1].textContent.trim().replace(/\s+/g, ' ');
+                    var tipo   = td[2].textContent.trim();
+                    var doctor = td[3].textContent.trim();
+                    var badge  = td[4].innerHTML.trim();   // conserva el estado con su color
+                    var sub    = tipo + (doctor && doctor !== '—' ? ' — ' + doctor : '');
+                    out += '<div class="cita-hist-card">' +
+                               '<div class="cita-hist-main">' +
+                                   '<div class="cita-hist-fecha">' + fecha + ' · ' + hora + '</div>' +
+                                   '<div class="cita-hist-sub">' + sub + '</div>' +
+                               '</div>' +
+                               '<div class="cita-hist-estado">' + badge + '</div>' +
+                           '</div>';
+                });
+                out += '</div></div>';
+            }
+
+            cont.innerHTML = out;
         })
         .catch(function () {
             cont.innerHTML = '<p class="text-muted small mb-0">No se pudieron cargar los datos del paciente.</p>';
