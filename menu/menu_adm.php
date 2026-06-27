@@ -188,6 +188,11 @@ function menuActivo($paginas, $actual) {
                     </li>
                 </ul>
             </li>
+            <li>
+                <a href="gestionar_seguros.php" class="<?php echo menuActivo('gestionar_seguros.php', $paginaActual); ?>">
+                    <i class="metismenu-icon pe-7s-shield"></i> Seguros
+                </a>
+            </li>
             <?php endif; ?>
 
             <!-- ══ REPORTES ════════════════════════════════════════════ -->
