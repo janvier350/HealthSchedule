@@ -512,6 +512,8 @@ $conexion=conectarse();
         document.getElementById('sex').value = paciente.SEX;
         document.getElementById('gender').value = paciente.GENDER;
 
+        // Cargar los seguros asignados a este paciente
+        cargarSegurosPaciente(paciente.IDPACIENTE);
     }
 
     function guardarEdicion() {
@@ -527,6 +529,63 @@ $conexion=conectarse();
             location.reload(); // Recargar la página tras la edición
         })
         .catch(error => console.error("Error:", error));
+    }
+
+    // ── Seguros del paciente ──────────────────────────────────────────
+    function cargarSegurosPaciente(idPaciente) {
+        const cont = document.getElementById('psLista');
+        if (!cont) return;
+        cont.innerHTML = '<div class="text-muted small">Cargando…</div>';
+        fetch('seguro_paciente_listar.php?id_paciente=' + encodeURIComponent(idPaciente))
+            .then(r => r.text())
+            .then(html => { cont.innerHTML = html; })
+            .catch(() => { cont.innerHTML = '<div class="text-danger small">Error al cargar seguros.</div>'; });
+    }
+
+    function agregarSeguroPaciente() {
+        const idPaciente = document.getElementById('idPaciente').value;
+        const idSeguro   = document.getElementById('psSeguro').value;
+        const poliza     = document.getElementById('psPoliza').value;
+        const prioridad  = document.getElementById('psPrioridad').value;
+        if (!idPaciente) { alert('Primero abra un paciente para editar.'); return; }
+        if (!idSeguro)   { alert('Seleccione una aseguradora.'); return; }
+
+        fetch('seguro_paciente_guardar.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ id_paciente: idPaciente, id_seguro: idSeguro, num_poliza: poliza, prioridad: prioridad })
+        })
+        .then(r => r.text())
+        .then(res => {
+            res = res.trim();
+            if (res === 'OK') {
+                document.getElementById('psSeguro').value = '';
+                document.getElementById('psPoliza').value = '';
+                document.getElementById('psPrioridad').value = 'Primario';
+                cargarSegurosPaciente(idPaciente);
+            } else if (res === 'DUP') {
+                alert('Ese seguro ya está asignado a este paciente.');
+            } else {
+                alert('No se pudo agregar: ' + res);
+            }
+        })
+        .catch(() => alert('Error de conexión.'));
+    }
+
+    function eliminarSeguroPaciente(id) {
+        if (!confirm('¿Quitar este seguro del paciente?')) return;
+        const idPaciente = document.getElementById('idPaciente').value;
+        fetch('seguro_paciente_eliminar.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ id: id })
+        })
+        .then(r => r.text())
+        .then(res => {
+            if (res.trim() === 'OK') cargarSegurosPaciente(idPaciente);
+            else alert('No se pudo quitar: ' + res);
+        })
+        .catch(() => alert('Error de conexión.'));
     }
 </script>
                                     </div>
@@ -652,6 +711,41 @@ $conexion=conectarse();
 
                     <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
                 </form>
+
+                <hr class="my-3">
+                <div>
+                    <h6 class="mb-2">🛡️ Seguros del paciente</h6>
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-12 col-md-5">
+                            <label class="form-label small mb-1">Aseguradora</label>
+                            <select id="psSeguro" class="form-select form-select-sm">
+                                <option value="">— Seleccione —</option>
+                                <?php
+                                $resSegPac = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
+                                while ($resSegPac && $sp = $resSegPac->fetch_assoc()):
+                                ?>
+                                <option value="<?php echo (int)$sp['Id_seguro']; ?>"><?php echo htmlspecialchars($sp['Empresa_seguro']); ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">N° póliza</label>
+                            <input type="text" id="psPoliza" class="form-control form-control-sm" maxlength="60">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Prioridad</label>
+                            <select id="psPrioridad" class="form-select form-select-sm">
+                                <option value="Primario">Primario</option>
+                                <option value="Secundario">Secundario</option>
+                                <option value="Terciario">Terciario</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <button type="button" class="btn btn-sm btn-success w-100" onclick="agregarSeguroPaciente()">+ Agregar</button>
+                        </div>
+                    </div>
+                    <div id="psLista"><div class="text-muted small">—</div></div>
+                </div>
             </div>
         </div>
     </div>
