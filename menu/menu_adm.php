@@ -193,6 +193,11 @@ function menuActivo($paginas, $actual) {
                     <i class="metismenu-icon pe-7s-shield"></i> Seguros
                 </a>
             </li>
+            <li>
+                <a href="gestionar_tipos_seguro.php" class="<?php echo menuActivo('gestionar_tipos_seguro.php', $paginaActual); ?>">
+                    <i class="metismenu-icon pe-7s-ribbon"></i> Tipos de Seguro
+                </a>
+            </li>
             <?php endif; ?>
 
             <!-- ══ REPORTES ════════════════════════════════════════════ -->
