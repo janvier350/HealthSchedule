@@ -177,6 +177,10 @@ while ($d = $resultDoctores->fetch_assoc()) {
         .fc-daygrid-event-harness { margin-bottom: 2px; }
         .fc-daygrid-day-events { min-height: 2em; }
 
+        /* Vista Día/Semana: filas de hora más altas para aprovechar la pantalla (estilo agenda) */
+        .fc .fc-timegrid-slot { height: 2.8em; }
+        .fc .fc-timegrid-slot-label { font-size: 0.8rem; }
+
         /* Lista de citas para móvil (Vista por Doctor) */
         .cv-list { display: none; }
         .cv-list-day { font-weight: 700; font-size: 0.9rem; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 2px solid #dee2e6; color: #343a40; }
@@ -747,6 +751,11 @@ document.addEventListener('DOMContentLoaded', function () {
         initialView: esMovilInit ? 'timeGridDay' : 'dayGridMonth',
         eventDisplay: 'block',
         eventMinHeight: 70,
+        height: 'auto',
+        slotMinTime: '06:00:00',
+        slotMaxTime: '22:00:00',
+        expandRows: true,
+        nowIndicator: true,
         events: eventosAll,
 
         // Render personalizado en TODAS las vistas (mes, semana y día):
