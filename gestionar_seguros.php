@@ -68,14 +68,21 @@ $agencias = [];
 $resAg = $conexion->query("SELECT IDAGENCIA, DESCRIPCION FROM ADM_AGENCIA WHERE ESTADO = 1 ORDER BY DESCRIPCION");
 while ($a = $resAg->fetch_assoc()) { $agencias[] = $a; }
 
+// Tipos de seguro para el selector
+$tiposSeguro = [];
+$resTS = $conexion->query("SELECT id_tipo_seguro, Descripcion FROM tipo_seguro ORDER BY Descripcion");
+while ($ts = $resTS->fetch_assoc()) { $tiposSeguro[] = $ts; }
+
 // Listado de seguros
 $seguros = [];
 $res = $conexion->query(
     "SELECT S.Id_seguro, S.Empresa_seguro, S.telefono, S.direccion,
             S.id_tipo_seguro, S.Notas_Seguro, S.Id_agencia, S.estado,
-            A.DESCRIPCION AS AGENCIA
+            A.DESCRIPCION AS AGENCIA,
+            T.Descripcion AS TIPO_DESC
        FROM seguros S
-       LEFT JOIN ADM_AGENCIA A ON A.IDAGENCIA = S.Id_agencia
+       LEFT JOIN ADM_AGENCIA A ON A.IDAGENCIA      = S.Id_agencia
+       LEFT JOIN tipo_seguro  T ON T.id_tipo_seguro = S.id_tipo_seguro
    ORDER BY S.Empresa_seguro"
 );
 while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
@@ -207,7 +214,7 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                                         <td><?php echo htmlspecialchars($s['Empresa_seguro']); ?></td>
                                         <td><?php echo htmlspecialchars($s['telefono'] ?: '—'); ?></td>
                                         <td><?php echo htmlspecialchars($s['direccion'] ?: '—'); ?></td>
-                                        <td><?php echo htmlspecialchars($s['id_tipo_seguro'] ?? '—'); ?></td>
+                                        <td><?php echo htmlspecialchars($s['TIPO_DESC'] ?: '—'); ?></td>
                                         <td><?php echo htmlspecialchars($s['AGENCIA'] ?: '—'); ?></td>
                                         <td class="text-center">
                                             <?php if ((int)$s['estado'] === 1): ?>
@@ -266,8 +273,15 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                             <input type="text" class="form-control" name="telefono" id="fsTelefono" maxlength="30">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Tipo de seguro (ID)</label>
-                            <input type="number" class="form-control" name="id_tipo_seguro" id="fsTipo" min="0">
+                            <label class="form-label">Tipo de seguro</label>
+                            <select class="form-select" name="id_tipo_seguro" id="fsTipo">
+                                <option value="">— Seleccione —</option>
+                                <?php foreach ($tiposSeguro as $ts): ?>
+                                    <option value="<?php echo (int)$ts['id_tipo_seguro']; ?>">
+                                        <?php echo htmlspecialchars($ts['Descripcion']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
 
