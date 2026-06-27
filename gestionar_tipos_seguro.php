@@ -27,8 +27,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id          = (int)($_POST['id'] ?? 0);
         $descripcion = trim($_POST['descripcion'] ?? '');
 
+        // Verificar que no exista otro tipo con la misma descripción (ignora mayúsculas y espacios)
+        $dup = 0;
+        if ($descripcion !== '') {
+            $stmtD = $conexion->prepare(
+                "SELECT COUNT(*) AS n FROM tipo_seguro
+                  WHERE LOWER(TRIM(Descripcion)) = LOWER(TRIM(?)) AND id_tipo_seguro <> ?"
+            );
+            $stmtD->bind_param("si", $descripcion, $id);
+            $stmtD->execute();
+            $dup = (int)($stmtD->get_result()->fetch_assoc()['n'] ?? 0);
+            $stmtD->close();
+        }
+
         if ($descripcion === '') {
             $mensaje = ['err', 'La descripción es obligatoria.'];
+        } elseif ($dup > 0) {
+            $mensaje = ['err', 'Ya existe un tipo de seguro con esa descripción.'];
         } elseif ($id > 0) {
             $stmt = $conexion->prepare("UPDATE tipo_seguro SET Descripcion = ? WHERE id_tipo_seguro = ?");
             $stmt->bind_param("si", $descripcion, $id);
