@@ -54,7 +54,7 @@ $sqlHoy = "SELECT A.IDCITA, A.HORA_INICIO, A.HORA_FIN, A.ESTADO_CITA,
                   TC.NOMBRES AS TIPO_CONSULTA
            FROM AG_CITA A
            INNER JOIN AG_PACIENTE P     ON A.IDPACIENTE     = P.IDPACIENTE
-           LEFT  JOIN ADM_USUARIO D     ON A.IDDOCTOR        = D.IDADM_USUARIO
+           LEFT  JOIN ADM_DOCTOR D      ON A.IDDOCTOR        = D.IDDOCTOR
            LEFT  JOIN AG_TIPOCONSULTA TC ON A.IDTIPOCONSULTA = TC.IDTIPOCONSULTA
            WHERE A.FECHA_CITA = '$hoy' AND A.ESTADO = 'A'
            ORDER BY A.HORA_INICIO";
@@ -84,7 +84,7 @@ $sqlUlt = "SELECT H.FECHA_REGISTRO, H.IMC,
            FROM AG_HISTORIAL H
            INNER JOIN AG_CITA C       ON H.IDCITA      = C.IDCITA
            INNER JOIN AG_PACIENTE P   ON C.IDPACIENTE  = P.IDPACIENTE
-           LEFT  JOIN ADM_USUARIO D   ON C.IDDOCTOR     = D.IDADM_USUARIO
+           LEFT  JOIN ADM_DOCTOR D    ON C.IDDOCTOR     = D.IDDOCTOR
            ORDER BY H.FECHA_REGISTRO DESC
            LIMIT 5";
 $resUlt = $conexion->query($sqlUlt);
@@ -373,14 +373,13 @@ for ($i = 6; $i >= 0; $i--) {
                                         <?php while ($c = $resHoy->fetch_assoc()): ?>
                                             <?php
                                             $est = $c['ESTADO_CITA'];
-                                            switch ($est) {
-                                                case 'Confirmada':            $badgeClass = 'bg-success'; break;
-                                                case 'Pendiente':             $badgeClass = 'bg-warning text-dark'; break;
-                                                case 'A':                     $badgeClass = 'bg-purple'; break;
-                                                case 'Cancelada':
-                                                case 'Cancelado':             $badgeClass = 'bg-danger'; break;
-                                                default:                      $badgeClass = 'bg-secondary';
-                                            }
+                                            $badgeClass = match($est) {
+                                                'Confirmada'        => 'bg-success',
+                                                'Pendiente'         => 'bg-warning text-dark',
+                                                'A'                 => 'bg-purple',
+                                                'Cancelada','Cancelado' => 'bg-danger',
+                                                default             => 'bg-secondary'
+                                            };
                                             $estLabel = $est === 'A' ? 'Atendida' : $est;
                                             ?>
                                             <tr>

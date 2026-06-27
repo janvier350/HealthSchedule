@@ -1,276 +1,278 @@
 <?php
 ob_start();
-?>
-<?php
-    session_start();
-    if(isset($_SESSION["loggedin"])){
-		header("Location: Home.php");
-	}
+session_start();
+if (isset($_SESSION["loggedin"])) {
+    header("Location: Home.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
-<html>
-    <head>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<!------ Include the above in your HEAD tag ---------->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sross Nutritions — Iniciar Sesión</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<!------ Include the above in your HEAD tag ---------->
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, #0264d6 1%, #1c2b5a 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
 
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
-<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
-<!-- Include the above in your HEAD tag -->
+        .login-card {
+            display: flex;
+            width: 580px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
 
-<style>
-@charset "utf-8";
+        /* ── Panel izquierdo: formulario ─── */
+        .login-form-panel {
+            flex: 1;
+            background: #fff;
+            padding: 44px 36px;
+        }
 
+        .login-form-panel h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1c2b5a;
+            margin-bottom: 6px;
+        }
 
-@import url//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css);
+        .login-form-panel p.subtitle {
+            font-size: .83rem;
+            color: #888;
+            margin-bottom: 28px;
+        }
 
+        .input-group {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
 
+        .input-group:focus-within { border-color: #5a2d82; }
 
-div.main{
-    background: #0264d6; /* Old browsers */
-background: -moz-radial-gradient(center, ellipse cover,  #0264d6 1%, #1c2b5a 100%); /* FF3.6+ */
-background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(1%,#0264d6), color-stop(100%,#1c2b5a)); /* Chrome,Safari4+ */
-background: -webkit-radial-gradient(center, ellipse cover,  #0264d6 1%,#1c2b5a 100%); /* Chrome10+,Safari5.1+ */
-background: -o-radial-gradient(center, ellipse cover,  #0264d6 1%,#1c2b5a 100%); /* Opera 12+ */
-background: -ms-radial-gradient(center, ellipse cover,  #0264d6 1%,#1c2b5a 100%); /* IE10+ */
-background: radial-gradient(ellipse at center,  #0264d6 1%,#1c2b5a 100%); /* W3C */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0264d6', endColorstr='#1c2b5a',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
-height:calc(100vh);
-width:100%;
-}
+        .input-group .icon {
+            width: 46px;
+            text-align: center;
+            color: #aaa;
+            font-size: .95rem;
+            flex-shrink: 0;
+        }
 
-[class*="fontawesome-"]:before {
-  font-family: 'FontAwesome', sans-serif;
-}
+        .input-group input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 13px 12px 13px 0;
+            font-size: .9rem;
+            color: #333;
+            background: transparent;
+        }
 
-/* ---------- GENERAL ---------- */
+        .login-extras {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            font-size: .8rem;
+        }
 
-* {
-  box-sizing: border-box;
-    margin:0px auto;
+        .login-extras a { color: #888; text-decoration: none; }
+        .login-extras a:hover { color: #5a2d82; }
 
-  &:before,
-  &:after {
-    box-sizing: border-box;
-  }
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #5a2d82, #7b3fa8);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: .95rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+        }
 
-}
+        .btn-login:hover { opacity: .92; transform: translateY(-1px); }
+        .btn-login:active { transform: translateY(0); }
 
-body {
-   
-    color: #606468;
-  font: 87.5%/1.5em 'Open Sans', sans-serif;
-  margin: 0;
-}
+        /* ── Panel derecho: logo ──────────── */
+        .login-logo-panel {
+            width: 220px;
+            background: linear-gradient(160deg, #0e1f55 0%, #1a3a8c 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+            gap: 20px;
+        }
 
-a {
-	color: #eee;
-	text-decoration: none;
-}
+        /* ── SVG Logo ────────────────────── */
+        .logo-svg { width: 110px; height: 110px; }
 
-a:hover {
-	text-decoration: underline;
-}
+        .logo-wordmark {
+            text-align: center;
+            color: #fff;
+        }
 
-input {
-	border: none;
-	font-family: 'Open Sans', Arial, sans-serif;
-	font-size: 14px;
-	line-height: 1.5em;
-	padding: 0;
-	-webkit-appearance: none;
-}
+        .logo-wordmark .brand {
+            display: block;
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: .12em;
+            line-height: 1.1;
+        }
 
-p {
-	line-height: 1.5em;
-}
+        .logo-wordmark .tagline {
+            display: block;
+            font-size: .6rem;
+            letter-spacing: .25em;
+            color: rgba(255,255,255,.55);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
 
-.clearfix {
-  *zoom: 1;
+        .logo-divider {
+            width: 32px;
+            height: 1px;
+            background: rgba(255,255,255,.2);
+        }
 
-  &:before,
-  &:after {
-    content: ' ';
-    display: table;
-  }
+        .logo-caption {
+            font-size: .68rem;
+            color: rgba(255,255,255,.35);
+            text-align: center;
+            letter-spacing: .05em;
+        }
 
-  &:after {
-    clear: both;
-  }
+        @media (max-width: 620px) {
+            .login-card { flex-direction: column; width: 92%; }
+            .login-logo-panel { width: 100%; padding: 28px; flex-direction: row; gap: 16px; }
+            .logo-svg { width: 64px; height: 64px; }
+        }
+    </style>
+</head>
+<body>
 
-}
+<div class="login-card">
 
-.container {
-  left: 50%;
-  position: fixed;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* ---------- LOGIN ---------- */
-
-#login form{
-	width: 250px;
-}
-#login, .logo{
-    display:inline-block;
-    width:40%;
-}
-#login{
-border-right:1px solid #fff;
-  padding: 0px 22px;
-  width: 59%;
-}
-.logo{
-color:#fff;
-font-size:50px;
-  line-height: 125px;
-}
-
-#login form span.fa {
-	background-color: #fff;
-	border-radius: 3px 0px 0px 3px;
-	color: #000;
-	display: block;
-	float: left;
-	height: 50px;
-    font-size:24px;
-	line-height: 50px;
-	text-align: center;
-	width: 50px;
-}
-
-#login form input {
-	height: 50px;
-}
-fieldset{
-    padding:0;
-    border:0;
-    margin: 0;
-
-}
-#login form input[type="text"], input[type="password"] {
-	background-color: #fff;
-	border-radius: 0px 3px 3px 0px;
-	color: #000;
-	margin-bottom: 1em;
-	padding: 0 16px;
-	width: 200px;
-}
-
-#login form input[type="submit"] {
-  border-radius: 3px;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  background-color: #000000;
-  color: #eee;
-  font-weight: bold;
-  /* margin-bottom: 2em; */
-  text-transform: uppercase;
-  padding: 5px 10px;
-  height: 30px;
-}
-
-#login form input[type="submit"]:hover {
-	background-color: #d44179;
-}
-
-#login > p {
-	text-align: center;
-}
-
-#login > p span {
-	padding-left: 5px;
-}
-.middle {
-  display: flex;
-  width: 600px;
-}
-</style>
-    </head>
-    <body>   
-    <div class="main">
-    
-    
-    <div class="container">
-<center>
-<div class="middle">
-      <div id="login">
+    <!-- ── FORMULARIO ───────────────────────────────── -->
+    <div class="login-form-panel">
+        <h2>Bienvenido</h2>
+        <p class="subtitle">Ingresa tus credenciales para continuar</p>
 
         <form action="class/checkLogin.php" method="post">
 
-          <fieldset class="clearfix">
+            <div class="input-group">
+                <span class="icon"><i class="fa fa-user"></i></span>
+                <input type="text" name="user" placeholder="Usuario" required autofocus>
+            </div>
 
-            <p ><span class="fa fa-user"></span><input type="text"  name="user" Placeholder="janvier" required></p> <!-- JS because of IE support; better: placeholder="Username" -->
-            <p><span class="fa fa-lock"></span><input type="password"  name="password" Placeholder="Password" required></p> <!-- JS because of IE support; better: placeholder="Password" -->
-            
-             <div>
-                                <span style="width:48%; text-align:left;  display: inline-block;"><a class="small-text" href="#">Forgot
-                                password?</a></span>
-                                <span style="width:50%; text-align:right;  display: inline-block;"><input type="submit" value="Sign In"></span>
-                            </div>
+            <div class="input-group">
+                <span class="icon"><i class="fa fa-lock"></i></span>
+                <input type="password" name="password" placeholder="Contraseña" required>
+            </div>
 
-          </fieldset>
-<div class="clearfix"></div>
+            <div class="login-extras">
+                <a href="#">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" class="btn-login">Iniciar Sesión</button>
+
         </form>
+    </div>
 
-        <div class="clearfix"></div>
+    <!-- ── LOGO PANEL ───────────────────────────────── -->
+    <div class="login-logo-panel">
 
-      </div> <!-- end login -->
-      <div>
-      <img src = "https://images.vexels.com/media/users/3/144118/isolated/lists/31093a4558d1aa47a6fcec2a174f2754-signo-de-cerveza-de-neon.png">
-            <!--<img src = "https://overclocking.com.ec/schedule.overclocking.com.ec/images/Login/freepik__background__71873.png"> -->
+        <!-- Logo SVG corporativo/minimalista -->
+        <svg class="logo-svg" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Anillo exterior -->
+            <circle cx="55" cy="55" r="50" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+            <!-- Anillo medio -->
+            <circle cx="55" cy="55" r="40" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
 
-          <div class="clearfix"></div>
-      </div>
-      
-      </div>
-</center>
+            <!-- Hoja estilizada -->
+            <path d="M55 22
+                     C55 22 32 34 32 55
+                     C32 68 42 76 55 78
+                     C68 76 78 68 78 55
+                     C78 34 55 22 55 22Z"
+                  fill="rgba(255,255,255,0.12)"
+                  stroke="rgba(255,255,255,0.5)"
+                  stroke-width="1.2"/>
+
+            <!-- Nervio central de la hoja -->
+            <line x1="55" y1="28" x2="55" y2="78"
+                  stroke="rgba(255,255,255,0.6)"
+                  stroke-width="1"
+                  stroke-linecap="round"/>
+
+            <!-- Nervios laterales -->
+            <path d="M55 42 C48 46 44 52 44 58"
+                  stroke="rgba(255,255,255,0.35)"
+                  stroke-width="0.8"
+                  stroke-linecap="round"
+                  fill="none"/>
+            <path d="M55 42 C62 46 66 52 66 58"
+                  stroke="rgba(255,255,255,0.35)"
+                  stroke-width="0.8"
+                  stroke-linecap="round"
+                  fill="none"/>
+            <path d="M55 54 C50 57 47 62 47 66"
+                  stroke="rgba(255,255,255,0.25)"
+                  stroke-width="0.8"
+                  stroke-linecap="round"
+                  fill="none"/>
+            <path d="M55 54 C60 57 63 62 63 66"
+                  stroke="rgba(255,255,255,0.25)"
+                  stroke-width="0.8"
+                  stroke-linecap="round"
+                  fill="none"/>
+
+            <!-- Punto central superior -->
+            <circle cx="55" cy="22" r="2.5" fill="white" opacity="0.8"/>
+
+            <!-- Iniciales SR -->
+            <text x="55" y="62"
+                  text-anchor="middle"
+                  fill="white"
+                  font-family="Segoe UI, Arial, sans-serif"
+                  font-size="13"
+                  font-weight="700"
+                  letter-spacing="2"
+                  opacity="0.9">SN</text>
+        </svg>
+
+        <div class="logo-wordmark">
+            <span class="brand">SROSS</span>
+            <span class="tagline">Nutritions</span>
+        </div>
+
+        <div class="logo-divider"></div>
+
+        <span class="logo-caption">Sistema de Gestión<br>de Citas</span>
+
     </div>
 
 </div>
 
-
-        <div class="container-fluid">
-        <div class="row">
-        <div class="col-sm-12 col-lg-12">                
-        <div class="wrapper fadeInDown">
-        <div id="formContent">
-        <!-- Tabs Titles -->
-        <!-- Icon -->
-            <div class="fadeIn first">
-              <img src="image/MedicalAppointment.jpg" id="icon" alt="User Icon" />
-              <h1>Medical - Appointment</h1>
-            </div>
-        <!-- Login Form -->
-            <form action="class/checkLogin.php" method="post">
-                <input type="text" id="user" class="fadeIn second" name="user" placeholder="Usuario">
-                <input type="password" id="password" class="fadeIn third" name="password" placeholder="Password">
-                <input type="submit" class="fadeIn fourth" value="Ingresar">
-            </form>
-            <!-- Remind Passowrd -->
-            <div id="formFooter">
-                <a class="underlineHover" href="#">Visita Nuestra sitio Web</a>
-            </div>
-<!--
-            <form action="class/insert.php" method="post">                
-                <input type="submit" class="fadeIn fourth" value="Ingresar">
-            </form>
--->
-        </div>
-        </div>                
-        </div>
-        </div>
-        </div>
-    </body>
+</body>
 </html>
-<?php
-ob_end_flush();
-?>
+<?php ob_end_flush(); ?>

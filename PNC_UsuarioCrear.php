@@ -4,6 +4,16 @@
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion=conectarse();
+
+$rolesHtml = '';
+$sqlRoles  = "SELECT IDADM_ROL, CARGO FROM ADM_ROL WHERE ESTADO = 'A' ORDER BY IDADM_ROL";
+$queryRoles = $conexion->query($sqlRoles);
+if ($queryRoles) {
+    while ($rolFila = mysqli_fetch_array($queryRoles)) {
+        $rolesHtml .= '<option value="' . htmlspecialchars($rolFila['IDADM_ROL'], ENT_QUOTES, 'UTF-8') . '">'
+            . htmlspecialchars($rolFila['CARGO'], ENT_QUOTES, 'UTF-8') . '</option>';
+    }
+}
 ?>
 <head>
     <meta charset="utf-8">
@@ -301,9 +311,7 @@ $conexion=conectarse();
                                                             <div class="position-relative form-group">
                                                                 <select  id="validationCustom05" name="Idrol" class="form-control" required>
                                                                 <option value="0">Default Select</option>
-                                                                <option value="1">Sistema</option>
-                                                                
-                                                                <option value="3">Usuario</option> 
+                                                                <?php echo $rolesHtml; ?>
                                                             </select>
                                                         </div>
                                                          <div class="invalid-feedback">
@@ -537,11 +545,8 @@ $conexion=conectarse();
                     <div class="mb-3">
                         <label class="form-label">Rol</label>
                         <select name="idRol" id="idRol" class="form-control" required>
-                                                                <option>Default Select</option>
-                                                                <option value="1">Sistema</option>
-                                                                <option value="2">Dr.</option>
-                                                                <option value="3">Usuario</option>
-                                                                
+                                                                <option value="0">Default Select</option>
+                                                                <?php echo $rolesHtml; ?>
                                                                 </select>
                     </div>
                     

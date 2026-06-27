@@ -17,14 +17,11 @@ if(isset($_SESSION['expire']) && $now > $_SESSION['expire']){
     exit();
 }
 
-$colorTipoDefault = '#3788d8';
-
 $query = "SELECT
             A.IDCITA,
             CONCAT(B.NOMBRES, ' ', B.APELLIDOS) AS PACIENTE,
             B.TELEFONO,
             C.NOMBRES AS TIPO_CONSULTA,
-            C.COLOR AS TIPO_COLOR,
             A.FECHA_CITA,
             A.HORA_INICIO,
             A.HORA_FIN,
@@ -34,7 +31,7 @@ $query = "SELECT
           FROM AG_CITA A
           INNER JOIN AG_PACIENTE B     ON A.IDPACIENTE      = B.IDPACIENTE
           INNER JOIN AG_TIPOCONSULTA C ON A.IDTIPOCONSULTA  = C.IDTIPOCONSULTA
-          INNER JOIN ADM_USUARIO D     ON A.IDDOCTOR        = D.IDADM_USUARIO
+          INNER JOIN ADM_DOCTOR D      ON A.IDDOCTOR        = D.IDDOCTOR
           WHERE A.ESTADO = 'A'";
 
 $resultado = $conexion->query($query);
@@ -42,28 +39,22 @@ $eventos   = array();
 
 while ($row = $resultado->fetch_assoc()) {
     switch($row['ESTADO_CITA']) {
-        case 'Pendiente':
-        case 'Reagendada':              $colorEstado = '#212529'; break; // Negro  - Pendiente / Reagendada
-        case 'Confirmada':              $colorEstado = '#6f42c1'; break; // Morado - Confirmada
-        case 'A':                       $colorEstado = '#28a745'; break; // Verde  - Atendida
+        case 'Confirmada': $color = '#28a745'; break; // Verde
+        case 'Pendiente':  $color = '#ffc107'; break; // Amarillo
+        case 'A':          $color = '#6f42c1'; break; // Morado - Atendida
         case 'Cancelada':
-        case 'Cancelado':               $colorEstado = '#fd7e14'; break; // Naranja - Cancelada
-        case 'Atrasado':
-        case 'Cancelación Tardía':      $colorEstado = '#ffc107'; break; // Ámbar  - Cancelación tardía
-        case 'Cancelado por Profesional': $colorEstado = '#ff8a80'; break; // Salmón - Cancelado por el profesional
-        case 'No Asistió':              $colorEstado = '#dc3545'; break; // Rojo   - No asistió
-        default:                        $colorEstado = '#007bff'; break; // Azul
+        case 'Cancelado':
+        case 'Atrasado':   $color = '#dc3545'; break; // Rojo
+        default:           $color = '#007bff'; break; // Azul
     }
-
-    $colorTipo = !empty($row['TIPO_COLOR']) ? $row['TIPO_COLOR'] : $colorTipoDefault;
 
     $eventos[] = array(
         'id'              => $row['IDCITA'],
         'title'           => $row['PACIENTE'],
         'start'           => $row['FECHA_CITA'] . 'T' . $row['HORA_INICIO'],
         'end'             => $row['FECHA_CITA'] . 'T' . $row['HORA_FIN'],
-        'backgroundColor' => $colorEstado,
-        'borderColor'     => $colorTipo,
+        'backgroundColor' => $color,
+        'borderColor'     => $color,
         'textColor'       => '#ffffff',
         'extendedProps'   => array(
             'cita'      => $row['ESTADO_CITA'],
@@ -75,26 +66,23 @@ while ($row = $resultado->fetch_assoc()) {
     );
 }
 
-$tiposConsultaActivos = array();
-$resTipos = $conexion->query("SELECT NOMBRES, COLOR FROM AG_TIPOCONSULTA WHERE ESTADO = 'A' ORDER BY NOMBRES");
-while ($t = $resTipos->fetch_assoc()) {
-    $tiposConsultaActivos[] = array(
-        'nombre' => $t['NOMBRES'],
-        'color'  => !empty($t['COLOR']) ? $t['COLOR'] : $colorTipoDefault,
-    );
-}
-
-$sqlDoctores = "SELECT U.IDADM_USUARIO, U.NOMBRES, U.APELLIDOS
-                FROM ADM_USUARIO U
-                INNER JOIN ADM_ROL R ON U.IDADM_ROL = R.IDADM_ROL
-                WHERE R.CARGO = 'DOCTOR'
-                  AND U.ESTADO = 'A'
-                ORDER BY U.NOMBRES";
+$sqlDoctores = "SELECT D.IDDOCTOR, D.NOMBRES, D.APELLIDOS
+                FROM ADM_DOCTOR D
+                WHERE D.ESTADO = 'A'
+                  AND EXISTS (
+                      SELECT 1 FROM ADM_USUARIO U
+                      INNER JOIN ADM_ROL R ON U.IDADM_ROL = R.IDADM_ROL
+                      WHERE R.CARGO = 'DOCTOR'
+                        AND U.ESTADO = 'A'
+                        AND U.NOMBRES = D.NOMBRES
+                        AND U.APELLIDOS = D.APELLIDOS
+                  )
+                ORDER BY D.NOMBRES";
 $resultDoctores  = $conexion->query($sqlDoctores);
 $doctoresActivos = array();
 while ($d = $resultDoctores->fetch_assoc()) {
     $doctoresActivos[] = array(
-        'id'     => $d['IDADM_USUARIO'],
+        'id'     => $d['IDDOCTOR'],
         'nombre' => $d['NOMBRES'] . ' ' . $d['APELLIDOS'],
     );
 }
@@ -109,7 +97,7 @@ while ($d = $resultDoctores->fetch_assoc()) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/css/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link href="./fullcalendar/main.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
@@ -117,20 +105,10 @@ while ($d = $resultDoctores->fetch_assoc()) {
         .fc-event { cursor: pointer; font-size: 0.85em; padding: 2px 5px; }
         #eventModal .btn { transition: all 0.3s ease; white-space: nowrap; }
         #eventModal .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-        /* Franja izquierda = tipo de consulta (el fondo del evento sigue indicando el estado) */
-        .fc-daygrid-event, .fc-timegrid-event, .fc-list-event-dot {
-            border-width: 0 0 0 5px !important;
-            border-style: solid !important;
-            border-radius: 3px;
-        }
-        .fc-list-event-dot { border-radius: 50%; border-width: 5px !important; }
         /* Leyenda de colores */
-        .leyenda-calendario { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.8rem; }
+        .leyenda-calendario { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; font-size: 0.8rem; }
         .leyenda-item { display: flex; align-items: center; gap: 5px; }
         .leyenda-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .leyenda-dot-borde { width: 12px; height: 12px; border-radius: 50%; display: inline-block; background: #fff; border: 3px solid #999; box-sizing: border-box; }
-        .leyenda-franja { width: 16px; height: 12px; display: inline-block; background: #fff; border: 1px solid #ddd; border-left: 5px solid #999; box-sizing: border-box; border-radius: 2px; }
-        .leyenda-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: #888; font-weight: 600; margin-right: 4px; }
 
         /* ── Vista por Doctor ─────────────────────────────────────── */
         .cv-scroll { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 4px; }
@@ -161,44 +139,6 @@ while ($d = $resultDoctores->fetch_assoc()) {
         .cv-event b { display: block; }
         .cv-doctores { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 0.85rem; }
         .cv-doctores label { display: flex; align-items: center; gap: 5px; margin: 0; cursor: pointer; }
-
-        /* ════════ Mejoras responsive móvil + citas legibles ════════ */
-        .fc-event-main-custom { padding: 2px 4px; line-height: 1.25; overflow: hidden; }
-        .fc-event-time-custom { font-weight: 700; font-size: 0.78em; }
-        .fc-event-title-custom { font-weight: 600; font-size: 0.82em; white-space: normal; word-break: break-word; }
-        .fc-event-sub-custom { font-size: 0.72em; opacity: 0.95; white-space: normal; }
-
-        /* Lista de citas para móvil (Vista por Doctor) */
-        .cv-list { display: none; }
-        .cv-list-day { font-weight: 700; font-size: 0.9rem; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 2px solid #dee2e6; color: #343a40; }
-        .cv-list-card { display: flex; border-radius: 6px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); cursor: pointer; }
-        .cv-list-color { width: 6px; flex: 0 0 6px; }
-        .cv-list-body { flex: 1; padding: 8px 10px; color: #fff; }
-        .cv-list-body .hora { font-weight: 700; font-size: 0.82rem; }
-        .cv-list-body .pac { font-weight: 600; font-size: 0.9rem; }
-        .cv-list-body .sub { font-size: 0.76rem; opacity: 0.95; }
-
-        @media (max-width: 768px) {
-            .app-main__inner { padding: 10px !important; }
-            .card-body { padding: 8px !important; }
-
-            /* Cabecera y botones que no se monten */
-            .page-title-heading > div { flex-wrap: wrap; }
-
-            /* Leyenda más compacta para ganar espacio arriba */
-            .leyenda-calendario { gap: 6px 10px; font-size: 0.68rem; margin-bottom: 4px; }
-            .leyenda-label { font-size: 0.62rem; width: 100%; margin-bottom: 2px; }
-
-            /* Barra del calendario en columna para que quepan todos los botones */
-            .fc .fc-toolbar.fc-header-toolbar { flex-direction: column; gap: 8px; align-items: stretch; }
-            .fc .fc-toolbar-title { font-size: 1.1rem; text-align: center; }
-            .fc .fc-button { padding: 4px 8px; font-size: 0.8rem; }
-            .fc .fc-toolbar-chunk { display: flex; justify-content: center; }
-
-            /* En móvil: ocultar la cuadrícula horizontal de Vista por Doctor y mostrar la lista */
-            .cv-scroll { display: none; }
-            .cv-list { display: block; }
-        }
     </style>
 </head>
 <body>
@@ -307,20 +247,10 @@ while ($d = $resultDoctores->fetch_assoc()) {
                     <div class="card-body">
                         <!-- Leyenda de colores -->
                         <div class="leyenda-calendario">
-                            <span class="leyenda-label">Estado (relleno):</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
-                        </div>
-                        <div class="leyenda-calendario">
-                            <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
-                            <?php foreach ($tiposConsultaActivos as $tc): ?>
-                                <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
-                            <?php endforeach; ?>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Pendiente</span>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Confirmada</span>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Atendida</span>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> Cancelada</span>
                         </div>
                         <div id="calendar1"></div>
                     </div>
@@ -330,20 +260,10 @@ while ($d = $resultDoctores->fetch_assoc()) {
                     <div class="card-body">
                         <!-- Leyenda de colores -->
                         <div class="leyenda-calendario">
-                            <span class="leyenda-label">Estado (relleno):</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
-                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
-                        </div>
-                        <div class="leyenda-calendario">
-                            <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
-                            <?php foreach ($tiposConsultaActivos as $tc): ?>
-                                <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
-                            <?php endforeach; ?>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Pendiente</span>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Confirmada</span>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Atendida</span>
+                            <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> Cancelada</span>
                         </div>
                         <div class="cv-toolbar d-flex align-items-center gap-2 mb-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="cvToday">Hoy</button>
@@ -354,7 +274,6 @@ while ($d = $resultDoctores->fetch_assoc()) {
                         <div class="cv-scroll">
                             <div id="cvGrid" class="cv-grid"></div>
                         </div>
-                        <div class="cv-list" id="cvList"></div>
                         <div class="cv-doctores mt-3" id="cvDoctorFiltros">
                             <span class="fw-semibold me-2">Doctores:</span>
                         </div>
@@ -431,18 +350,6 @@ while ($d = $resultDoctores->fetch_assoc()) {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Location</label>
-                        <select class="form-select select-busqueda" name="IdAgencia" required>
-                            <option value="">Seleccione location...</option>
-                            <?php
-                            $queryAg = $conexion->query("SELECT IDAGENCIA, DESCRIPCION FROM ADM_AGENCIA WHERE ESTADO = 1 ORDER BY DESCRIPCION");
-                            while ($v = $queryAg->fetch_assoc()):
-                            ?>
-                            <option value="<?php echo $v['IDAGENCIA']; ?>"><?php echo htmlspecialchars($v['DESCRIPCION']); ?></option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-calendar-check"></i> Agendar
                     </button>
@@ -507,17 +414,6 @@ while ($d = $resultDoctores->fetch_assoc()) {
                     <button id="btnCancelar" class="btn btn-danger" type="submit" onclick="setEstado('Cancelada')">
                         <i class="bi bi-x-circle"></i> Cancelar
                     </button>
-                    <div id="btnMasEstados" class="btn-group">
-                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                            Otro estado
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Reagendada')">Reagendada</button></li>
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelación Tardía')">Cancelación Tardía</button></li>
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelado por Profesional')">Cancelado por Profesional</button></li>
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('No Asistió')">No Asistió</button></li>
-                        </ul>
-                    </div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </form>
@@ -536,19 +432,15 @@ while ($d = $resultDoctores->fetch_assoc()) {
 // ── Helpers ──────────────────────────────────────────────────────────
 function estadoBadge(estado) {
     const map = {
-        'Pendiente':                   ['#212529', 'Pendiente'],
-        'Reagendada':                  ['#212529', 'Reagendada'],
-        'Confirmada':                  ['#6f42c1', 'Confirmada'],
-        'A':                           ['#28a745', 'Atendida'],
-        'Cancelada':                   ['#fd7e14', 'Cancelada'],
-        'Cancelado':                   ['#fd7e14', 'Cancelado'],
-        'Atrasado':                    ['#ffc107', 'Atrasado'],
-        'Cancelación Tardía':          ['#ffc107', 'Cancelación Tardía'],
-        'Cancelado por Profesional':   ['#ff8a80', 'Cancelado por Profesional'],
-        'No Asistió':                  ['#dc3545', 'No Asistió'],
+        'Confirmada': ['bg-success',          'Confirmada'],
+        'Pendiente':  ['bg-warning text-dark', 'Pendiente'],
+        'A':          ['bg-purple',            'Atendida'],
+        'Cancelada':  ['bg-danger',            'Cancelada'],
+        'Cancelado':  ['bg-danger',            'Cancelado'],
+        'Atrasado':   ['bg-danger',            'Atrasado'],
     };
-    const [color, label] = map[estado] || ['#6c757d', estado];
-    return `<span class="badge" style="background:${color}">${label}</span>`;
+    const [cls, label] = map[estado] || ['bg-secondary', estado];
+    return `<span class="badge ${cls}" style="${cls==='bg-purple'?'background:#6f42c1':''}">${label}</span>`;
 }
 
 function setEstado(estado) {
@@ -631,12 +523,9 @@ const eventosAll      = <?php echo json_encode($eventos); ?>;
 const doctoresActivos = <?php echo json_encode($doctoresActivos); ?>;
 
 // ── Modal de gestión de cita (usado por ambas vistas) ──────────────────
-const ESTADOS_CERRADOS = ['A', 'Cancelada', 'Cancelado', 'Cancelación Tardía', 'Cancelado por Profesional', 'No Asistió'];
-
 function abrirModalCita(id, title, startDate, p) {
     const est      = p.cita || 'Pendiente';
     const atendida = est === 'A';
-    const cerrada  = ESTADOS_CERRADOS.includes(est);
 
     // Limpiar y formatear teléfono para WhatsApp
     let tel = p.telefono ? p.telefono.replace(/\D/g, '') : '';
@@ -677,34 +566,27 @@ function abrirModalCita(id, title, startDate, p) {
     document.getElementById('idCita').value     = id;
     document.getElementById('estadoCita').value = est;
 
-    const btnAtender     = document.getElementById('btnAtender');
-    const btnHistorial   = document.getElementById('btnHistorial');
-    const btnReagendar    = document.getElementById('btnReagendar');
-    const btnConfirmar   = document.getElementById('btnConfirmar');
-    const btnCancelar    = document.getElementById('btnCancelar');
-    const btnMasEstados  = document.getElementById('btnMasEstados');
+    const btnAtender   = document.getElementById('btnAtender');
+    const btnHistorial = document.getElementById('btnHistorial');
+    const btnReagendar = document.getElementById('btnReagendar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const btnCancelar  = document.getElementById('btnCancelar');
 
     // Cerrar panel reagendar al abrir una nueva cita
     cerrarReagendar();
 
-    if (cerrada) {
+    if (atendida) {
         btnAtender.classList.add('d-none');
         btnReagendar.classList.add('d-none');
         btnConfirmar.classList.add('d-none');
         btnCancelar.classList.add('d-none');
-        btnMasEstados.classList.add('d-none');
+        btnHistorial.href = `historial_atenciones.php?q=${encodeURIComponent(title)}`;
+        btnHistorial.classList.remove('d-none');
     } else {
         btnAtender.classList.remove('d-none');
         btnReagendar.classList.remove('d-none');
         btnConfirmar.classList.remove('d-none');
         btnCancelar.classList.remove('d-none');
-        btnMasEstados.classList.remove('d-none');
-    }
-
-    if (atendida) {
-        btnHistorial.href = `historial_atenciones.php?q=${encodeURIComponent(title)}`;
-        btnHistorial.classList.remove('d-none');
-    } else {
         btnHistorial.classList.add('d-none');
     }
 
@@ -714,9 +596,6 @@ function abrirModalCita(id, title, startDate, p) {
 // ── FullCalendar ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
 
-    // En celular arranca en vista de Día (más legible que el mes apretado)
-    var esMovilInit = window.innerWidth <= 768;
-
     var calendarEl = document.getElementById('calendar1');
     var calendar   = new FullCalendar.Calendar(calendarEl, {
         locale: 'es',
@@ -725,32 +604,8 @@ document.addEventListener('DOMContentLoaded', function () {
             center: 'title',
             right:  'dayGridMonth,timeGridWeek,timeGridDay'
         },
-        initialView: esMovilInit ? 'timeGridDay' : 'dayGridMonth',
-        eventDisplay: 'block',
-        eventMinHeight: 70,
+        initialView: 'dayGridMonth',
         events: eventosAll,
-
-        // Render personalizado en vista de día/semana: hora, paciente, doctor y tipo sin recortar
-        eventContent: function (arg) {
-            if (!arg.view.type.startsWith('timeGrid')) return true;
-            var p = arg.event.extendedProps;
-            var esc = function (s) {
-                return (s == null ? '' : String(s))
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            };
-            var fmt = function (d) {
-                return d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-            };
-            var rango = fmt(arg.event.start) + (arg.event.end ? ' - ' + fmt(arg.event.end) : '');
-            var div = document.createElement('div');
-            div.className = 'fc-event-main-custom';
-            div.innerHTML =
-                '<div class="fc-event-time-custom">' + rango + '</div>' +
-                '<div class="fc-event-title-custom">' + esc(arg.event.title) + '</div>' +
-                '<div class="fc-event-sub-custom">Dr. ' + esc(p.medico || '') + '</div>' +
-                (p.consulta ? '<div class="fc-event-sub-custom">' + esc(p.consulta) + '</div>' : '');
-            return { domNodes: [div] };
-        },
 
         eventClick: function (info) {
             abrirModalCita(info.event.id, info.event.title, info.event.start, info.event.extendedProps);
@@ -944,69 +799,13 @@ function renderVistaPorDoctor() {
         div.style.top    = top + 'px';
         div.style.width  = (CV_COL_WIDTH - 4) + 'px';
         div.style.height = height + 'px';
-        div.style.background  = ev.backgroundColor;
-        div.style.borderLeft  = '5px solid ' + (ev.borderColor || '#333');
+        div.style.background = ev.backgroundColor;
         div.innerHTML = `<b>${inicio.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b>${cvEscapeHtml(ev.title)}`;
         div.addEventListener('click', function () {
             abrirModalCita(ev.id, ev.title, inicio, ev.extendedProps);
         });
         grid.appendChild(div);
     });
-
-    // ── Lista para móvil (misma semana, agrupada por día) ──────────────
-    renderVistaPorDoctorLista(doctores, weekEnd);
-}
-
-// Lista de citas para celular: tarjetas agrupadas por día
-function renderVistaPorDoctorLista(doctores, weekEnd) {
-    const cont = document.getElementById('cvList');
-    if (!cont) return;
-    cont.innerHTML = '';
-
-    const fmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    for (let dia = 0; dia < 7; dia++) {
-        const fecha = new Date(cvWeekStart);
-        fecha.setDate(fecha.getDate() + dia);
-        const finDia = new Date(fecha);
-        finDia.setDate(finDia.getDate() + 1);
-
-        // Citas de este día con doctor visible, ordenadas por hora
-        const citasDia = eventosAll.filter(function (ev) {
-            const inicio = new Date(ev.start);
-            if (inicio < fecha || inicio >= finDia) return false;
-            return doctores.some(d => d.nombre === ev.extendedProps.medico);
-        }).sort((a, b) => new Date(a.start) - new Date(b.start));
-
-        if (citasDia.length === 0) continue;
-
-        const titulo = document.createElement('div');
-        titulo.className = 'cv-list-day';
-        titulo.textContent = `${CV_DIAS[fecha.getDay()]} ${fecha.getDate()} de ${CV_MESES[fecha.getMonth()]}`;
-        cont.appendChild(titulo);
-
-        citasDia.forEach(function (ev) {
-            const inicio = new Date(ev.start);
-            const fin    = new Date(ev.end);
-            const card = document.createElement('div');
-            card.className = 'cv-list-card';
-            card.innerHTML =
-                `<div class="cv-list-color" style="background:${ev.borderColor || '#333'}"></div>` +
-                `<div class="cv-list-body" style="background:${ev.backgroundColor}">` +
-                    `<div class="hora">${fmt(inicio)} - ${fmt(fin)}</div>` +
-                    `<div class="pac">${cvEscapeHtml(ev.title)}</div>` +
-                    `<div class="sub">${cvEscapeHtml(ev.extendedProps.consulta || '')} — Dr. ${cvEscapeHtml(ev.extendedProps.medico || '')}</div>` +
-                `</div>`;
-            card.addEventListener('click', function () {
-                abrirModalCita(ev.id, ev.title, inicio, ev.extendedProps);
-            });
-            cont.appendChild(card);
-        });
-    }
-
-    if (!cont.children.length) {
-        cont.innerHTML = '<p class="text-muted text-center my-3">No hay citas esta semana.</p>';
-    }
 }
 
 // ── Select2 en modal Agendar ─────────────────────────────────────────

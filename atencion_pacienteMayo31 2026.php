@@ -10,11 +10,6 @@ if(!isset($_SESSION["rol"])){
     header("Location: break.php");
     exit();
 }
-if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
-    session_destroy();
-    header("Location: expirada.php");
-    exit();
-}
 
 if(!isset($_GET['idCita']) || empty($_GET['idCita'])){
     die("Error: No se recibió el ID de la cita.");
@@ -25,17 +20,18 @@ $idCita = $conexion->real_escape_string($_GET['idCita']);
 $sql = "SELECT
             P.IDPACIENTE, P.NOMBRES, P.APELLIDOS, P.FECHANACIMIENTO, P.SEX,
             P.EMAIL, P.TELEFONO, P.CEDULA, P.ADDRESS,
-            A.FECHA_CITA, A.HORA_INICIO, A.IDDOCTOR, A.IDAGENCIA,
+            A.FECHA_CITA, A.HORA_INICIO, A.IDDOCTOR,
             D.NOMBRES  AS DOC_NOMBRES,
             D.APELLIDOS AS DOC_APELLIDOS,
+            D.ESPECIALIDAD,
             AG.DESCRIPCION AS AGENCIA_NOMBRE,
             AG.DIRECCION  AS AGENCIA_DIRECCION,
             AG.TELEFONO   AS AGENCIA_TEL,
             TC.NOMBRES    AS TIPO_CONSULTA
         FROM AG_CITA A
         INNER JOIN AG_PACIENTE     P  ON A.IDPACIENTE      = P.IDPACIENTE
-        LEFT  JOIN ADM_USUARIO     D  ON A.IDDOCTOR         = D.IDADM_USUARIO
-        LEFT  JOIN ADM_AGENCIA     AG ON AG.IDAGENCIA        = COALESCE(A.IDAGENCIA, 1)
+        LEFT  JOIN ADM_DOCTOR      D  ON A.IDDOCTOR         = D.IDDOCTOR
+        LEFT  JOIN ADM_AGENCIA     AG ON AG.IDAGENCIA        = 1
         LEFT  JOIN AG_TIPOCONSULTA TC ON A.IDTIPOCONSULTA   = TC.IDTIPOCONSULTA
         WHERE A.IDCITA = '$idCita'";
 
@@ -56,7 +52,6 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Atención - <?php echo htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS']); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
@@ -80,66 +75,8 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
         }
     </style>
 </head>
-<body>
-<div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
-
-    <!-- HEADER -->
-    <div class="app-header header-shadow">
-        <div class="app-header__logo">
-            <div class="logo-src"></div>
-            <div class="header__pane ml-auto">
-                <button type="button" class="hamburger close-sidebar-btn hamburger--elastic" data-class="closed-sidebar">
-                    <span class="hamburger-box"><span class="hamburger-inner"></span></span>
-                </button>
-            </div>
-        </div>
-        <div class="app-header__mobile-menu">
-            <button type="button" class="hamburger hamburger--elastic mobile-toggle-nav">
-                <span class="hamburger-box"><span class="hamburger-inner"></span></span>
-            </button>
-        </div>
-        <div class="app-header__menu">
-            <button type="button" class="btn-icon btn-icon-only btn btn-primary btn-sm mobile-toggle-header-nav">
-                <span class="btn-icon-wrapper"><i class="fa fa-ellipsis-v fa-w-6"></i></span>
-            </button>
-        </div>
-        <div class="app-header__content">
-            <div class="app-header-left"></div>
-            <div class="app-header-right">
-                <div class="header-btn-lg pr-0">
-                    <div class="widget-content p-0">
-                        <div class="widget-content-wrapper">
-                            <div class="widget-content-left ml-3 header-user-info">
-                                <div class="widget-heading"><?php echo htmlspecialchars($sessionNombres); ?></div>
-                                <div class="widget-subheading"><?php echo htmlspecialchars($_SESSION['rol'] ?? ''); ?></div>
-                            </div>
-                            <div class="widget-content-left ms-3">
-                                <div class="btn-group">
-                                    <a data-toggle="dropdown" class="p-0 btn" href="#">
-                                        <i class="fa fa-angle-down ml-2 opacity-8"></i>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="app-main">
-        <!-- SIDEBAR -->
-        <div class="app-sidebar sidebar-shadow">
-            <?php include("./menu/menu_adm.php"); ?>
-        </div>
-
-        <div class="app-main__outer">
-            <div class="app-main__inner">
-
-<div class="container-fluid mt-1 mb-5">
+<body class="bg-light">
+<div class="container mt-4 mb-5">
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
@@ -217,16 +154,6 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
                     <i class="bi bi-mic-fill"></i> Iniciar dictado
                 </button>
 
-                <!-- Toggle idioma -->
-                <div class="d-flex align-items-center gap-1" title="Idioma del micrófono">
-                    <span id="langES" class="badge"
-                          style="cursor:pointer;background:#0264d6;font-size:.7rem;"
-                          onclick="setLang('es')">ES</span>
-                    <span id="langEN" class="badge bg-secondary"
-                          style="cursor:pointer;font-size:.7rem;"
-                          onclick="setLang('en')">EN</span>
-                </div>
-
                 <div id="micStatus" class="d-none d-flex align-items-center gap-2">
                     <span class="badge bg-danger d-flex align-items-center gap-1">
                         <span class="mic-pulse">●</span> Escuchando
@@ -236,7 +163,7 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
 
                 <small class="text-muted ms-auto">
                     <i class="bi bi-info-circle me-1"></i>
-                    Chrome / Edge
+                    Chrome / Edge · Idioma: Español
                 </small>
             </div>
 
@@ -262,12 +189,7 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
 
         </div>
     </div>
-</div><!-- /container-fluid -->
-
-            </div><!-- /app-main__inner -->
-        </div><!-- /app-main__outer -->
-    </div><!-- /app-main -->
-</div><!-- /app-container -->
+</div>
 
 <script>
 const DATOS_CITA = {
@@ -279,7 +201,7 @@ const DATOS_CITA = {
     pacienteCedula:  "<?php echo addslashes($d['CEDULA']); ?>",
     docNombre:       "<?php echo addslashes($docNombreCompleto); ?>",
     docApellido:     "<?php echo addslashes($d['DOC_APELLIDOS']); ?>",
-    docEspecialidad: "",
+    docEspecialidad: "<?php echo addslashes($d['ESPECIALIDAD']); ?>",
     atiendNombre:    "<?php echo addslashes($doctorAtiende); ?>",
     atiendApellido:  "<?php echo addslashes($sessionApellidos); ?>",
     agenciaNombre:   "<?php echo addslashes($d['AGENCIA_NOMBRE']); ?>",
@@ -460,27 +382,8 @@ function imprimirInforme(){
 }
 
 // ── DICTADO POR VOZ ───────────────────────────────────────────────────
-let recognition   = null;
+let recognition  = null;
 let dictadoActivo = false;
-let savedRange    = null;   // guarda posición del cursor al iniciar dictado
-let micLang       = 'es-EC';
-
-function setLang(lang) {
-    if (dictadoActivo) return; // no cambiar mientras escucha
-    if (lang === 'es') {
-        micLang = 'es-EC';
-        document.getElementById('langES').style.background = '#0264d6';
-        document.getElementById('langES').classList.remove('bg-secondary');
-        document.getElementById('langEN').style.background = '';
-        document.getElementById('langEN').classList.add('bg-secondary');
-    } else {
-        micLang = 'en-US';
-        document.getElementById('langEN').style.background = '#198754';
-        document.getElementById('langEN').classList.remove('bg-secondary');
-        document.getElementById('langES').style.background = '';
-        document.getElementById('langES').classList.add('bg-secondary');
-    }
-}
 
 function toggleDictado() {
     if (!dictadoActivo) {
@@ -497,12 +400,8 @@ function iniciarDictado() {
         return;
     }
 
-    // Guardar posición actual del cursor en el editor antes de empezar
-    var sel = window.getSelection();
-    savedRange = (sel && sel.rangeCount > 0) ? sel.getRangeAt(0).cloneRange() : null;
-
     recognition = new SR();
-    recognition.lang         = micLang;
+    recognition.lang         = 'es-EC';   // Español Ecuador; cambia a 'es-ES' si prefieres
     recognition.continuous   = true;       // sigue escuchando sin timeout
     recognition.interimResults = true;     // muestra texto parcial en tiempo real
 
@@ -521,29 +420,19 @@ function iniciarDictado() {
 
         // Insertar texto final en el editor Summernote
         if (finalText) {
+            // El editor pierde foco durante el dictado; hay que devolverle el cursor
             var $editable = $('.note-editable').first();
             $editable[0].focus();
-
-            // Restaurar posición guardada; si no hay, ir al final
-            var sel2 = window.getSelection();
-            sel2.removeAllRanges();
-            if (savedRange) {
-                try { sel2.addRange(savedRange); } catch(e) { savedRange = null; }
-            }
-            if (!savedRange || sel2.rangeCount === 0) {
+            // Si no hay selección activa, colocar cursor al final del contenido
+            var sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) {
                 var range = document.createRange();
                 range.selectNodeContents($editable[0]);
                 range.collapse(false);
-                sel2.removeAllRanges();
-                sel2.addRange(range);
+                sel.removeAllRanges();
+                sel.addRange(range);
             }
-
             $('#editorInforme').summernote('insertText', finalText);
-
-            // Actualizar savedRange a la nueva posición (después del texto insertado)
-            var sel3 = window.getSelection();
-            savedRange = (sel3 && sel3.rangeCount > 0) ? sel3.getRangeAt(0).cloneRange() : null;
-
             document.getElementById('interimText').textContent = '';
         }
     };

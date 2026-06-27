@@ -1,39 +1,15 @@
 <?php
-
 function conectarse()
-
 {
+    $db_host   = "localhost";
+    $db_nombre = "srossnut_agenda";
+    $db_user   = "srossnut_agenda";
+    $db_pass   = "nAGTDbMpym6nNv9aedHJ";
 
-$db_host="127.0.0.1"; // Host BD al que conectarse, habitualmente es localhost
+    $link = mysqli_connect($db_host, $db_user, $db_pass);
+    mysqli_select_db($link, $db_nombre) or die("Error seleccionando la base de datos.");
+    mysqli_set_charset($link, 'utf8mb4');   // ← línea correcta, procedural
 
-$db_nombre="srossnut_agenda"; // Nombre de la Base de Datos que se desea utilizar
-
-$db_user="srossnut_agenda"; // Nombre del usuario con permisos para acceder a la BD
-
-$db_pass="b3JsNL25rkq746W77mrn"; // Contrase
-
-
-//$db_nombre="overcloc_agenda"; // Nombre de la Base de Datos que se desea utilizar
-
-//$db_user="overcloc_agenda"; // Nombre del usuario con permisos para acceder a la BD
-
-//$db_pass="G4Yg_O_d_ejg"; // Contrase
-
-
-
-// Ahora estamos realizando una conexión y la llamamos $link
-
-$link= mysqli_connect($db_host, $db_user, $db_pass);
-
-// Seleccionamos la base de datos que nos interesa
-
-mysqli_select_db($link, $db_nombre) or die("Error seleccionando la base de datos.");
-
-// Retornamos $link  para hacer consultas a la BD.
-
-return $link;
-
+    return $link;
 }
-//$link=conectarse();
-
 ?>
