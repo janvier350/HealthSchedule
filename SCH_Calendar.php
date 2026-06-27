@@ -21,14 +21,9 @@ $colorTipoDefault = '#3788d8';
 
 $query = "SELECT
             A.IDCITA,
-            B.IDPACIENTE,
+            A.IDPACIENTE,
             CONCAT(B.NOMBRES, ' ', B.APELLIDOS) AS PACIENTE,
             B.TELEFONO,
-            B.CEDULA,
-            B.EMAIL,
-            B.FECHANACIMIENTO,
-            B.SEX,
-            B.GENDER,
             C.NOMBRES AS TIPO_CONSULTA,
             C.COLOR AS TIPO_COLOR,
             A.FECHA_CITA,
@@ -37,19 +32,7 @@ $query = "SELECT
             A.ESTADO_CITA,
             A.COMENTARIO,
             CONCAT(D.NOMBRES, ' ', D.APELLIDOS) AS DOCTOR,
-            E.DESCRIPCION AS AGENCIA,
-            (SELECT H.TALLA FROM AG_HISTORIAL H
-               INNER JOIN AG_CITA CC ON CC.IDCITA = H.IDCITA
-               WHERE CC.IDPACIENTE = B.IDPACIENTE AND H.TALLA IS NOT NULL AND H.TALLA > 0
-               ORDER BY H.FECHA_REGISTRO DESC LIMIT 1) AS TALLA_ACTUAL,
-            (SELECT H.PESO FROM AG_HISTORIAL H
-               INNER JOIN AG_CITA CC ON CC.IDCITA = H.IDCITA
-               WHERE CC.IDPACIENTE = B.IDPACIENTE AND H.PESO IS NOT NULL AND H.PESO > 0
-               ORDER BY H.FECHA_REGISTRO DESC LIMIT 1) AS PESO_ACTUAL,
-            (SELECT H.IMC FROM AG_HISTORIAL H
-               INNER JOIN AG_CITA CC ON CC.IDCITA = H.IDCITA
-               WHERE CC.IDPACIENTE = B.IDPACIENTE AND H.IMC IS NOT NULL AND H.IMC > 0
-               ORDER BY H.FECHA_REGISTRO DESC LIMIT 1) AS IMC_ACTUAL
+            E.DESCRIPCION AS AGENCIA
           FROM AG_CITA A
           INNER JOIN AG_PACIENTE B     ON A.IDPACIENTE      = B.IDPACIENTE
           INNER JOIN AG_TIPOCONSULTA C ON A.IDTIPOCONSULTA  = C.IDTIPOCONSULTA
@@ -77,35 +60,6 @@ while ($row = $resultado->fetch_assoc()) {
 
     $colorTipo = !empty($row['TIPO_COLOR']) ? $row['TIPO_COLOR'] : $colorTipoDefault;
 
-    // Edad calculada desde FECHANACIMIENTO
-    $edad = null;
-    $fn   = $row['FECHANACIMIENTO'] ?? '';
-    if ($fn && $fn !== '0000-00-00') {
-        try {
-            $edad = (new DateTime($fn))->diff(new DateTime())->y;
-        } catch (Exception $e) { $edad = null; }
-    }
-
-    // Talla a metros (algunas se guardan en cm)
-    $talla = null;
-    if (!empty($row['TALLA_ACTUAL']) && $row['TALLA_ACTUAL'] > 0) {
-        $tallaRaw = (float)$row['TALLA_ACTUAL'];
-        $talla    = number_format($tallaRaw > 3 ? $tallaRaw / 100 : $tallaRaw, 2);
-    }
-
-    // Peso e IMC más recientes
-    $peso = (!empty($row['PESO_ACTUAL']) && $row['PESO_ACTUAL'] > 0)
-        ? number_format((float)$row['PESO_ACTUAL'], 1) : null;
-    $imc  = (!empty($row['IMC_ACTUAL']) && $row['IMC_ACTUAL'] > 0)
-        ? number_format((float)$row['IMC_ACTUAL'], 1) : null;
-
-    // Sexo / género (preferir GENDER, descartar valores por defecto)
-    $invalidSexo = array('', 'Default Select', 'default select');
-    $sexoVal     = $row['SEX']    ?? '';
-    $generoVal   = $row['GENDER'] ?? '';
-    $sexo = !in_array($generoVal, $invalidSexo) ? $generoVal
-            : (!in_array($sexoVal, $invalidSexo) ? $sexoVal : null);
-
     $eventos[] = array(
         'id'              => $row['IDCITA'],
         'title'           => $row['PACIENTE'],
@@ -121,13 +75,7 @@ while ($row = $resultado->fetch_assoc()) {
             'telefono'  => $row['TELEFONO'],
             'comentario'=> $row['COMENTARIO'],
             'agencia'   => $row['AGENCIA'],
-            'cedula'    => $row['CEDULA'],
-            'email'     => $row['EMAIL'],
-            'edad'      => $edad,
-            'sexo'      => $sexo,
-            'talla'     => $talla,
-            'peso'      => $peso,
-            'imc'       => $imc,
+            'idpaciente'=> $row['IDPACIENTE'],
         )
     );
 }
@@ -541,6 +489,9 @@ while ($d = $resultDoctores->fetch_assoc()) {
                 <div class="modal-body">
                     <div id="eventDetails" class="mb-3"></div>
 
+                    <!-- Datos del paciente (edad, estatura, IMC, etc.) cargados por AJAX -->
+                    <div id="citaPacienteInfo" class="mb-2"></div>
+
                     <!-- Panel Reagendar (oculto por defecto) -->
                     <div id="reagendarSection" class="d-none border rounded p-3 bg-light mt-2">
                         <h6 class="mb-3"><i class="bi bi-calendar2-event"></i> Nueva fecha y hora</h6>
@@ -726,20 +677,6 @@ function abrirModalCita(id, title, startDate, p) {
         `${startDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}. ¿Nos confirma su asistencia?`
     );
 
-    // Chips con datos clínicos/biométricos del paciente
-    const chip = (icon, val) =>
-        `<span class="me-3 d-inline-block text-nowrap mb-1">
-            <i class="bi ${icon} text-muted me-1"></i>${val}
-         </span>`;
-    let datosPaciente = '';
-    if (p.cedula)        datosPaciente += chip('bi-person-vcard', 'C.I. ' + p.cedula);
-    if (p.edad != null)  datosPaciente += chip('bi-person-fill', p.edad + ' años');
-    if (p.sexo)          datosPaciente += chip('bi-gender-ambiguous', p.sexo);
-    if (p.talla)         datosPaciente += chip('bi-rulers', p.talla + ' m');
-    if (p.peso)          datosPaciente += chip('bi-speedometer2', p.peso + ' kg');
-    if (p.imc)           datosPaciente += chip('bi-heart-pulse', 'IMC ' + p.imc);
-    if (p.email)         datosPaciente += chip('bi-envelope', p.email);
-
     document.getElementById('eventDetails').innerHTML = `
         <div class="row">
             <div class="col-md-8">
@@ -747,7 +684,7 @@ function abrirModalCita(id, title, startDate, p) {
                 <p><strong>Teléfono:</strong> ${p.telefono || 'No registrado'}</p>
                 <p><strong>Inicio:</strong> ${startDate.toLocaleString()}</p>
                 <p><strong>Doctor:</strong> ${p.medico}</p>
-                <p><strong>Location:</strong> ${p.agencia || 'Sin asignar'}</p>
+                <p><strong>Location:</strong> ${p.agencia || 'No registrada'}</p>
                 <p><strong>Estado:</strong> ${estadoBadge(est)}</p>
             </div>
             <div class="col-md-4 text-center">
@@ -760,12 +697,6 @@ function abrirModalCita(id, title, startDate, p) {
                 }
             </div>
         </div>
-        ${datosPaciente
-            ? `<div class="border rounded p-2 bg-light mb-2" style="font-size:.85rem;">
-                   ${datosPaciente}
-               </div>`
-            : ''
-        }
         <hr>
         <p><strong>Tipo consulta:</strong> ${p.consulta}</p>
         ${p.comentario ? `<p><strong>Comentario:</strong> ${p.comentario}</p>` : ''}
@@ -806,7 +737,32 @@ function abrirModalCita(id, title, startDate, p) {
         btnHistorial.classList.add('d-none');
     }
 
+    // Cargar datos del paciente (edad, estatura, IMC, estadísticas) reusando el endpoint de informes
+    cargarInfoPacienteCita(p.idpaciente);
+
     new bootstrap.Modal(document.getElementById('eventModal')).show();
+}
+
+// Trae el bloque de datos del paciente desde get_historial_paciente.php (igual al de informes)
+function cargarInfoPacienteCita(idPaciente) {
+    const cont = document.getElementById('citaPacienteInfo');
+    if (!cont) return;
+    if (!idPaciente) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="text-muted small py-2"><span class="spinner-border spinner-border-sm me-1"></span> Cargando datos del paciente...</div>';
+    fetch('get_historial_paciente.php?id=' + encodeURIComponent(idPaciente))
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            var style = tmp.querySelector('style');           // estilos (.info-label, etc.)
+            var info  = tmp.querySelector('.border-bottom');   // bloque superior: datos + estadísticas
+            cont.innerHTML = info
+                ? '<div class="border rounded overflow-hidden">' + (style ? style.outerHTML : '') + info.outerHTML + '</div>'
+                : '';
+        })
+        .catch(function () {
+            cont.innerHTML = '<p class="text-muted small mb-0">No se pudieron cargar los datos del paciente.</p>';
+        });
 }
 
 // ── FullCalendar ─────────────────────────────────────────────────────
