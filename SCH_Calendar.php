@@ -562,6 +562,27 @@ while ($d = $resultDoctores->fetch_assoc()) {
     </div>
 </div>
 
+<!-- ── MODAL VER INFORME ──────────────────────────────────────────── -->
+<div class="modal fade" id="modalInforme" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Informe de Atención</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="cuerpoInforme">
+                <div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>
+            </div>
+            <div class="modal-footer py-2">
+                <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts — cargados UNA sola vez, en orden correcto -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="./fullcalendar/main.js"></script>
@@ -786,12 +807,20 @@ function cargarInfoPacienteCita(idPaciente) {
                     var doctor = td[3].textContent.trim();
                     var badge  = td[4].innerHTML.trim();   // conserva el estado con su color
                     var sub    = tipo + (doctor && doctor !== '—' ? ' — ' + doctor : '');
+                    // Botón "Ver informe" si la cita tiene informe registrado
+                    var informeHtml = '';
+                    if (td.length > 6) {
+                        var btn = td[6].querySelector('button');
+                        if (btn) informeHtml = btn.outerHTML;
+                    }
                     out += '<div class="cita-hist-card">' +
                                '<div class="cita-hist-main">' +
                                    '<div class="cita-hist-fecha">' + fecha + ' · ' + hora + '</div>' +
                                    '<div class="cita-hist-sub">' + sub + '</div>' +
                                '</div>' +
-                               '<div class="cita-hist-estado">' + badge + '</div>' +
+                               '<div class="cita-hist-estado d-flex flex-column align-items-end gap-1">' +
+                                   badge + informeHtml +
+                               '</div>' +
                            '</div>';
                 });
                 out += '</div></div>';
@@ -801,6 +830,21 @@ function cargarInfoPacienteCita(idPaciente) {
         })
         .catch(function () {
             cont.innerHTML = '<p class="text-muted small mb-0">No se pudieron cargar los datos del paciente.</p>';
+        });
+}
+
+// Ver informe de una atención (mismo endpoint que el listado de pacientes)
+function verInforme(idHistorial) {
+    document.getElementById('cuerpoInforme').innerHTML =
+        '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>';
+    new bootstrap.Modal(document.getElementById('modalInforme')).show();
+    $.get('get_informe_html.php', { id: idHistorial })
+        .done(function (html) {
+            document.getElementById('cuerpoInforme').innerHTML = html;
+        })
+        .fail(function (xhr) {
+            document.getElementById('cuerpoInforme').innerHTML =
+                '<div class="alert alert-danger m-3">No se pudo cargar el informe (HTTP ' + xhr.status + ').</div>';
         });
 }
 
