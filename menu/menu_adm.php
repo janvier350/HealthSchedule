@@ -129,6 +129,11 @@ function menuActivo($paginas, $actual) {
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> Documentos
                 </a>
             </li>
+            <li>
+                <a href="documentos_enviados.php" class="<?php echo menuActivo('documentos_enviados.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-send-check"></i> Documentos Enviados
+                </a>
+            </li>
             <?php endif; ?>
 
             <!-- ══ SÓLO SISTEMA ════════════════════════════════════════ -->
