@@ -502,18 +502,17 @@ $conexion=conectarse();
 <script>
     function cargarDatos(paciente) {
         document.getElementById('idPaciente').value = paciente.IDPACIENTE;
+        // Cargar los seguros del paciente primero (independiente de los demás campos)
+        cargarSegurosPaciente(paciente.IDPACIENTE);
         document.getElementById('nombre').value = paciente.NOMBRES;
         document.getElementById('apellido').value = paciente.APELLIDOS;
         document.getElementById('email').value = paciente.EMAIL;
         document.getElementById('telefono').value = paciente.TELEFONO;
         document.getElementById('fecNac').value = paciente.FECHANACIMIENTO;
         document.getElementById('identificacion').value = paciente.CEDULA;
-        document.getElementById('titler').value = paciente.TITLE;
+        document.getElementById('title').value = paciente.TITLE;
         document.getElementById('sex').value = paciente.SEX;
         document.getElementById('gender').value = paciente.GENDER;
-
-        // Cargar los seguros asignados a este paciente
-        cargarSegurosPaciente(paciente.IDPACIENTE);
     }
 
     function guardarEdicion() {
