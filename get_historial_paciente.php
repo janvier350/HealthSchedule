@@ -75,6 +75,20 @@ foreach ($citas as $_c) {
 $imcs    = array_filter(array_column($citas, 'IMC'));
 $imcProm = count($imcs) ? number_format(array_sum($imcs) / count($imcs), 1) : null;
 
+// Documentos enviados a este paciente
+$documentosPac = [];
+$stmtDoc = $conexion->prepare(
+    "SELECT e.id_envio, e.estado, e.fecha_envio, e.fecha_firma, d.titulo
+       FROM documento_envio e
+       INNER JOIN documentos d ON d.id_documento = e.id_documento
+      WHERE e.IDPACIENTE = ?
+   ORDER BY e.fecha_envio DESC"
+);
+$stmtDoc->bind_param("i", $idPaciente);
+$stmtDoc->execute();
+$documentosPac = $stmtDoc->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmtDoc->close();
+
 function badgeClass($est) {
     switch ($est) {
         case 'Confirmada':  return 'bg-success';
@@ -244,3 +258,32 @@ function imcColor($imc) {
     </table>
     <?php endif; ?>
 </div>
+
+<!-- ── DOCUMENTOS DEL PACIENTE (lista en divs para no mezclarse con las citas) ── -->
+<?php if (!empty($documentosPac)): ?>
+<div class="px-4 py-3 border-top">
+    <h6 class="text-muted mb-2"><i class="bi bi-file-earmark-text"></i> Documentos enviados (<?php echo count($documentosPac); ?>)</h6>
+    <?php foreach ($documentosPac as $doc): ?>
+        <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-1">
+            <div>
+                <strong><?php echo htmlspecialchars($doc['titulo']); ?></strong><br>
+                <small class="text-muted">
+                    Enviado: <?php echo $doc['fecha_envio'] ? date('d/m/Y', strtotime($doc['fecha_envio'])) : '—'; ?>
+                    <?php if ($doc['estado'] === 'Firmado' && $doc['fecha_firma']): ?>
+                        &nbsp;·&nbsp; Firmado: <?php echo date('d/m/Y', strtotime($doc['fecha_firma'])); ?>
+                    <?php endif; ?>
+                </small>
+            </div>
+            <div class="text-end" style="white-space:nowrap;">
+                <?php if ($doc['estado'] === 'Firmado'): ?>
+                    <span class="badge bg-success">Firmado</span>
+                    <a href="ver_documento_firmado.php?id=<?php echo (int)$doc['id_envio']; ?>" target="_blank"
+                       class="btn btn-outline-primary btn-sm py-0 px-2" title="Ver firmado"><i class="bi bi-eye"></i></a>
+                <?php else: ?>
+                    <span class="badge bg-warning text-dark">Pendiente</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
