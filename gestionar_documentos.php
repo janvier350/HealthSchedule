@@ -68,6 +68,8 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
     <title>Documentos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
     <style>
@@ -296,15 +298,26 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
 const modalDoc = new bootstrap.Modal(document.getElementById('modalDoc'));
 const modalEnviar = new bootstrap.Modal(document.getElementById('modalEnviar'));
 
+// Buscador de pacientes (Select2)
+$(function () {
+    $('#envPaciente').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $('#modalEnviar'),
+        width: '100%',
+        placeholder: 'Escribe el nombre del paciente…'
+    });
+});
+
 function abrirEnviar(idDoc, titulo) {
     document.getElementById('envDocId').value = idDoc;
     document.getElementById('envDocTitulo').textContent = titulo;
-    document.getElementById('envPaciente').value = '';
+    $('#envPaciente').val(null).trigger('change');
     document.getElementById('envResultado').innerHTML = '';
     modalEnviar.show();
 }
