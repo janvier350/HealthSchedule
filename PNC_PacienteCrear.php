@@ -4,6 +4,7 @@
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion=conectarse();
+if ($conexion) { $conexion->set_charset('utf8mb4'); }
 ?>
 <head>
     <meta charset="utf-8">
@@ -38,6 +39,16 @@ $conexion=conectarse();
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap4.min.css">
+<style>
+    /* Tabla de pacientes: que quepa bien en celular */
+    #example { width: 100% !important; }
+    #example td, #example th { white-space: normal; word-break: break-word; vertical-align: middle; }
+    @media (max-width: 768px) {
+        #example td:first-child, #example th:first-child { width: 30px; padding-left: 4px; padding-right: 4px; }
+        div.dataTables_paginate ul.pagination { flex-wrap: wrap; justify-content: center; }
+        div.dataTables_info, div.dataTables_length label, div.dataTables_filter label { font-size: .85rem; }
+    }
+</style>
 
 
 </head>
@@ -444,7 +455,7 @@ $conexion=conectarse();
                                                             ?>    
                                                 <tr>
                                                     <td><?php echo $valores[0]?></td>
-                                                    <td style="min-width:200px;">
+                                                    <td>
                                                         <strong><?php echo htmlspecialchars(trim($valores[1].' '.$valores[2])); ?></strong><br>
                                                         <small class="text-muted">CI: <?php echo htmlspecialchars($valores[6] ?: '—'); ?></small><br>
                                                         <small class="text-muted"><i class="fa fa-envelope"></i> <?php echo htmlspecialchars($valores[3] ?: '—'); ?></small><br>
