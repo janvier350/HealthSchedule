@@ -57,7 +57,7 @@ function menuActivo($paginas, $actual) {
             <li class="app-sidebar__heading">Dashboard</li>
             <li>
                 <a href="home.php" class="<?php echo menuActivo('home.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-rocket"></i> General
+                    <i class="metismenu-icon bi bi-house-door"></i> General
                 </a>
             </li>
 
@@ -65,32 +65,32 @@ function menuActivo($paginas, $actual) {
             <li class="app-sidebar__heading">Agenda</li>
             <li>
                 <a href="SCH_Calendar.php" class="<?php echo menuActivo('SCH_Calendar.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-display2"></i> Calendario
+                    <i class="metismenu-icon bi bi-calendar3"></i> Calendario
                 </a>
             </li>
             <li>
                 <a href="Agenda_Pendientes.php" class="<?php echo menuActivo('Agenda_Pendientes.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-date"></i> Pendientes
+                    <i class="metismenu-icon bi bi-calendar-check"></i> Pendientes
                 </a>
             </li>
             <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="historial_atenciones.php" class="<?php echo menuActivo('historial_atenciones.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-date"></i> Atendidas
+                    <i class="metismenu-icon bi bi-calendar-check"></i> Atendidas
                 </a>
             </li>
             <?php endif; ?>
             <?php if ($esSistema): ?>
             <li>
                 <a href="VTA_Concretado.php" class="<?php echo menuActivo('VTA_Concretado.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-diamond"></i> Canceladas
+                    <i class="metismenu-icon bi bi-x-octagon"></i> Canceladas
                 </a>
             </li>
             <?php endif; ?>
             <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="Enviar_Notificacion.php" class="<?php echo menuActivo('Enviar_Notificacion.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-mail"></i> Enviar Notificación
+                    <i class="metismenu-icon bi bi-envelope"></i> Enviar Notificación
                 </a>
             </li>
             <?php endif; ?>
@@ -99,9 +99,9 @@ function menuActivo($paginas, $actual) {
             <li class="app-sidebar__heading">Pacientes</li>
             <li>
                 <a href="#">
-                    <i class="metismenu-icon pe-7s-add-user"></i>
+                    <i class="metismenu-icon bi bi-person-plus"></i>
                     Pacientes
-                    <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+                    <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
                     <li>
@@ -126,7 +126,7 @@ function menuActivo($paginas, $actual) {
             <?php if ($esSistema): ?>
             <li>
                 <a href="gestionar_documentos.php" class="<?php echo menuActivo('gestionar_documentos.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-note2"></i> Documentos
+                    <i class="metismenu-icon bi bi-file-earmark-text"></i> Documentos
                 </a>
             </li>
             <?php endif; ?>
@@ -135,9 +135,9 @@ function menuActivo($paginas, $actual) {
             <?php if ($esSistema): ?>
             <li>
                 <a href="#">
-                    <i class="metismenu-icon pe-7s-users"></i>
+                    <i class="metismenu-icon bi bi-people"></i>
                     Doctor
-                    <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+                    <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
                     <li>
@@ -149,9 +149,9 @@ function menuActivo($paginas, $actual) {
             </li>
             <li>
                 <a href="#">
-                    <i class="metismenu-icon pe-7s-note2"></i>
+                    <i class="metismenu-icon bi bi-file-earmark-text"></i>
                     Código CIE-10
-                    <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+                    <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
                     <li>
@@ -163,7 +163,7 @@ function menuActivo($paginas, $actual) {
             </li>
             <li>
                 <a href="gestionar_tipos_consulta.php" class="<?php echo menuActivo('gestionar_tipos_consulta.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-palette"></i> Tipos de Consulta
+                    <i class="metismenu-icon bi bi-palette"></i> Tipos de Consulta
                 </a>
             </li>
             <?php endif; ?>
@@ -173,9 +173,9 @@ function menuActivo($paginas, $actual) {
             <li class="app-sidebar__heading">Bills</li>
             <li>
                 <a href="#">
-                    <i class="metismenu-icon pe-7s-news-paper"></i>
+                    <i class="metismenu-icon bi bi-receipt"></i>
                     Registrar
-                    <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+                    <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
                     <li>
@@ -197,12 +197,12 @@ function menuActivo($paginas, $actual) {
             </li>
             <li>
                 <a href="gestionar_seguros.php" class="<?php echo menuActivo('gestionar_seguros.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-shield"></i> Seguros
+                    <i class="metismenu-icon bi bi-shield-check"></i> Seguros
                 </a>
             </li>
             <li>
                 <a href="gestionar_tipos_seguro.php" class="<?php echo menuActivo('gestionar_tipos_seguro.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-ribbon"></i> Tipos de Seguro
+                    <i class="metismenu-icon bi bi-bookmark-star"></i> Tipos de Seguro
                 </a>
             </li>
             <?php endif; ?>
@@ -211,20 +211,20 @@ function menuActivo($paginas, $actual) {
             <li class="app-sidebar__heading">Reportes</li>
             <li>
                 <a href="RPT_Vendedor_Vta.php" class="<?php echo menuActivo('RPT_Vendedor_Vta.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-monitor"></i> Mis Citas
+                    <i class="metismenu-icon bi bi-display"></i> Mis Citas
                 </a>
             </li>
             <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="visor_plantillas.php" class="<?php echo menuActivo('visor_plantillas.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-note2"></i> Plantillas
+                    <i class="metismenu-icon bi bi-file-earmark-text"></i> Plantillas
                 </a>
             </li>
             <?php endif; ?>
             <?php if ($esSistema): ?>
             <li>
                 <a href="RPT_General_vta.php" class="<?php echo menuActivo('RPT_General_vta.php', $paginaActual); ?>">
-                    <i class="metismenu-icon pe-7s-graph"></i> Citas Generales
+                    <i class="metismenu-icon bi bi-graph-up"></i> Citas Generales
                 </a>
             </li>
             <?php endif; ?>
@@ -234,9 +234,9 @@ function menuActivo($paginas, $actual) {
             <li class="app-sidebar__heading">Panel de Control</li>
             <li>
                 <a href="#">
-                    <i class="metismenu-icon pe-7s-users"></i>
+                    <i class="metismenu-icon bi bi-people"></i>
                     Usuarios
-                    <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+                    <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
                     <li>
@@ -260,6 +260,6 @@ function menuActivo($paginas, $actual) {
 <!-- ══ CERRAR SESIÓN — fijo al pie, siempre visible sin necesidad de scroll ══ -->
 <div class="sidebar-logout-footer">
     <a href="salir.php">
-        <i class="metismenu-icon pe-7s-power"></i> Cerrar Sesión
+        <i class="metismenu-icon bi bi-power"></i> Cerrar Sesión
     </a>
 </div>
