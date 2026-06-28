@@ -587,6 +587,24 @@ $conexion=conectarse();
         })
         .catch(() => alert('Error de conexión.'));
     }
+
+    function subirImagenSeguro(input, id, lado) {
+        if (!input.files || !input.files[0]) return;
+        const fd = new FormData();
+        fd.append('id_paciente_seguro', id);
+        fd.append('lado', lado);
+        fd.append('imagen', input.files[0]);
+        fetch('seguro_paciente_subir_imagen.php', { method: 'POST', body: fd })
+            .then(r => r.text())
+            .then(res => {
+                if (res.trim().startsWith('OK')) {
+                    cargarSegurosPaciente(document.getElementById('idPaciente').value);
+                } else {
+                    alert('No se pudo subir la imagen: ' + res);
+                }
+            })
+            .catch(() => alert('Error de conexión al subir la imagen.'));
+    }
 </script>
                                     </div>
                                 </div>

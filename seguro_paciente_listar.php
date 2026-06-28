@@ -10,7 +10,7 @@ $idPac = (int)($_GET['id_paciente'] ?? 0);
 if (!$idPac) { echo '<div class="text-muted small">Paciente no válido.</div>'; exit; }
 
 $stmt = $conexion->prepare(
-    "SELECT PS.id_paciente_seguro, PS.num_poliza, PS.prioridad,
+    "SELECT PS.id_paciente_seguro, PS.num_poliza, PS.prioridad, PS.img_frente, PS.img_reverso,
             S.Empresa_seguro, T.Descripcion AS TIPO
        FROM paciente_seguro PS
        INNER JOIN seguros S     ON S.Id_seguro      = PS.Id_seguro
@@ -27,36 +27,47 @@ if (!$rows) {
     echo '<div class="text-muted small fst-italic">Sin seguros asignados.</div>';
     exit;
 }
+
+// Render del control de imagen (muestra miniatura si existe, o botón "Subir")
+function imgControl($id, $lado, $ruta) {
+    $label = $lado === 'frente' ? 'Frente' : 'Reverso';
+    $html  = '<div class="text-center" style="min-width:90px;">';
+    $html .= '<div class="small text-muted mb-1">' . $label . '</div>';
+    if ($ruta) {
+        $rEsc = htmlspecialchars($ruta);
+        $html .= '<a href="' . $rEsc . '" target="_blank">'
+               . '<img src="' . $rEsc . '" style="height:50px;width:auto;max-width:90px;border:1px solid #ddd;border-radius:4px;object-fit:cover;"></a>';
+        $html .= '<label class="d-block small text-primary mt-1" style="cursor:pointer;">Cambiar'
+               . '<input type="file" accept="image/*" hidden onchange="subirImagenSeguro(this,' . (int)$id . ',\'' . $lado . '\')"></label>';
+    } else {
+        $html .= '<label class="btn btn-sm btn-outline-primary" style="cursor:pointer;">Subir'
+               . '<input type="file" accept="image/*" hidden onchange="subirImagenSeguro(this,' . (int)$id . ',\'' . $lado . '\')"></label>';
+    }
+    $html .= '</div>';
+    return $html;
+}
 ?>
-<div class="table-responsive">
-<table class="table table-sm align-middle mb-0">
-    <thead class="table-light">
-        <tr>
-            <th>Aseguradora</th>
-            <th>Tipo</th>
-            <th>Póliza</th>
-            <th>Prioridad</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    <?php foreach ($rows as $r): ?>
-        <tr>
-            <td><?php echo htmlspecialchars($r['Empresa_seguro']); ?></td>
-            <td class="small text-muted"><?php echo htmlspecialchars($r['TIPO'] ?: '—'); ?></td>
-            <td><?php echo htmlspecialchars($r['num_poliza'] ?: '—'); ?></td>
-            <td>
-                <span class="badge bg-<?php echo $r['prioridad'] === 'Primario' ? 'success' : 'secondary'; ?>">
-                    <?php echo htmlspecialchars($r['prioridad']); ?>
-                </span>
-            </td>
-            <td class="text-end">
-                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2"
-                        title="Quitar"
-                        onclick="eliminarSeguroPaciente(<?php echo (int)$r['id_paciente_seguro']; ?>)">✕</button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-    </tbody>
-</table>
+<?php foreach ($rows as $r):
+    $id = (int)$r['id_paciente_seguro'];
+?>
+<div class="border rounded p-2 mb-2">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <strong><?php echo htmlspecialchars($r['Empresa_seguro']); ?></strong>
+            <span class="badge bg-<?php echo $r['prioridad'] === 'Primario' ? 'success' : 'secondary'; ?> ms-1">
+                <?php echo htmlspecialchars($r['prioridad']); ?>
+            </span>
+            <div class="small text-muted">
+                <?php echo htmlspecialchars($r['TIPO'] ?: 'Sin tipo'); ?>
+                · Póliza: <?php echo htmlspecialchars($r['num_poliza'] ?: '—'); ?>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" title="Quitar"
+                onclick="eliminarSeguroPaciente(<?php echo $id; ?>)">✕</button>
+    </div>
+    <div class="d-flex gap-3 mt-2 flex-wrap">
+        <?php echo imgControl($id, 'frente',  $r['img_frente']); ?>
+        <?php echo imgControl($id, 'reverso', $r['img_reverso']); ?>
+    </div>
 </div>
+<?php endforeach; ?>
