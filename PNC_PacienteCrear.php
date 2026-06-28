@@ -33,15 +33,11 @@ $conexion=conectarse();
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap4.min.js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap4.min.css">
-<style>
-    /* En celular: la tabla de pacientes se desliza horizontalmente para alcanzar los botones */
-    @media (max-width: 768px) {
-        div.dataTables_wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table#example { min-width: 820px; }
-    }
-</style>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap4.min.css">
 
 
 </head>
@@ -494,6 +490,7 @@ $conexion=conectarse();
                                                     <th>Title</th>
                                                     <th>Sex</th>
                                                     <th>Gender</th>
+                                                    <th>Actions</th>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -640,6 +637,7 @@ $conexion=conectarse();
 <script type="text/javascript">
     $(document).ready(function () {
     $('#example').DataTable({
+        responsive: true,
         autoWidth: false
     });
 });
