@@ -431,16 +431,8 @@ $conexion=conectarse();
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Name</th>
-                                                    <th>LastName</th>
-                                                    <th>E-MAIL</th>
-                                                    <th>Fecha Nacimiento</th>
-                                                    <th>Telefono</th>
-                                                    <th>Id</th>
-                                                    <th>Title</th>
-                                                    <th>Sex</th>
-                                                    <th>Gender</th>
-                                                    <th>Actions</th>
+                                                    <th>Paciente</th>
+                                                    <th>Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -452,15 +444,12 @@ $conexion=conectarse();
                                                             ?>    
                                                 <tr>
                                                     <td><?php echo $valores[0]?></td>
-                                                    <td><?php echo $valores[1]?></td>
-                                                    <td><?php echo $valores[2]?></td>
-                                                    <td><?php echo $valores[3]?></td>
-                                                    <td><?php echo $valores[4]?></td>
-                                                    <td><?php echo $valores[5]?></td>
-                                                     <td><?php echo $valores[6]?></td>
-                                                     <td><?php echo $valores[7]?></td>
-                                                     <td><?php echo $valores[8]?></td>
-                                                     <td><?php echo $valores[9]?></td>
+                                                    <td style="min-width:200px;">
+                                                        <strong><?php echo htmlspecialchars(trim($valores[1].' '.$valores[2])); ?></strong><br>
+                                                        <small class="text-muted">CI: <?php echo htmlspecialchars($valores[6] ?: '—'); ?></small><br>
+                                                        <small class="text-muted"><i class="fa fa-envelope"></i> <?php echo htmlspecialchars($valores[3] ?: '—'); ?></small><br>
+                                                        <small class="text-muted"><i class="fa fa-phone"></i> <?php echo htmlspecialchars($valores[5] ?: '—'); ?> &nbsp;·&nbsp; Nac: <?php echo htmlspecialchars($valores[4] ?: '—'); ?> &nbsp;·&nbsp; <?php echo htmlspecialchars($valores[8] ?: ''); ?></small>
+                                                    </td>
                                                       <td>
                                                             <button class="btn btn-outline-warning fa fa-edit"
                                                                 data-bs-toggle="modal" 
@@ -481,16 +470,8 @@ $conexion=conectarse();
                                             <tfoot>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Name</th>
-                                                    <th>LastName</th>
-                                                    <th>E-MAIL</th>
-                                                    <th>Fecha Nacimiento</th>
-                                                    <th>Telefono</th>
-                                                    <th>Id</th>
-                                                    <th>Title</th>
-                                                    <th>Sex</th>
-                                                    <th>Gender</th>
-                                                    <th>Actions</th>
+                                                    <th>Paciente</th>
+                                                    <th>Acciones</th>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -637,7 +618,6 @@ $conexion=conectarse();
 <script type="text/javascript">
     $(document).ready(function () {
     $('#example').DataTable({
-        responsive: true,
         autoWidth: false
     });
 });
