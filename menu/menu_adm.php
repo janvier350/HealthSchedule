@@ -123,6 +123,13 @@ function menuActivo($paginas, $actual) {
                     <?php endif; ?>
                 </ul>
             </li>
+            <?php if ($esSistema): ?>
+            <li>
+                <a href="gestionar_documentos.php" class="<?php echo menuActivo('gestionar_documentos.php', $paginaActual); ?>">
+                    <i class="metismenu-icon pe-7s-note2"></i> Documentos
+                </a>
+            </li>
+            <?php endif; ?>
 
             <!-- ══ SÓLO SISTEMA ════════════════════════════════════════ -->
             <?php if ($esSistema): ?>
