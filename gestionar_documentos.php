@@ -4,6 +4,7 @@ session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
+if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
 if (!isset($_SESSION["rol"])) {
     header("Location: break.php");
@@ -53,6 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $documentos = [];
 $res = $conexion->query("SELECT id_documento, titulo, contenido, estado FROM documentos ORDER BY titulo");
 while ($r = $res->fetch_assoc()) { $documentos[] = $r; }
+
+// Pacientes activos con correo (para enviar documentos)
+$pacientesEnvio = [];
+$resP = $conexion->query("SELECT IDPACIENTE, NOMBRES, APELLIDOS, EMAIL FROM AG_PACIENTE WHERE ESTADO = 'A' AND EMAIL IS NOT NULL AND EMAIL <> '' ORDER BY NOMBRES, APELLIDOS");
+while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -187,6 +193,11 @@ while ($r = $res->fetch_assoc()) { $documentos[] = $r; }
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-end">
+                                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                                onclick='abrirEnviar(<?php echo (int)$d['id_documento']; ?>, <?php echo json_encode($d['titulo'], JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'
+                                                <?php echo (int)$d['estado'] !== 1 ? 'disabled' : ''; ?> title="Enviar a paciente">
+                                                <i class="bi bi-send"></i>
+                                            </button>
                                             <button type="button" class="btn btn-outline-warning btn-sm"
                                                 onclick='editarDoc(<?php echo json_encode($d, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP); ?>)'>
                                                 <i class="bi bi-pencil"></i>
@@ -249,10 +260,85 @@ while ($r = $res->fetch_assoc()) { $documentos[] = $r; }
     </div>
 </div>
 
+<!-- MODAL ENVIAR A PACIENTE -->
+<div class="modal fade" id="modalEnviar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enviar documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="envDocId">
+                <p class="mb-2">Documento: <strong id="envDocTitulo"></strong></p>
+                <div class="mb-2">
+                    <label class="form-label">Paciente (con correo registrado)</label>
+                    <select class="form-select" id="envPaciente">
+                        <option value="">— Seleccione —</option>
+                        <?php foreach ($pacientesEnvio as $p): ?>
+                            <option value="<?php echo (int)$p['IDPACIENTE']; ?>">
+                                <?php echo htmlspecialchars(trim($p['NOMBRES'].' '.$p['APELLIDOS'])); ?> — <?php echo htmlspecialchars($p['EMAIL']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">Se enviará un correo con un link y un código de acceso.</div>
+                </div>
+                <div id="envResultado" class="mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="envBtn" onclick="enviarDocumento()">
+                    <i class="bi bi-send"></i> Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
 const modalDoc = new bootstrap.Modal(document.getElementById('modalDoc'));
+const modalEnviar = new bootstrap.Modal(document.getElementById('modalEnviar'));
+
+function abrirEnviar(idDoc, titulo) {
+    document.getElementById('envDocId').value = idDoc;
+    document.getElementById('envDocTitulo').textContent = titulo;
+    document.getElementById('envPaciente').value = '';
+    document.getElementById('envResultado').innerHTML = '';
+    modalEnviar.show();
+}
+
+function enviarDocumento() {
+    const idDoc = document.getElementById('envDocId').value;
+    const idPac = document.getElementById('envPaciente').value;
+    const res   = document.getElementById('envResultado');
+    const btn   = document.getElementById('envBtn');
+    if (!idPac) { alert('Seleccione un paciente.'); return; }
+    btn.disabled = true;
+    res.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span> Enviando…</div>';
+    fetch('enviar_documento_guardar.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id_documento: idDoc, id_paciente: idPac })
+    })
+    .then(r => r.json())
+    .then(d => {
+        btn.disabled = false;
+        if (d.ok) {
+            let html = '<div class="alert alert-' + (d.correo_fallo ? 'warning' : 'success') + ' py-2 small mb-0">' + d.msg + '</div>';
+            if (d.link) {
+                html += '<div class="mt-2 small border rounded p-2">'
+                      + '<strong>Link:</strong> <a href="' + d.link + '" target="_blank">' + d.link + '</a><br>'
+                      + '<strong>Código:</strong> <span style="font-size:1.1rem;letter-spacing:2px;">' + d.codigo + '</span></div>';
+            }
+            res.innerHTML = html;
+        } else {
+            res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">' + (d.msg || 'Error al enviar.') + '</div>';
+        }
+    })
+    .catch(() => { btn.disabled = false; res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">Error de conexión.</div>'; });
+}
 
 function actualizarPreview() {
     document.getElementById('dPreview').innerHTML = document.getElementById('dContenido').value;
