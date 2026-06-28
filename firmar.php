@@ -11,9 +11,9 @@ $token = preg_replace('/[^a-fA-F0-9]/', '', $_GET['t'] ?? '');
 $envio = null;
 if ($token) {
     $stmt = $conexion->prepare(
-        "SELECT e.id_envio, e.codigo, e.estado, e.fecha_firma, e.firmado_por,
+        "SELECT e.id_envio, e.codigo, e.estado, e.fecha_firma, e.firmado_por, e.fecha_envio,
                 d.titulo, d.contenido,
-                CONCAT(p.NOMBRES,' ',p.APELLIDOS) AS paciente
+                CONCAT(p.NOMBRES,' ',p.APELLIDOS) AS paciente, p.CEDULA, p.FECHANACIMIENTO
            FROM documento_envio e
            INNER JOIN documentos  d ON d.id_documento = e.id_documento
            INNER JOIN AG_PACIENTE p ON p.IDPACIENTE   = e.IDPACIENTE
@@ -35,6 +35,22 @@ if ($envio && $envio['estado'] !== 'Firmado'
     } else {
         $errCodigo = 'Código incorrecto. Revisa el correo e inténtalo de nuevo.';
     }
+}
+
+// Reemplaza los campos {{...}} del documento con los datos reales
+function aplicarCampos($html, $d) {
+    $fnac = (!empty($d['FECHANACIMIENTO']) && $d['FECHANACIMIENTO'] !== '0000-00-00')
+        ? date('d/m/Y', strtotime($d['FECHANACIMIENTO'])) : '';
+    $fecha  = !empty($d['fecha_envio']) ? date('d/m/Y', strtotime($d['fecha_envio'])) : date('d/m/Y');
+    $ffirma = !empty($d['fecha_firma']) ? date('d/m/Y', strtotime($d['fecha_firma'])) : '';
+    return strtr($html, [
+        '{{paciente}}'         => htmlspecialchars($d['paciente'] ?? ''),
+        '{{nombre}}'           => htmlspecialchars($d['paciente'] ?? ''),
+        '{{cedula}}'           => htmlspecialchars($d['CEDULA'] ?? ''),
+        '{{fecha_nacimiento}}' => htmlspecialchars($fnac),
+        '{{fecha}}'            => htmlspecialchars($fecha),
+        '{{fecha_firma}}'      => htmlspecialchars($ffirma),
+    ]);
 }
 ?>
 <!DOCTYPE html>
@@ -91,7 +107,7 @@ if ($envio && $envio['estado'] !== 'Firmado'
     <?php else: ?>
         <!-- Código correcto: mostrar documento + firma -->
         <h5 class="mb-3"><?php echo htmlspecialchars($envio['titulo']); ?></h5>
-        <div class="doc-content mb-3"><?php echo $envio['contenido']; ?></div>
+        <div class="doc-content mb-3"><?php echo aplicarCampos($envio['contenido'], $envio); ?></div>
 
         <form method="POST" action="firmar_guardar.php" id="formFirma" onsubmit="return prepararFirma();">
             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
