@@ -13,7 +13,7 @@ $e = null;
 if ($id) {
     $stmt = $conexion->prepare(
         "SELECT e.*, d.titulo, d.contenido,
-                CONCAT(p.NOMBRES,' ',p.APELLIDOS) AS paciente, p.CEDULA
+                CONCAT(p.NOMBRES,' ',p.APELLIDOS) AS paciente, p.CEDULA, p.FECHANACIMIENTO
            FROM documento_envio e
            INNER JOIN documentos  d ON d.id_documento = e.id_documento
            INNER JOIN AG_PACIENTE p ON p.IDPACIENTE   = e.IDPACIENTE
@@ -25,6 +25,22 @@ if ($id) {
     $stmt->close();
 }
 $firmado = $e && $e['estado'] === 'Firmado';
+
+// Reemplaza los campos {{...}} del documento con los datos reales
+function aplicarCampos($html, $d) {
+    $fnac = (!empty($d['FECHANACIMIENTO']) && $d['FECHANACIMIENTO'] !== '0000-00-00')
+        ? date('d/m/Y', strtotime($d['FECHANACIMIENTO'])) : '';
+    $fecha  = !empty($d['fecha_envio']) ? date('d/m/Y', strtotime($d['fecha_envio'])) : date('d/m/Y');
+    $ffirma = !empty($d['fecha_firma']) ? date('d/m/Y', strtotime($d['fecha_firma'])) : '';
+    return strtr($html, [
+        '{{paciente}}'         => htmlspecialchars($d['paciente'] ?? ''),
+        '{{nombre}}'           => htmlspecialchars($d['paciente'] ?? ''),
+        '{{cedula}}'           => htmlspecialchars($d['CEDULA'] ?? ''),
+        '{{fecha_nacimiento}}' => htmlspecialchars($fnac),
+        '{{fecha}}'            => htmlspecialchars($fecha),
+        '{{fecha_firma}}'      => htmlspecialchars($ffirma),
+    ]);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -71,7 +87,7 @@ $firmado = $e && $e['estado'] === 'Firmado';
                 </p>
 
                 <h6 class="text-muted">Contenido del documento</h6>
-                <div class="doc-content mb-4"><?php echo $e['contenido']; ?></div>
+                <div class="doc-content mb-4"><?php echo aplicarCampos($e['contenido'], $e); ?></div>
 
                 <h6 class="text-muted">Firma</h6>
                 <?php if ($firmado && !empty($e['firma_img'])): ?>
