@@ -233,7 +233,7 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                 <h5 class="modal-title" id="modalDocTitulo">Nuevo Documento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form method="POST">
+            <form method="POST" onsubmit="return sincronizarContenido();">
                 <div class="modal-body">
                     <input type="hidden" name="accion" value="guardar">
                     <input type="hidden" name="id" id="dId" value="0">
@@ -243,15 +243,36 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                         <input type="text" class="form-control" name="titulo" id="dTitulo" maxlength="180" required>
                     </div>
 
-                    <div class="mb-2">
-                        <label class="form-label">Contenido</label>
-                        <textarea class="form-control" name="contenido" id="dContenido" rows="10"
-                                  oninput="actualizarPreview()"></textarea>
-                        <div class="form-text">Puedes usar HTML para dar formato (negritas, listas, etc.). Lo que escribas se mostrará al paciente.</div>
+                    <label class="form-label">Contenido</label>
+                    <div class="btn-toolbar gap-1 mb-1" role="toolbar">
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('bold')" title="Negrita"><b>B</b></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('italic')" title="Cursiva"><i>I</i></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('underline')" title="Subrayado"><u>U</u></button>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('H2')" title="Título">Título</button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('H3')" title="Subtítulo">Subtítulo</button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('P')" title="Texto normal">Normal</button>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('insertUnorderedList')" title="Lista">&bull; Lista</button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('insertOrderedList')" title="Lista numerada">1. Lista</button>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" onmousedown="event.preventDefault()" title="Insertar dato del paciente">Insertar dato</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{paciente}}');return false;">Nombre del paciente</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{cedula}}');return false;">Cédula / ID</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha_nacimiento}}');return false;">Fecha de nacimiento</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha}}');return false;">Fecha (del documento)</a></li>
+                            </ul>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('removeFormat')" title="Quitar formato">Limpiar</button>
                     </div>
-
-                    <label class="form-label">Vista previa</label>
-                    <div class="doc-preview" id="dPreview"></div>
+                    <div id="dEditor" contenteditable="true" class="form-control" style="min-height:240px;max-height:50vh;overflow:auto;"></div>
+                    <input type="hidden" name="contenido" id="dContenido">
+                    <div class="form-text">Da formato con los botones. Con <strong>"Insertar dato"</strong> agregas campos que se completan solos con la info del paciente al enviar.</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -353,16 +374,29 @@ function enviarDocumento() {
     .catch(() => { btn.disabled = false; res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">Error de conexión.</div>'; });
 }
 
-function actualizarPreview() {
-    document.getElementById('dPreview').innerHTML = document.getElementById('dContenido').value;
+// ── Editor con formato ───────────────────────────────────────────────
+function fmt(cmd) {
+    document.execCommand(cmd, false, null);
+    document.getElementById('dEditor').focus();
+}
+function fmtBlock(tag) {
+    document.execCommand('formatBlock', false, tag);
+    document.getElementById('dEditor').focus();
+}
+function insertarCampo(texto) {
+    document.getElementById('dEditor').focus();
+    document.execCommand('insertText', false, texto);
+}
+function sincronizarContenido() {
+    document.getElementById('dContenido').value = document.getElementById('dEditor').innerHTML;
+    return true;
 }
 
 function nuevoDoc() {
     document.getElementById('modalDocTitulo').textContent = 'Nuevo Documento';
     document.getElementById('dId').value = '0';
     document.getElementById('dTitulo').value = '';
-    document.getElementById('dContenido').value = '';
-    actualizarPreview();
+    document.getElementById('dEditor').innerHTML = '';
     modalDoc.show();
 }
 
@@ -370,8 +404,7 @@ function editarDoc(d) {
     document.getElementById('modalDocTitulo').textContent = 'Editar Documento';
     document.getElementById('dId').value = d.id_documento;
     document.getElementById('dTitulo').value = d.titulo || '';
-    document.getElementById('dContenido').value = d.contenido || '';
-    actualizarPreview();
+    document.getElementById('dEditor').innerHTML = d.contenido || '';
     modalDoc.show();
 }
 </script>
