@@ -1,6 +1,7 @@
 <?php
 ob_start();
 session_start();
+date_default_timezone_set('America/New_York');
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
@@ -31,7 +32,17 @@ function pagina($titulo, $tipo, $mensaje) {
     exit;
 }
 
-if (!$token || !$codigo) { pagina('Datos incompletos', 'err', 'Faltan datos para registrar la firma.'); }
+if (!$token || !$codigo) {
+    $metodo  = $_SERVER['REQUEST_METHOD'] ?? '';
+    $detalle = $metodo !== 'POST'
+        ? 'la página se abrió directamente (sin enviar el formulario de firma).'
+        : (!$token ? 'no se recibió el token del enlace.' : 'no se recibió el código de verificación.');
+    error_log('firmar_guardar.php - faltan datos: ' . $detalle
+        . ' | metodo=' . $metodo
+        . ' | referer=' . ($_SERVER['HTTP_REFERER'] ?? '(ninguno)')
+        . ' | post=' . json_encode($_POST));
+    pagina('Datos incompletos', 'err', 'Faltan datos para registrar la firma: ' . $detalle);
+}
 if (!$acepto)           { pagina('Falta aceptar', 'err', 'Debes aceptar los términos del documento.'); }
 if ($firmadoPor === '') { pagina('Falta el nombre', 'err', 'Indica el nombre de quien firma.'); }
 if (strpos($firma, 'data:image/png;base64,') !== 0 || strlen($firma) < 100) {
@@ -50,13 +61,14 @@ if ((string)$envio['codigo'] !== $codigo) { pagina('Código incorrecto', 'err', 
 if ($envio['estado'] === 'Firmado')   { pagina('Ya firmado', 'ok', 'Este documento ya había sido firmado. ¡Gracias!'); }
 
 $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+$fechaFirma = date('Y-m-d H:i:s');
 
 $upd = $conexion->prepare(
     "UPDATE documento_envio
-        SET estado = 'Firmado', firmado_por = ?, firma_img = ?, ip_firma = ?, campos_json = ?, fecha_firma = NOW()
+        SET estado = 'Firmado', firmado_por = ?, firma_img = ?, ip_firma = ?, campos_json = ?, fecha_firma = ?
       WHERE token = ? AND estado <> 'Firmado'"
 );
-$upd->bind_param("sssss", $firmadoPor, $firma, $ip, $camposJson, $token);
+$upd->bind_param("ssssss", $firmadoPor, $firma, $ip, $camposJson, $fechaFirma, $token);
 $upd->execute();
 $ok = $upd->affected_rows > 0;
 $upd->close();
