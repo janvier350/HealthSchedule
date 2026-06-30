@@ -105,14 +105,18 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
                 </div>
 
                 <div class="card shadow-sm">
-                    <div class="card-header py-2">
+                    <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
                         <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;font-weight:600;">
-                            <i class="bi bi-send me-1"></i> <?php echo count($envios); ?> envío(s)
+                            <i class="bi bi-send me-1"></i> <span id="contadorEnvios"><?php echo count($envios); ?></span> envío(s)
                         </span>
+                        <div style="max-width:300px;width:100%;">
+                            <input type="text" id="buscarEnvio" class="form-control form-control-sm"
+                                   placeholder="Buscar por paciente, documento o estado...">
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0" id="tablaEnvios">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Paciente</th>
@@ -160,5 +164,24 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
+<script>
+(function () {
+    var input    = document.getElementById('buscarEnvio');
+    var filas    = document.querySelectorAll('#tablaEnvios tbody tr');
+    var contador = document.getElementById('contadorEnvios');
+    if (!input) return;
+
+    input.addEventListener('input', function () {
+        var q = input.value.trim().toLowerCase();
+        var visibles = 0;
+        filas.forEach(function (fila) {
+            var coincide = fila.textContent.toLowerCase().indexOf(q) !== -1;
+            fila.style.display = coincide ? '' : 'none';
+            if (coincide) visibles++;
+        });
+        contador.textContent = visibles;
+    });
+})();
+</script>
 </body>
 </html>
