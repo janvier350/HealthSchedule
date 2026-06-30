@@ -29,17 +29,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $titulo    = trim($_POST['titulo'] ?? '');
         $contenido = $_POST['contenido'] ?? '';
 
+        // PDF adjunto (opcional)
+        $pdfPath = null; $tienePdf = false; $errPdf = '';
+        if (!empty($_FILES['archivo_pdf']['name']) && ($_FILES['archivo_pdf']['error'] ?? 1) === UPLOAD_ERR_OK) {
+            $f   = $_FILES['archivo_pdf'];
+            $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
+            if ($ext !== 'pdf') {
+                $errPdf = 'El archivo adjunto debe ser PDF.';
+            } elseif ($f['size'] > 10 * 1024 * 1024) {
+                $errPdf = 'El PDF supera el límite de 10MB.';
+            } else {
+                $dir = __DIR__ . '/uploads/documentos';
+                if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
+                $nombre = 'doc_' . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
+                if (move_uploaded_file($f['tmp_name'], $dir . '/' . $nombre)) {
+                    $pdfPath = 'uploads/documentos/' . $nombre; $tienePdf = true;
+                } else {
+                    $errPdf = 'No se pudo guardar el PDF.';
+                }
+            }
+        }
+
         if ($titulo === '') {
             $mensaje = ['err', 'El título es obligatorio.'];
+        } elseif ($errPdf !== '') {
+            $mensaje = ['err', $errPdf];
         } elseif ($id > 0) {
-            $stmt = $conexion->prepare("UPDATE documentos SET titulo = ?, contenido = ? WHERE id_documento = ?");
-            $stmt->bind_param("ssi", $titulo, $contenido, $id);
+            if ($tienePdf) {
+                $stmt = $conexion->prepare("UPDATE documentos SET titulo = ?, contenido = ?, archivo_pdf = ? WHERE id_documento = ?");
+                $stmt->bind_param("sssi", $titulo, $contenido, $pdfPath, $id);
+            } else {
+                $stmt = $conexion->prepare("UPDATE documentos SET titulo = ?, contenido = ? WHERE id_documento = ?");
+                $stmt->bind_param("ssi", $titulo, $contenido, $id);
+            }
             $stmt->execute();
             $stmt->close();
             $mensaje = ['ok', 'Documento actualizado.'];
         } else {
-            $stmt = $conexion->prepare("INSERT INTO documentos (titulo, contenido, estado) VALUES (?, ?, 1)");
-            $stmt->bind_param("ss", $titulo, $contenido);
+            $stmt = $conexion->prepare("INSERT INTO documentos (titulo, contenido, archivo_pdf, estado) VALUES (?, ?, ?, 1)");
+            $stmt->bind_param("sss", $titulo, $contenido, $pdfPath);
             $stmt->execute();
             $stmt->close();
             $mensaje = ['ok', 'Documento creado.'];
@@ -52,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $documentos = [];
-$res = $conexion->query("SELECT id_documento, titulo, contenido, estado FROM documentos ORDER BY titulo");
+$res = $conexion->query("SELECT id_documento, titulo, contenido, archivo_pdf, estado FROM documentos ORDER BY titulo");
 while ($r = $res->fetch_assoc()) { $documentos[] = $r; }
 
 // Pacientes activos con correo (para enviar documentos)
@@ -233,7 +261,7 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                 <h5 class="modal-title" id="modalDocTitulo">Nuevo Documento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form method="POST" onsubmit="return sincronizarContenido();">
+            <form method="POST" enctype="multipart/form-data" onsubmit="return sincronizarContenido();">
                 <div class="modal-body">
                     <input type="hidden" name="accion" value="guardar">
                     <input type="hidden" name="id" id="dId" value="0">
@@ -268,11 +296,22 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                                 <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha}}');return false;">Fecha (del documento)</a></li>
                             </ul>
                         </div>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="insertarTabla()" title="Insertar tabla">&#8862; Tabla</button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnHtml" onmousedown="event.preventDefault()" onclick="toggleHtml()" title="Editar el HTML (para pegar tablas o contenido avanzado)">&lt;/&gt; HTML</button>
+                        </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('removeFormat')" title="Quitar formato">Limpiar</button>
                     </div>
                     <div id="dEditor" contenteditable="true" class="form-control" style="min-height:240px;max-height:50vh;overflow:auto;"></div>
+                    <textarea id="dHtml" class="form-control" style="display:none;min-height:240px;max-height:50vh;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;"></textarea>
                     <input type="hidden" name="contenido" id="dContenido">
-                    <div class="form-text">Da formato con los botones. Con <strong>"Insertar dato"</strong> agregas campos que se completan solos con la info del paciente al enviar.</div>
+                    <div class="form-text">Da formato con los botones. <strong>"Insertar dato"</strong> agrega campos que se completan solos. <strong>"HTML"</strong> te deja pegar tablas/contenido avanzado.</div>
+
+                    <div class="mt-3">
+                        <label class="form-label">Adjuntar PDF (opcional)</label>
+                        <input type="file" name="archivo_pdf" id="dPdf" accept="application/pdf" class="form-control form-control-sm">
+                        <div class="form-text" id="dPdfActual"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -375,6 +414,8 @@ function enviarDocumento() {
 }
 
 // ── Editor con formato ───────────────────────────────────────────────
+var modoHtml = false;
+
 function fmt(cmd) {
     document.execCommand(cmd, false, null);
     document.getElementById('dEditor').focus();
@@ -387,16 +428,49 @@ function insertarCampo(texto) {
     document.getElementById('dEditor').focus();
     document.execCommand('insertText', false, texto);
 }
+function insertarTabla() {
+    var filas = parseInt(prompt('¿Cuántas filas?', '3'), 10) || 0;
+    var cols  = parseInt(prompt('¿Cuántas columnas?', '2'), 10) || 0;
+    if (filas < 1 || cols < 1) return;
+    var html = '<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;">';
+    for (var i = 0; i < filas; i++) { html += '<tr>'; for (var j = 0; j < cols; j++) html += '<td>&nbsp;</td>'; html += '</tr>'; }
+    html += '</table><p>&nbsp;</p>';
+    document.getElementById('dEditor').focus();
+    document.execCommand('insertHTML', false, html);
+}
+function toggleHtml() {
+    var ed = document.getElementById('dEditor'), ta = document.getElementById('dHtml');
+    if (!modoHtml) {                       // visual -> HTML
+        ta.value = ed.innerHTML;
+        ed.style.display = 'none'; ta.style.display = 'block'; modoHtml = true;
+        document.getElementById('btnHtml').classList.add('active');
+    } else {                               // HTML -> visual
+        ed.innerHTML = ta.value;
+        ta.style.display = 'none'; ed.style.display = 'block'; modoHtml = false;
+        document.getElementById('btnHtml').classList.remove('active');
+    }
+}
 function sincronizarContenido() {
-    document.getElementById('dContenido').value = document.getElementById('dEditor').innerHTML;
+    var html = modoHtml ? document.getElementById('dHtml').value : document.getElementById('dEditor').innerHTML;
+    document.getElementById('dContenido').value = html;
     return true;
+}
+function resetEditor(html) {
+    modoHtml = false;
+    document.getElementById('dHtml').style.display = 'none';
+    document.getElementById('btnHtml').classList.remove('active');
+    var ed = document.getElementById('dEditor');
+    ed.style.display = 'block';
+    ed.innerHTML = html || '';
 }
 
 function nuevoDoc() {
     document.getElementById('modalDocTitulo').textContent = 'Nuevo Documento';
     document.getElementById('dId').value = '0';
     document.getElementById('dTitulo').value = '';
-    document.getElementById('dEditor').innerHTML = '';
+    resetEditor('');
+    document.getElementById('dPdf').value = '';
+    document.getElementById('dPdfActual').innerHTML = '';
     modalDoc.show();
 }
 
@@ -404,7 +478,11 @@ function editarDoc(d) {
     document.getElementById('modalDocTitulo').textContent = 'Editar Documento';
     document.getElementById('dId').value = d.id_documento;
     document.getElementById('dTitulo').value = d.titulo || '';
-    document.getElementById('dEditor').innerHTML = d.contenido || '';
+    resetEditor(d.contenido || '');
+    document.getElementById('dPdf').value = '';
+    document.getElementById('dPdfActual').innerHTML = d.archivo_pdf
+        ? 'PDF actual: <a href="' + d.archivo_pdf + '" target="_blank">ver</a> — sube otro para reemplazarlo.'
+        : '';
     modalDoc.show();
 }
 </script>
