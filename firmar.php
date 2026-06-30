@@ -67,6 +67,8 @@ function aplicarCampos($html, $d) {
         .doc-head { background:#5a2d82; color:#fff; padding:20px; border-radius:8px 8px 0 0; text-align:center; }
         .doc-body { background:#fff; border:1px solid #e7e7e7; border-top:none; padding:24px; border-radius:0 0 8px 8px; }
         .doc-content { border:1px solid #eee; border-radius:6px; padding:16px; max-height:50vh; overflow:auto; background:#fff; }
+        .doc-content input.campo-llenar[type="text"] { border:none; border-bottom:1px solid #5a2d82; background:#fff8e1; padding:1px 4px; border-radius:2px; }
+        .doc-content input.campo-llenar[type="checkbox"] { width:16px; height:16px; vertical-align:middle; margin:0 4px; accent-color:#5a2d82; }
         #firmaCanvas { border:1px dashed #aaa; border-radius:6px; width:100%; height:160px; touch-action:none; background:#fff; }
     </style>
 </head>
@@ -107,7 +109,10 @@ function aplicarCampos($html, $d) {
     <?php else: ?>
         <!-- Código correcto: mostrar documento + firma -->
         <h5 class="mb-3"><?php echo htmlspecialchars($envio['titulo']); ?></h5>
-        <div class="doc-content mb-3"><?php echo aplicarCampos($envio['contenido'], $envio); ?></div>
+        <div class="doc-content mb-3" id="docContenido"><?php echo aplicarCampos($envio['contenido'], $envio); ?></div>
+        <?php if (strpos($envio['contenido'], 'campo-llenar') !== false): ?>
+            <div class="alert alert-info py-2 small"><i class="bi bi-info-circle"></i> Completa los campos en blanco resaltados dentro del documento antes de firmar.</div>
+        <?php endif; ?>
         <?php if (!empty($envio['archivo_pdf'])): ?>
         <div class="mb-3">
             <a href="<?php echo htmlspecialchars($envio['archivo_pdf']); ?>" target="_blank" class="btn btn-outline-secondary">
@@ -120,6 +125,7 @@ function aplicarCampos($html, $d) {
             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
             <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($envio['codigo']); ?>">
             <input type="hidden" name="firma" id="firmaInput">
+            <input type="hidden" name="campos_json" id="camposInput">
 
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="acepto" name="acepto" value="1" required>
@@ -190,6 +196,17 @@ function aplicarCampos($html, $d) {
     window.prepararFirma = function(){
         if (!hayFirma) { alert('Por favor dibuja tu firma antes de enviar.'); return false; }
         if (!document.getElementById('acepto').checked) { alert('Debes aceptar los términos.'); return false; }
+
+        var cont  = document.getElementById('docContenido');
+        var datos = [];
+        if (cont) {
+            cont.querySelectorAll('input.campo-llenar').forEach(function (el, i) {
+                datos.push(el.type === 'checkbox'
+                    ? { idx: i, type: 'checkbox', value: el.checked }
+                    : { idx: i, type: 'text', value: el.value });
+            });
+        }
+        document.getElementById('camposInput').value = JSON.stringify(datos);
         document.getElementById('firmaInput').value = canvas.toDataURL('image/png');
         return true;
     };
