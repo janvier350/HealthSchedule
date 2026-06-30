@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('America/New_York');
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
@@ -47,11 +48,12 @@ $token  = bin2hex(random_bytes(16));            // 32 caracteres
 $codigo = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
 // Guardar el envío
+$fechaEnvio = date('Y-m-d H:i:s');
 $stmtI = $conexion->prepare(
     "INSERT INTO documento_envio (id_documento, IDPACIENTE, token, codigo, estado, fecha_envio)
-     VALUES (?, ?, ?, ?, 'Pendiente', NOW())"
+     VALUES (?, ?, ?, ?, 'Pendiente', ?)"
 );
-$stmtI->bind_param("iiss", $idDoc, $idPac, $token, $codigo);
+$stmtI->bind_param("iisss", $idDoc, $idPac, $token, $codigo, $fechaEnvio);
 if (!$stmtI->execute()) {
     echo json_encode(['ok'=>false,'msg'=>'Error al registrar el envío: ' . $stmtI->error]); exit;
 }
