@@ -300,12 +300,16 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                             <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="insertarTabla()" title="Insertar tabla">&#8862; Tabla</button>
                             <button type="button" class="btn btn-outline-secondary" id="btnHtml" onmousedown="event.preventDefault()" onclick="toggleHtml()" title="Editar el HTML (para pegar tablas o contenido avanzado)">&lt;/&gt; HTML</button>
                         </div>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-warning" onmousedown="event.preventDefault()" onclick="insertarCampoLlenar('texto')" title="Campo en blanco que el paciente completará al firmar">&#9998; Campo</button>
+                            <button type="button" class="btn btn-outline-warning" onmousedown="event.preventDefault()" onclick="insertarCampoLlenar('checkbox')" title="Casilla que el paciente marcará al firmar">&#9745; Casilla</button>
+                        </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('removeFormat')" title="Quitar formato">Limpiar</button>
                     </div>
                     <div id="dEditor" contenteditable="true" class="form-control" style="min-height:240px;max-height:50vh;overflow:auto;"></div>
                     <textarea id="dHtml" class="form-control" style="display:none;min-height:240px;max-height:50vh;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;"></textarea>
                     <input type="hidden" name="contenido" id="dContenido">
-                    <div class="form-text">Da formato con los botones. <strong>"Insertar dato"</strong> agrega campos que se completan solos. <strong>"HTML"</strong> te deja pegar tablas/contenido avanzado.</div>
+                    <div class="form-text">Da formato con los botones. <strong>"Insertar dato"</strong> agrega campos que se completan solos. <strong>"Campo"/"Casilla"</strong> agregan espacios en blanco que el <u>paciente</u> llena al firmar (ej. número de tarjeta, nombre del titular). <strong>"HTML"</strong> te deja pegar tablas/contenido avanzado.</div>
 
                     <div class="mt-3">
                         <label class="form-label">Adjuntar PDF (opcional)</label>
@@ -436,6 +440,18 @@ function insertarTabla() {
     for (var i = 0; i < filas; i++) { html += '<tr>'; for (var j = 0; j < cols; j++) html += '<td>&nbsp;</td>'; html += '</tr>'; }
     html += '</table><p>&nbsp;</p>';
     document.getElementById('dEditor').focus();
+    document.execCommand('insertHTML', false, html);
+}
+function insertarCampoLlenar(tipo) {
+    document.getElementById('dEditor').focus();
+    var html;
+    if (tipo === 'checkbox') {
+        html = '<input type="checkbox" class="campo-llenar" style="width:16px;height:16px;vertical-align:middle;margin:0 4px;">';
+    } else {
+        var ancho = parseInt(prompt('Ancho aproximado del campo (en caracteres)', '20'), 10) || 20;
+        var px = Math.max(60, ancho * 8);
+        html = '<input type="text" class="campo-llenar" style="border:none;border-bottom:1px solid #333;background:#fff8e1;padding:1px 4px;min-width:' + px + 'px;">';
+    }
     document.execCommand('insertHTML', false, html);
 }
 function toggleHtml() {
