@@ -11,6 +11,8 @@ $codigo     = trim($_POST['codigo'] ?? '');
 $firmadoPor = trim($_POST['firmado_por'] ?? '');
 $firma      = $_POST['firma'] ?? '';
 $acepto     = isset($_POST['acepto']);
+$camposJson = $_POST['campos_json'] ?? '';
+if ($camposJson !== '' && json_decode($camposJson) === null) { $camposJson = ''; }
 
 function pagina($titulo, $tipo, $mensaje) {
     $color = $tipo === 'ok' ? '#28a745' : '#dc3545';
@@ -51,10 +53,10 @@ $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
 $upd = $conexion->prepare(
     "UPDATE documento_envio
-        SET estado = 'Firmado', firmado_por = ?, firma_img = ?, ip_firma = ?, fecha_firma = NOW()
+        SET estado = 'Firmado', firmado_por = ?, firma_img = ?, ip_firma = ?, campos_json = ?, fecha_firma = NOW()
       WHERE token = ? AND estado <> 'Firmado'"
 );
-$upd->bind_param("ssss", $firmadoPor, $firma, $ip, $token);
+$upd->bind_param("sssss", $firmadoPor, $firma, $ip, $camposJson, $token);
 $upd->execute();
 $ok = $upd->affected_rows > 0;
 $upd->close();
