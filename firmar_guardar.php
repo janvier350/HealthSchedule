@@ -32,7 +32,17 @@ function pagina($titulo, $tipo, $mensaje) {
     exit;
 }
 
-if (!$token || !$codigo) { pagina('Datos incompletos', 'err', 'Faltan datos para registrar la firma.'); }
+if (!$token || !$codigo) {
+    $metodo  = $_SERVER['REQUEST_METHOD'] ?? '';
+    $detalle = $metodo !== 'POST'
+        ? 'la página se abrió directamente (sin enviar el formulario de firma).'
+        : (!$token ? 'no se recibió el token del enlace.' : 'no se recibió el código de verificación.');
+    error_log('firmar_guardar.php - faltan datos: ' . $detalle
+        . ' | metodo=' . $metodo
+        . ' | referer=' . ($_SERVER['HTTP_REFERER'] ?? '(ninguno)')
+        . ' | post=' . json_encode($_POST));
+    pagina('Datos incompletos', 'err', 'Faltan datos para registrar la firma: ' . $detalle);
+}
 if (!$acepto)           { pagina('Falta aceptar', 'err', 'Debes aceptar los términos del documento.'); }
 if ($firmadoPor === '') { pagina('Falta el nombre', 'err', 'Indica el nombre de quien firma.'); }
 if (strpos($firma, 'data:image/png;base64,') !== 0 || strlen($firma) < 100) {
