@@ -12,7 +12,7 @@ $envio = null;
 if ($token) {
     $stmt = $conexion->prepare(
         "SELECT e.id_envio, e.codigo, e.estado, e.fecha_firma, e.firmado_por, e.fecha_envio,
-                d.titulo, d.contenido,
+                d.titulo, d.contenido, d.archivo_pdf,
                 CONCAT(p.NOMBRES,' ',p.APELLIDOS) AS paciente, p.CEDULA, p.FECHANACIMIENTO
            FROM documento_envio e
            INNER JOIN documentos  d ON d.id_documento = e.id_documento
@@ -108,6 +108,13 @@ function aplicarCampos($html, $d) {
         <!-- Código correcto: mostrar documento + firma -->
         <h5 class="mb-3"><?php echo htmlspecialchars($envio['titulo']); ?></h5>
         <div class="doc-content mb-3"><?php echo aplicarCampos($envio['contenido'], $envio); ?></div>
+        <?php if (!empty($envio['archivo_pdf'])): ?>
+        <div class="mb-3">
+            <a href="<?php echo htmlspecialchars($envio['archivo_pdf']); ?>" target="_blank" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-pdf"></i> Ver / descargar el PDF adjunto
+            </a>
+        </div>
+        <?php endif; ?>
 
         <form method="POST" action="firmar_guardar.php" id="formFirma" onsubmit="return prepararFirma();">
             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
