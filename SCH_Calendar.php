@@ -22,6 +22,9 @@ $colorTipoDefault = '#3788d8';
 $query = "SELECT
             A.IDCITA,
             A.IDPACIENTE,
+            A.IDTIPOCONSULTA,
+            A.IDDOCTOR,
+            A.IDAGENCIA,
             CONCAT(B.NOMBRES, ' ', B.APELLIDOS) AS PACIENTE,
             B.TELEFONO,
             C.NOMBRES AS TIPO_CONSULTA,
@@ -76,14 +79,18 @@ while ($row = $resultado->fetch_assoc()) {
             'comentario'=> $row['COMENTARIO'],
             'agencia'   => $row['AGENCIA'],
             'idpaciente'=> $row['IDPACIENTE'],
+            'idtipoconsulta' => $row['IDTIPOCONSULTA'],
+            'iddoctor'       => $row['IDDOCTOR'],
+            'idagencia'      => $row['IDAGENCIA'],
         )
     );
 }
 
 $tiposConsultaActivos = array();
-$resTipos = $conexion->query("SELECT NOMBRES, COLOR FROM AG_TIPOCONSULTA WHERE ESTADO = 'A' ORDER BY NOMBRES");
+$resTipos = $conexion->query("SELECT IDTIPOCONSULTA, NOMBRES, COLOR FROM AG_TIPOCONSULTA WHERE ESTADO = 'A' ORDER BY NOMBRES");
 while ($t = $resTipos->fetch_assoc()) {
     $tiposConsultaActivos[] = array(
+        'id'     => $t['IDTIPOCONSULTA'],
         'nombre' => $t['NOMBRES'],
         'color'  => !empty($t['COLOR']) ? $t['COLOR'] : $colorTipoDefault,
     );
@@ -101,6 +108,15 @@ while ($d = $resultDoctores->fetch_assoc()) {
     $doctoresActivos[] = array(
         'id'     => $d['IDADM_USUARIO'],
         'nombre' => $d['NOMBRES'] . ' ' . $d['APELLIDOS'],
+    );
+}
+
+$agenciasActivas = array();
+$resAgencias = $conexion->query("SELECT IDAGENCIA, DESCRIPCION FROM ADM_AGENCIA WHERE ESTADO = 1 ORDER BY DESCRIPCION");
+while ($a = $resAgencias->fetch_assoc()) {
+    $agenciasActivas[] = array(
+        'id'     => $a['IDAGENCIA'],
+        'nombre' => $a['DESCRIPCION'],
     );
 }
 ?>
@@ -524,6 +540,55 @@ while ($d = $resultDoctores->fetch_assoc()) {
                         </div>
                     </div>
 
+                    <!-- Panel Editar Cita (oculto por defecto) -->
+                    <div id="editarSection" class="d-none border rounded p-3 bg-light mt-2">
+                        <h6 class="mb-1"><i class="bi bi-pencil-square"></i> Editar cita</h6>
+                        <p class="text-muted small mb-3">Corrija los datos de la cita si hubo un error al registrarla. El estado de la cita no cambia.</p>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha</label>
+                                <input type="date" id="editFecha" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Hora</label>
+                                <select id="editHora" class="form-select"></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tipo de consulta</label>
+                                <select id="editTipoConsulta" class="form-select">
+                                    <?php foreach ($tiposConsultaActivos as $tc): ?>
+                                    <option value="<?php echo $tc['id']; ?>"><?php echo htmlspecialchars($tc['nombre']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Doctor</label>
+                                <select id="editDoctor" class="form-select">
+                                    <?php foreach ($doctoresActivos as $d): ?>
+                                    <option value="<?php echo $d['id']; ?>"><?php echo htmlspecialchars($d['nombre']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Location</label>
+                                <select id="editAgencia" class="form-select">
+                                    <option value="0">Sin asignar</option>
+                                    <?php foreach ($agenciasActivas as $a): ?>
+                                    <option value="<?php echo $a['id']; ?>"><?php echo htmlspecialchars($a['nombre']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="button" class="btn btn-info text-white flex-grow-1" onclick="guardarEdicion()">
+                                <i class="bi bi-check2-square"></i> Guardar cambios
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="cerrarEditar()">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+
                     <input type="hidden" id="idCita"     name="id">
                     <input type="hidden" id="estadoCita" name="estado">
                 </div>
@@ -535,6 +600,9 @@ while ($d = $resultDoctores->fetch_assoc()) {
                        style="background:#6f42c1;color:#fff;">
                         <i class="bi bi-clipboard2-pulse"></i> Ver Historial
                     </a>
+                    <button id="btnEditar" class="btn btn-info text-white" type="button" onclick="toggleEditar()">
+                        <i class="bi bi-pencil-square"></i> Editar
+                    </button>
                     <button id="btnReagendar" class="btn btn-warning" type="button" onclick="toggleReagendar()">
                         <i class="bi bi-calendar2-event"></i> Reagendar
                     </button>
@@ -619,8 +687,8 @@ function irAConsulta() {
 }
 
 // ── Reagendar ────────────────────────────────────────────────────────
-function generarHorasReagendar() {
-    const sel = document.getElementById('nuevaHora');
+function generarHoras(selectId) {
+    const sel = document.getElementById(selectId);
     if (sel.options.length > 0) return; // ya generadas
     let h = 7, m = 0;
     while (h < 22 || (h === 22 && m === 0)) {
@@ -637,9 +705,10 @@ function generarHorasReagendar() {
 function toggleReagendar() {
     const section = document.getElementById('reagendarSection');
     const hidden  = section.classList.contains('d-none');
+    cerrarEditar();
     section.classList.toggle('d-none', !hidden);
     if (hidden) {
-        generarHorasReagendar();
+        generarHoras('nuevaHora');
         document.getElementById('nuevaFecha').value = new Date().toISOString().substring(0, 10);
     }
 }
@@ -674,6 +743,64 @@ function guardarReagenda() {
     });
 }
 
+// ── Editar cita (corregir datos sin cambiar el estado) ───────────────
+function toggleEditar() {
+    const section = document.getElementById('editarSection');
+    const hidden  = section.classList.contains('d-none');
+    cerrarReagendar();
+    section.classList.toggle('d-none', !hidden);
+    if (hidden && citaActual) {
+        generarHoras('editHora');
+        document.getElementById('editFecha').value        = citaActual.fecha;
+        document.getElementById('editHora').value         = citaActual.hora;
+        document.getElementById('editTipoConsulta').value = citaActual.idtipoconsulta || '';
+        document.getElementById('editDoctor').value       = citaActual.iddoctor || '';
+        document.getElementById('editAgencia').value      = citaActual.idagencia || '0';
+    }
+}
+
+function cerrarEditar() {
+    document.getElementById('editarSection').classList.add('d-none');
+}
+
+function guardarEdicion() {
+    const id      = document.getElementById('idCita').value;
+    const fecha   = document.getElementById('editFecha').value;
+    const hora    = document.getElementById('editHora').value;
+    const tipo    = document.getElementById('editTipoConsulta').value;
+    const doctor  = document.getElementById('editDoctor').value;
+    const agencia = document.getElementById('editAgencia').value;
+
+    if (!fecha || !hora || !tipo || !doctor) {
+        alert('Complete fecha, hora, tipo de consulta y doctor.');
+        return;
+    }
+
+    const [y, mo, d] = fecha.split('-');
+    if (!confirm(`¿Guardar los cambios de la cita? Quedará el ${d}/${mo}/${y} a las ${hora}.`)) return;
+
+    $.post('editar_cita.php', {
+        idCita: id,
+        fecha: fecha,
+        hora: hora,
+        idTipoConsulta: tipo,
+        idDoctor: doctor,
+        idAgencia: agencia
+    }, function(res) {
+        res = res.trim();
+        if (res === 'OK') {
+            alert('Cita actualizada con éxito.');
+            location.reload();
+        } else if (res === 'HORARIO_OCUPADO') {
+            alert('Ya existe otra cita en ese horario. Elija otra hora.');
+        } else {
+            alert('Error al editar: ' + res);
+        }
+    }).fail(function() {
+        alert('Error de conexión. Intente de nuevo.');
+    });
+}
+
 function validarFormulario() {
     const id     = document.getElementById('idCita').value;
     const estado = document.getElementById('estadoCita').value;
@@ -690,6 +817,8 @@ const doctoresActivos = <?php echo json_encode($doctoresActivos); ?>;
 
 // ── Modal de gestión de cita (usado por ambas vistas) ──────────────────
 const ESTADOS_CERRADOS = ['A', 'Cancelada', 'Cancelado', 'Cancelación Tardía', 'Cancelado por Profesional', 'No Asistió'];
+
+let citaActual = null; // datos de la cita abierta en el modal (para prellenar el panel de edición)
 
 function abrirModalCita(id, title, startDate, p) {
     const est      = p.cita || 'Pendiente';
@@ -736,24 +865,38 @@ function abrirModalCita(id, title, startDate, p) {
     document.getElementById('idCita').value     = id;
     document.getElementById('estadoCita').value = est;
 
+    // Guardar datos actuales de la cita para el panel de edición
+    citaActual = {
+        id: id,
+        fecha: `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`,
+        hora: `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`,
+        idtipoconsulta: p.idtipoconsulta,
+        iddoctor: p.iddoctor,
+        idagencia: p.idagencia
+    };
+
     const btnAtender     = document.getElementById('btnAtender');
     const btnHistorial   = document.getElementById('btnHistorial');
+    const btnEditar      = document.getElementById('btnEditar');
     const btnReagendar    = document.getElementById('btnReagendar');
     const btnConfirmar   = document.getElementById('btnConfirmar');
     const btnCancelar    = document.getElementById('btnCancelar');
     const btnMasEstados  = document.getElementById('btnMasEstados');
 
-    // Cerrar panel reagendar al abrir una nueva cita
+    // Cerrar paneles reagendar/editar al abrir una nueva cita
     cerrarReagendar();
+    cerrarEditar();
 
     if (cerrada) {
         btnAtender.classList.add('d-none');
+        btnEditar.classList.add('d-none');
         btnReagendar.classList.add('d-none');
         btnConfirmar.classList.add('d-none');
         btnCancelar.classList.add('d-none');
         btnMasEstados.classList.add('d-none');
     } else {
         btnAtender.classList.remove('d-none');
+        btnEditar.classList.remove('d-none');
         btnReagendar.classList.remove('d-none');
         btnConfirmar.classList.remove('d-none');
         btnCancelar.classList.remove('d-none');
