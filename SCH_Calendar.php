@@ -623,6 +623,9 @@ while ($a = $resAgencias->fetch_assoc()) {
                             <li><button class="dropdown-item" type="submit" onclick="setEstado('No Asistió')">No Asistió</button></li>
                         </ul>
                     </div>
+                    <button id="btnEliminar" class="btn btn-outline-danger" type="button" onclick="eliminarCita()">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </form>
@@ -801,6 +804,32 @@ function guardarEdicion() {
             alert('La hora debe estar entre las 07:00 y las 22:30.');
         } else {
             alert('Error al editar: ' + res);
+        }
+    }).fail(function() {
+        alert('Error de conexión. Intente de nuevo.');
+    });
+}
+
+// ── Eliminar cita (borra del calendario y notifica al paciente) ──────
+function eliminarCita() {
+    const id = document.getElementById('idCita').value;
+    if (!id) return;
+
+    if (!confirm('¿Eliminar esta cita? Se notificará al paciente por correo que su cita fue cancelada. Esta acción no se puede deshacer.')) return;
+
+    $.post('eliminar_cita.php', { idCita: id }, function(res) {
+        res = res.trim();
+        if (res === 'OK') {
+            alert('Cita eliminada. Se envió el correo de cancelación al paciente.');
+            location.reload();
+        } else if (res === 'OK_SIN_CORREO') {
+            alert('Cita eliminada. No se pudo enviar el correo (el paciente no tiene correo registrado o falló el envío).');
+            location.reload();
+        } else if (res === 'NO_ENCONTRADA') {
+            alert('La cita ya no existe o fue eliminada previamente.');
+            location.reload();
+        } else {
+            alert('Error al eliminar: ' + res);
         }
     }).fail(function() {
         alert('Error de conexión. Intente de nuevo.');
