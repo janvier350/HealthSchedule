@@ -735,8 +735,15 @@ function guardarReagenda() {
     if (!confirm(`¿Reagendar la cita al ${d}/${mo}/${y} a las ${hora}?`)) return;
 
     $.post('reagendar_cita.php', { idCita: id, fecha: fecha, hora: hora }, function(res) {
-        if (res.trim() === 'OK') {
-            alert('Cita reagendada con éxito.');
+        res = res.trim();
+        if (res === 'OK') {
+            alert('Cita reagendada con éxito. Se notificó al paciente por correo.');
+            location.reload();
+        } else if (res === 'OK_SIN_CORREO') {
+            alert('Cita reagendada. No se pudo enviar el correo de aviso (el paciente no tiene correo registrado o falló el envío).');
+            location.reload();
+        } else if (res === 'NO_ENCONTRADA') {
+            alert('La cita ya no existe o fue eliminada.');
             location.reload();
         } else {
             alert('Error al reagendar: ' + res);
