@@ -798,10 +798,19 @@ function guardarEdicion() {
         if (res === 'OK') {
             alert('Cita actualizada con éxito.');
             location.reload();
+        } else if (res === 'OK_MODIFICADA') {
+            alert('Cita actualizada. Se notificó al paciente por correo del cambio de fecha/hora.');
+            location.reload();
+        } else if (res === 'OK_SIN_CORREO') {
+            alert('Cita actualizada. No se pudo enviar el correo de aviso (el paciente no tiene correo registrado o falló el envío).');
+            location.reload();
         } else if (res === 'HORARIO_OCUPADO') {
             alert('El horario elegido se cruza con otra cita existente. Elija otra hora.');
         } else if (res === 'HORA_FUERA_RANGO') {
             alert('La hora debe estar entre las 07:00 y las 22:30.');
+        } else if (res === 'NO_ENCONTRADA') {
+            alert('La cita ya no existe o fue eliminada.');
+            location.reload();
         } else {
             alert('Error al editar: ' + res);
         }
