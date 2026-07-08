@@ -249,7 +249,12 @@ $totalRows = $result ? $result->num_rows : 0;
                                                 <small class="text-muted">Sin citas</small>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-end pe-3">
+                                        <td class="text-end pe-3" style="white-space:nowrap;">
+                                            <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                                    onclick="editarPaciente(<?php echo $p['IDPACIENTE']; ?>)"
+                                                    title="Editar paciente">
+                                                <i class="bi bi-pencil-square"></i> Editar
+                                            </button>
                                             <button class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     onclick="verHistorial(<?php echo $p['IDPACIENTE']; ?>, '<?php echo htmlspecialchars(addslashes($p['APELLIDOS'] . ', ' . $p['NOMBRES'])); ?>')"
                                                     title="Ver historial">
@@ -276,6 +281,96 @@ $totalRows = $result ? $result->num_rows : 0;
         </div><!-- /app-main__outer -->
     </div><!-- /app-main -->
 </div><!-- /app-container -->
+
+<!-- ══ MODAL EDITAR PACIENTE ════════════════════════════════════════════ -->
+<div class="modal fade" id="modalEditarPaciente" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2" style="background:#5a2d82;">
+                <h6 class="modal-title text-white mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>Editar Paciente
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarPaciente">
+                    <input type="hidden" id="epId" name="idPaciente">
+
+                    <!-- Datos personales -->
+                    <h6 class="text-muted mb-2"><i class="bi bi-person-vcard"></i> Datos del paciente</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Nombres *</label>
+                            <input type="text" id="epNombres" name="nombres" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Apellidos *</label>
+                            <input type="text" id="epApellidos" name="apellidos" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Cédula</label>
+                            <input type="text" id="epCedula" name="cedula" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Teléfono</label>
+                            <input type="text" id="epTelefono" name="telefono" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Fecha de nacimiento</label>
+                            <input type="date" id="epFecNac" name="fecNac" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Correo</label>
+                            <input type="email" id="epEmail" name="email" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Sexo</label>
+                            <input type="text" id="epSex" name="sex" class="form-control" placeholder="M / F">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Género</label>
+                            <input type="text" id="epGender" name="gender" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Dirección</label>
+                            <input type="text" id="epAddress" name="address" class="form-control">
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    <h6 class="text-muted mb-2"><i class="bi bi-journal-text"></i> Notas</h6>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-danger">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Alerta
+                        </label>
+                        <textarea id="epAlerta" name="alerta" class="form-control" rows="2"
+                                  placeholder="Aviso importante que debe verse siempre (alergias, condición crítica, etc.)"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Notas Importantes</label>
+                        <textarea id="epNotes" name="notes" class="form-control" rows="3"
+                                  placeholder="Notas clínicas o generales del paciente."></textarea>
+                    </div>
+                    <div class="mb-1">
+                        <label class="form-label small fw-semibold">Notas de Facturación</label>
+                        <textarea id="epAddNotes" name="addNotes" class="form-control" rows="2"
+                                  placeholder="Notas relacionadas a facturación / seguros."></textarea>
+                    </div>
+                    <div id="epAlertaAviso" class="small text-muted d-none mt-1">
+                        <i class="bi bi-info-circle"></i> El campo <strong>Alerta</strong> no se guardará hasta ejecutar
+                        <a href="migrar_notas_paciente.php" target="_blank">la migración de notas</a>.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="epGuardar" onclick="guardarPaciente()">
+                    <i class="bi bi-check-lg"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ══ MODAL HISTORIAL ══════════════════════════════════════════════════ -->
 <div class="modal fade" id="modalHistorial" tabindex="-1">
@@ -324,6 +419,73 @@ $totalRows = $result ? $result->num_rows : 0;
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
+let epModal = null;
+
+function editarPaciente(idPaciente) {
+    if (!epModal) epModal = new bootstrap.Modal(document.getElementById('modalEditarPaciente'));
+
+    // Limpiar y bloquear mientras carga
+    document.getElementById('formEditarPaciente').reset();
+    document.getElementById('epId').value = idPaciente;
+
+    $.getJSON('get_paciente.php', { id: idPaciente })
+        .done(function(p) {
+            if (p.error) { alert('No se pudo cargar el paciente: ' + p.error); return; }
+            document.getElementById('epNombres').value   = p.NOMBRES   || '';
+            document.getElementById('epApellidos').value = p.APELLIDOS || '';
+            document.getElementById('epCedula').value    = p.CEDULA    || '';
+            document.getElementById('epTelefono').value  = p.TELEFONO  || '';
+            document.getElementById('epFecNac').value    = p.FECHANACIMIENTO || '';
+            document.getElementById('epEmail').value     = p.EMAIL     || '';
+            document.getElementById('epSex').value       = p.SEX       || '';
+            document.getElementById('epGender').value    = p.GENDER    || '';
+            document.getElementById('epAddress').value   = p.ADDRESS   || '';
+            document.getElementById('epAlerta').value    = p.ALERTA    || '';
+            document.getElementById('epNotes').value     = p.NOTES     || '';
+            document.getElementById('epAddNotes').value  = p.ADDNOTES  || '';
+
+            // Si la columna ALERTA aún no existe, avisar que ese campo no se guardará
+            const aviso = document.getElementById('epAlertaAviso');
+            aviso.classList.toggle('d-none', p._tieneAlerta !== false);
+
+            epModal.show();
+        })
+        .fail(function(xhr) {
+            alert('Error al cargar el paciente (HTTP ' + xhr.status + ').');
+        });
+}
+
+function guardarPaciente() {
+    const nombres   = document.getElementById('epNombres').value.trim();
+    const apellidos = document.getElementById('epApellidos').value.trim();
+    if (!nombres || !apellidos) {
+        alert('Nombres y apellidos son obligatorios.');
+        return;
+    }
+
+    const btn = document.getElementById('epGuardar');
+    btn.disabled = true;
+
+    $.post('editar_paciente.php', $('#formEditarPaciente').serialize(), function(res) {
+        res = res.trim();
+        if (res === 'OK' || res === 'OK_SIN_ALERTA') {
+            if (res === 'OK_SIN_ALERTA') {
+                alert('Paciente actualizado. Nota: el campo Alerta no se guardó porque falta ejecutar la migración de notas.');
+            }
+            location.reload();
+        } else if (res === 'DATOS_INCOMPLETOS') {
+            alert('Faltan datos obligatorios (nombres y apellidos).');
+            btn.disabled = false;
+        } else {
+            alert('Error al guardar: ' + res);
+            btn.disabled = false;
+        }
+    }).fail(function() {
+        alert('Error de conexión. Intente de nuevo.');
+        btn.disabled = false;
+    });
+}
+
 function verHistorial(idPaciente, nombre) {
     document.getElementById('modalPacienteNombre').textContent = nombre;
     document.getElementById('modalHistorialBody').innerHTML =

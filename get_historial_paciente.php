@@ -9,15 +9,24 @@ if (!isset($_SESSION["rol"])) { http_response_code(403); exit; }
 $idPaciente = (int)($_GET['id'] ?? 0);
 if (!$idPaciente) { echo '<p class="text-danger p-3">ID no válido.</p>'; exit; }
 
+// ¿Existe la columna ALERTA? (la agrega migrar_notas_paciente.php)
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneAlerta = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='ALERTA'"
+)->fetch_assoc()['c'] > 0;
+
 // Datos del paciente
+$colsPac = "NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, FECHA_REGISTRO, NOTES, ADDNOTES"
+         . ($tieneAlerta ? ", ALERTA" : "");
 $stmtP = $conexion->prepare(
-    "SELECT NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, FECHA_REGISTRO
-     FROM AG_PACIENTE WHERE IDPACIENTE = ? LIMIT 1"
+    "SELECT $colsPac FROM AG_PACIENTE WHERE IDPACIENTE = ? LIMIT 1"
 );
 $stmtP->bind_param("i", $idPaciente);
 $stmtP->execute();
 $pac = $stmtP->get_result()->fetch_assoc();
 $stmtP->close();
+if ($pac && !$tieneAlerta) $pac['ALERTA'] = '';
 
 if (!$pac) { echo '<p class="text-danger p-3">Paciente no encontrado.</p>'; exit; }
 
@@ -188,6 +197,42 @@ function imcColor($imc) {
         </div>
     </div>
 </div>
+
+<?php
+    $alertaTxt   = trim($pac['ALERTA']   ?? '');
+    $notasTxt    = trim($pac['NOTES']    ?? '');
+    $factNotasTxt= trim($pac['ADDNOTES'] ?? '');
+?>
+<!-- ── ALERTA (banner rojo, siempre visible si existe) ───────── -->
+<?php if ($alertaTxt !== ''): ?>
+<div class="mx-4 mt-3 p-2 rounded d-flex align-items-start gap-2"
+     style="background:#fdecea;border-left:4px solid #dc3545;">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;"></i>
+    <div style="font-size:.85rem;color:#842029;white-space:pre-wrap;"><?php echo htmlspecialchars($alertaTxt); ?></div>
+</div>
+<?php endif; ?>
+
+<!-- ── NOTAS DEL PACIENTE (importantes / facturación) ────────── -->
+<?php if ($notasTxt !== '' || $factNotasTxt !== ''): ?>
+<div class="mx-4 mt-2 mb-1 row g-2">
+    <?php if ($notasTxt !== ''): ?>
+    <div class="col-md-6">
+        <div class="border rounded p-2 h-100" style="background:#fff;">
+            <div class="info-label mb-1"><i class="bi bi-journal-text"></i> Notas Importantes</div>
+            <div style="font-size:.83rem;white-space:pre-wrap;"><?php echo htmlspecialchars($notasTxt); ?></div>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php if ($factNotasTxt !== ''): ?>
+    <div class="col-md-6">
+        <div class="border rounded p-2 h-100" style="background:#fff;">
+            <div class="info-label mb-1"><i class="bi bi-receipt"></i> Notas de Facturación</div>
+            <div style="font-size:.83rem;white-space:pre-wrap;"><?php echo htmlspecialchars($factNotasTxt); ?></div>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 
 <!-- ── TABLA DE CITAS ────────────────────────────────────────── -->
 <div class="px-0">
