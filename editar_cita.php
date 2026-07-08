@@ -21,23 +21,33 @@ if (!$idCita || !$fecha || !$hora || !$idTipoConsulta || !$idDoctor) {
     exit;
 }
 
-// Validar formato de fecha (YYYY-MM-DD) y hora (HH:MM)
+// Validar formato de fecha (YYYY-MM-DD) y hora (HH:MM, cualquier minuto)
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) || !preg_match('/^\d{2}:\d{2}$/', $hora)) {
     echo 'FORMATO_INVALIDO';
+    exit;
+}
+
+// Horario de atención: 07:00 a 22:30
+if ($hora < '07:00' || $hora > '22:30') {
+    echo 'HORA_FUERA_RANGO';
     exit;
 }
 
 // Hora fin = 30 minutos después
 $horaFin = date('H:i', strtotime($hora) + 30 * 60);
 
-// Verificar que no exista otra cita activa en ese horario (excluyendo esta misma cita)
+// Verificar que la cita no se solape con otra cita activa del mismo día
+// (excluyendo esta misma cita). Al permitir minutos libres ya no basta
+// comparar la hora exacta: dos citas chocan si sus rangos se cruzan.
 $stmt_valida = $conexion->prepare(
     "SELECT IDCITA FROM AG_CITA
-     WHERE FECHA_CITA = ? AND HORA_INICIO = ? AND ESTADO = 'A'
+     WHERE FECHA_CITA = ? AND ESTADO = 'A'
        AND ESTADO_CITA NOT IN ('Cancelada','Cancelado')
-       AND IDCITA <> ?"
+       AND IDCITA <> ?
+       AND TIME(HORA_INICIO) < TIME(?)
+       AND TIME(HORA_FIN)    > TIME(?)"
 );
-$stmt_valida->bind_param("ssi", $fecha, $hora, $idCita);
+$stmt_valida->bind_param("siss", $fecha, $idCita, $horaFin, $hora);
 $stmt_valida->execute();
 $stmt_valida->store_result();
 

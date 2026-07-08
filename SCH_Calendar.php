@@ -551,7 +551,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Hora</label>
-                                <select id="editHora" class="form-select"></select>
+                                <input type="time" id="editHora" class="form-control" min="07:00" max="22:30">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Tipo de consulta</label>
@@ -750,7 +750,6 @@ function toggleEditar() {
     cerrarReagendar();
     section.classList.toggle('d-none', !hidden);
     if (hidden && citaActual) {
-        generarHoras('editHora');
         document.getElementById('editFecha').value        = citaActual.fecha;
         document.getElementById('editHora').value         = citaActual.hora;
         document.getElementById('editTipoConsulta').value = citaActual.idtipoconsulta || '';
@@ -776,6 +775,11 @@ function guardarEdicion() {
         return;
     }
 
+    if (hora < '07:00' || hora > '22:30') {
+        alert('La hora debe estar entre las 07:00 y las 22:30.');
+        return;
+    }
+
     const [y, mo, d] = fecha.split('-');
     if (!confirm(`¿Guardar los cambios de la cita? Quedará el ${d}/${mo}/${y} a las ${hora}.`)) return;
 
@@ -792,7 +796,9 @@ function guardarEdicion() {
             alert('Cita actualizada con éxito.');
             location.reload();
         } else if (res === 'HORARIO_OCUPADO') {
-            alert('Ya existe otra cita en ese horario. Elija otra hora.');
+            alert('El horario elegido se cruza con otra cita existente. Elija otra hora.');
+        } else if (res === 'HORA_FUERA_RANGO') {
+            alert('La hora debe estar entre las 07:00 y las 22:30.');
         } else {
             alert('Error al editar: ' + res);
         }
