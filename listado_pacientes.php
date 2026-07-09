@@ -164,7 +164,7 @@ $totalRows = $result ? $result->num_rows : 0;
                                         <i class="bi bi-search text-muted"></i>
                                     </span>
                                     <input type="text" name="q" class="form-control border-start-0"
-                                           placeholder="Buscar por nombre, apellido, cédula o teléfono…"
+                                           placeholder="Buscar por nombre, apellido, ID o teléfono…"
                                            value="<?php echo htmlspecialchars($q); ?>" autofocus>
                                 </div>
                             </div>
@@ -197,7 +197,7 @@ $totalRows = $result ? $result->num_rows : 0;
                                     <tr>
                                         <th style="width:36px;"></th>
                                         <th>Paciente</th>
-                                        <th>Cédula</th>
+                                        <th>ID</th>
                                         <th>Teléfono</th>
                                         <th>Correo</th>
                                         <th class="text-center">Citas</th>
@@ -308,7 +308,7 @@ $totalRows = $result ? $result->num_rows : 0;
                             <input type="text" id="epApellidos" name="apellidos" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Cédula</label>
+                            <label class="form-label small fw-semibold">ID</label>
                             <input type="text" id="epCedula" name="cedula" class="form-control">
                         </div>
                         <div class="col-md-4">
