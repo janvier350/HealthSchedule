@@ -291,7 +291,7 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" onmousedown="event.preventDefault()" title="Insertar dato del paciente">Insertar dato</button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{paciente}}');return false;">Nombre del paciente</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{cedula}}');return false;">Cédula / ID</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{cedula}}');return false;">ID</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha_nacimiento}}');return false;">Fecha de nacimiento</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha}}');return false;">Fecha (del documento)</a></li>
                             </ul>

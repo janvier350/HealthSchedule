@@ -63,11 +63,11 @@ $result = $conexion->query($sql);
             <!-- FILTROS -->
             <form method="GET" class="row g-2 mb-4 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label">Buscar paciente o cédula</label>
+                    <label class="form-label">Buscar paciente o ID</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" name="q" class="form-control"
-                               placeholder="Nombre o cédula..."
+                               placeholder="Nombre o ID..."
                                value="<?php echo htmlspecialchars($busqueda); ?>">
                     </div>
                 </div>
@@ -105,7 +105,7 @@ $result = $conexion->query($sql);
                         <tr>
                             <th>#</th>
                             <th>Paciente</th>
-                            <th>Cédula</th>
+                            <th>ID</th>
                             <th>Fecha Cita</th>
                             <th>Tipo Consulta</th>
                             <th>Doctor</th>

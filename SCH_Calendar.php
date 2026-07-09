@@ -661,7 +661,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                             <input type="text" id="epApellidos" name="apellidos" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Cédula</label>
+                            <label class="form-label small fw-semibold">ID</label>
                             <input type="text" id="epCedula" name="cedula" class="form-control">
                         </div>
                         <div class="col-md-4">

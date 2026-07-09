@@ -140,7 +140,7 @@ function imcColor($imc) {
                     <div class="fw-bold" style="font-size:1.05rem;">
                         <?php echo htmlspecialchars($pac['NOMBRES'] . ' ' . $pac['APELLIDOS']); ?>
                     </div>
-                    <small class="text-muted">C.I. <?php echo htmlspecialchars($pac['CEDULA'] ?? '—'); ?></small>
+                    <small class="text-muted">ID <?php echo htmlspecialchars($pac['CEDULA'] ?? '—'); ?></small>
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-3" style="font-size:.85rem;">
