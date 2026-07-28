@@ -284,6 +284,13 @@ if ($queryRoles) {
                                                        </div>
                                                     </div>
                                                     <div class="form-row">
+                                                       <div class="col-md-8 mb-3">
+                                                           <label for="validationCustomCorreo">Correo electrónico</label>
+                                                           <input type="email" class="form-control" id="validationCustomCorreo" name="correo" placeholder="usuario@dominio.com">
+                                                           <small class="text-muted">Si se indica, se le enviará un correo de bienvenida con el enlace de la aplicación.</small>
+                                                       </div>
+                                                    </div>
+                                                    <div class="form-row">
                                                         <div class="col-md-4 mb-3">
                                                             <label for="validationCustomUsername">Username</label>
                                                             <div class="input-group">
