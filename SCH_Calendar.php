@@ -290,7 +290,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <button type="button" class="dropdown-item">Perfil de Usuario</button>
+                                        <a href="perfil.php" class="dropdown-item">Perfil de Usuario</a>
                                         <button type="button" class="dropdown-item">Configuración</button>
                                         <div class="dropdown-divider"></div>
                                         <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
