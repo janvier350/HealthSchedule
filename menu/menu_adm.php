@@ -60,6 +60,11 @@ function menuActivo($paginas, $actual) {
                     <i class="metismenu-icon bi bi-house-door"></i> General
                 </a>
             </li>
+            <li>
+                <a href="perfil.php" class="<?php echo menuActivo('perfil.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-person-circle"></i> Mi Perfil
+                </a>
+            </li>
 
             <!-- ══ AGENDA ══════════════════════════════════════════════ -->
             <li class="app-sidebar__heading">Agenda</li>
