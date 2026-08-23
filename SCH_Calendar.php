@@ -135,6 +135,40 @@ while ($a = $resAgencias->fetch_assoc()) {
     <link href="./main.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
     <style>
+        /* ── Modal Agendar Cita: campos claros y con borde (independiente del CDN) ── */
+        #editModal .modal-body .form-label { font-weight: 600; color: #33475b; margin-bottom: .3rem; }
+        #editModal .form-control,
+        #editModal .form-select { min-height: 46px; border: 1px solid #ced4da; border-radius: .5rem; }
+
+        /* Select2: garantizar apariencia aunque el tema del CDN no cargue */
+        #editModal .select2-container { width: 100% !important; }
+        #editModal .select2-container .select2-selection--single {
+            height: 46px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #ced4da;
+            border-radius: .5rem;
+            background-color: #fff;
+            padding: 0 .75rem;
+        }
+        #editModal .select2-container--open .select2-selection--single {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+        }
+        #editModal .select2-selection--single .select2-selection__rendered {
+            line-height: 44px !important;
+            padding: 0 !important;
+            color: #212529;
+            font-size: 1rem;
+        }
+        #editModal .select2-selection__placeholder { color: #6c757d; }
+        #editModal .select2-selection--single .select2-selection__arrow { height: 44px !important; right: 10px; }
+        /* Dropdown de búsqueda */
+        .select2-dropdown { border: 1px solid #ced4da; border-radius: .5rem; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+        .select2-search__field { border: 1px solid #ced4da !important; border-radius: .375rem; padding: .4rem .6rem; }
+        .select2-results__option { padding: .5rem .75rem; }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: #1976d2; }
+
         .fc-event { cursor: pointer; font-size: 0.85em; padding: 2px 5px; }
         #eventModal .btn { transition: all 0.3s ease; white-space: nowrap; }
         #eventModal .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
