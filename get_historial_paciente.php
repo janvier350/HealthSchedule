@@ -84,6 +84,29 @@ foreach ($citas as $_c) {
 $imcs    = array_filter(array_column($citas, 'IMC'));
 $imcProm = count($imcs) ? number_format(array_sum($imcs) / count($imcs), 1) : null;
 
+// Planes de peso guardados (Planificador de Peso Corporal) — si la tabla existe
+$planesPeso = [];
+$tienePlanPeso = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.TABLES
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PLAN_PESO'"
+)->fetch_assoc()['c'] > 0;
+if ($tienePlanPeso) {
+    $stmtPl = $conexion->prepare(
+        "SELECT P.PESO_INICIAL, P.PESO_META, P.FECHA_META, P.PAL_META,
+                P.CAL_MANTENER_ACTUAL, P.CAL_ALCANZAR, P.CAL_MANTENER_META, P.UNIDADES,
+                P.FECHA_REGISTRO, CONCAT(U.NOMBRES,' ',U.APELLIDOS) AS CREADO_POR
+         FROM AG_PLAN_PESO P
+         LEFT JOIN ADM_USUARIO U ON U.IDADM_USUARIO = P.IDADM_USUARIO
+         WHERE P.IDPACIENTE = ? AND P.ESTADO = 'A'
+         ORDER BY P.FECHA_REGISTRO DESC"
+    );
+    $stmtPl->bind_param("i", $idPaciente);
+    $stmtPl->execute();
+    $resPl = $stmtPl->get_result();
+    while ($rp = $resPl->fetch_assoc()) { $planesPeso[] = $rp; }
+    $stmtPl->close();
+}
+
 // Documentos enviados a este paciente
 $documentosPac = [];
 $stmtDoc = $conexion->prepare(
@@ -231,6 +254,49 @@ function imcColor($imc) {
         </div>
     </div>
     <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<!-- ── PLANES DE PESO GUARDADOS ──────────────────────────────── -->
+<?php if (!empty($planesPeso)): ?>
+<div class="mx-4 mt-3">
+    <div class="border rounded p-2" style="background:#fff;">
+        <div class="info-label mb-2"><i class="bi bi-graph-down-arrow"></i> Planes de peso (Planificador NIH)</div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0" style="font-size:.8rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Peso inicial → meta</th>
+                        <th>Fecha meta</th>
+                        <th class="text-center">Mantener actual</th>
+                        <th class="text-center">Alcanzar meta</th>
+                        <th class="text-center">Mantener meta</th>
+                        <th>Registrado por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($planesPeso as $pl):
+                    $esUS = (($pl['UNIDADES'] ?? '') === 'us');
+                    $u    = $esUS ? 'lb' : 'kg';
+                    $pi   = $esUS ? ($pl['PESO_INICIAL'] * 2.2) : $pl['PESO_INICIAL'];
+                    $pm   = $esUS ? ($pl['PESO_META']    * 2.2) : $pl['PESO_META'];
+                ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($pl['FECHA_REGISTRO']))); ?></td>
+                        <td><?php echo number_format($pi, 1) . ' → ' . number_format($pm, 1) . ' ' . $u; ?></td>
+                        <td><?php echo $pl['FECHA_META'] ? htmlspecialchars(date('d/m/Y', strtotime($pl['FECHA_META']))) : '—'; ?></td>
+                        <td class="text-center"><?php echo number_format($pl['CAL_MANTENER_ACTUAL']); ?></td>
+                        <td class="text-center"><strong><?php echo number_format($pl['CAL_ALCANZAR']); ?></strong></td>
+                        <td class="text-center"><?php echo number_format($pl['CAL_MANTENER_META']); ?></td>
+                        <td><?php echo htmlspecialchars(trim($pl['CREADO_POR'] ?? '') ?: '—'); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted mt-1" style="font-size:.7rem;">Calorías por día. Modelo NIH (Hall et al., Lancet 2011).</div>
+    </div>
 </div>
 <?php endif; ?>
 

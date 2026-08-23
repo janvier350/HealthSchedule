@@ -227,6 +227,13 @@ if ($resP) {
 
                             <div id="bwpAviso" class="alert alert-warning py-2 d-none"></div>
 
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <button type="button" class="btn btn-success btn-sm" id="btnGuardarPlan" onclick="guardarPlan()" disabled>
+                                    <i class="bi bi-save me-1"></i> Guardar en la ficha del paciente
+                                </button>
+                                <span id="guardarHint" class="small text-muted">Selecciona un paciente arriba para poder guardar el plan.</span>
+                            </div>
+
                             <div class="card shadow-sm">
                                 <div class="card-header py-2"><i class="bi bi-graph-down me-1"></i>Trayectoria estimada del peso</div>
                                 <div class="card-body">
@@ -319,6 +326,9 @@ function pesoAKg(v) { return unidades === 'us' ? v / LB_PER_KG : v; }
 function kgAPeso(kg) { return unidades === 'us' ? kg * LB_PER_KG : kg; }
 
 // ── Precarga de paciente ─────────────────────────────────────────────
+var pacienteSelId = null;
+var pacienteSelNombre = '';
+
 document.getElementById('pacienteBuscar').addEventListener('change', function () {
     var m = this.value.match(/#(\d+)\s*$/);
     var msg = document.getElementById('pacienteMsg');
@@ -328,6 +338,9 @@ document.getElementById('pacienteBuscar').addEventListener('change', function ()
     $.getJSON('get_paciente_bwp.php', { id: id })
         .done(function (d) {
             if (d.error) { msg.innerHTML = '<span class="text-danger">No se pudo cargar.</span>'; return; }
+            pacienteSelId = id;
+            pacienteSelNombre = d.nombre || '';
+            actualizarBotonGuardar();
             if (d.sex === 0 || d.sex === 1) document.getElementById('sexo').value = String(d.sex);
             if (d.edad)   document.getElementById('edad').value = d.edad;
             if (d.pesoKg) document.getElementById('peso').value = round1(kgAPeso(d.pesoKg));
@@ -418,6 +431,70 @@ function calcularBWP() {
         + 'Actividad durante la meta: PAL ' + palMeta + '.';
 
     dibujarChart(tray, unidadPeso);
+
+    // Guardar el último cálculo para poder registrarlo en la ficha
+    ultimoCalculo = {
+        unidades: unidades,
+        sexo: sexo,
+        edad: edad,
+        estaturaM: alturaM,
+        pesoKg: pesoKg,
+        pal: pal,
+        metaKg: metaKg,
+        fechaMeta: fechaMeta,
+        palMeta: palMeta,
+        calMantenerActual: Math.round(mantenerActual),
+        calAlcanzar: Math.round(alcanzar),
+        calMantenerMeta: Math.round(mantenerMeta)
+    };
+    actualizarBotonGuardar();
+}
+
+var ultimoCalculo = null;
+
+function actualizarBotonGuardar() {
+    var btn = document.getElementById('btnGuardarPlan');
+    var hint = document.getElementById('guardarHint');
+    if (!btn) return;
+    if (!ultimoCalculo) {
+        btn.disabled = true;
+        hint.textContent = 'Primero presiona Calcular.';
+        return;
+    }
+    if (!pacienteSelId) {
+        btn.disabled = true;
+        hint.textContent = 'Selecciona un paciente arriba para poder guardar el plan.';
+        return;
+    }
+    btn.disabled = false;
+    hint.textContent = 'Se guardará en la ficha de ' + (pacienteSelNombre || 'el paciente') + '.';
+}
+
+function guardarPlan() {
+    if (!pacienteSelId) { alert('Selecciona un paciente para guardar el plan.'); return; }
+    if (!ultimoCalculo) { alert('Primero calcula el plan.'); return; }
+
+    var btn = document.getElementById('btnGuardarPlan');
+    btn.disabled = true;
+
+    var datos = Object.assign({ idPaciente: pacienteSelId }, ultimoCalculo);
+    $.post('guardar_plan_peso.php', datos, function (res) {
+        res = (res || '').trim();
+        if (res === 'OK') {
+            alert('Plan guardado en la ficha del paciente.');
+        } else if (res === 'SIN_TABLA') {
+            alert('Falta crear la tabla de planes. Pide al administrador ejecutar migrar_plan_peso.php una vez.');
+        } else if (res === 'SIN_SESION') {
+            alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+            window.location.href = 'index.php';
+        } else {
+            alert('No se pudo guardar: ' + res);
+        }
+        btn.disabled = false;
+    }).fail(function () {
+        alert('Error de conexión al guardar.');
+        btn.disabled = false;
+    });
 }
 
 // ── Gráfica en canvas (sin librerías externas) ───────────────────────
