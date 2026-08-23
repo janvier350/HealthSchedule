@@ -84,6 +84,11 @@ function menuActivo($paginas, $actual) {
                     <i class="metismenu-icon bi bi-calendar-check"></i> Atendidas
                 </a>
             </li>
+            <li>
+                <a href="body_weight_planner.php" class="<?php echo menuActivo('body_weight_planner.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-graph-down-arrow"></i> Planificador de Peso
+                </a>
+            </li>
             <?php endif; ?>
             <?php if ($esSistema): ?>
             <li>
