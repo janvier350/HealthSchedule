@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if (!isset($_SESSION["rol"], $_SESSION["iduser"])) {
@@ -40,11 +41,11 @@ $nombreCompleto = trim(($u['NOMBRES'] ?? '') . ' ' . ($u['APELLIDOS'] ?? ''));
 $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS'] ?? '', 0, 1));
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mi Perfil</title>
+    <title><?php te('profile.title'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
@@ -118,8 +119,8 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                                 <i class="pe-7s-user icon-gradient bg-plum-plate"></i>
                             </div>
                             <div>
-                                Mi Perfil
-                                <div class="page-title-subheading">Consulta tus datos y cambia tu contraseña</div>
+                                <?php te('profile.title'); ?>
+                                <div class="page-title-subheading"><?php te('profile.subtitle'); ?></div>
                             </div>
                         </div>
                     </div>
@@ -139,15 +140,15 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                                 </div>
                                 <hr>
                                 <div class="mb-2">
-                                    <div class="info-label">Usuario</div>
+                                    <div class="info-label"><?php te('profile.username'); ?></div>
                                     <div><?php echo htmlspecialchars($u['USUARIO'] ?? ($_SESSION['username'] ?? '')); ?></div>
                                 </div>
                                 <div class="mb-2">
-                                    <div class="info-label">Teléfono</div>
+                                    <div class="info-label"><?php te('profile.phone'); ?></div>
                                     <div><?php echo htmlspecialchars($u['TELEFONO'] ?? '—') ?: '—'; ?></div>
                                 </div>
                                 <div class="mb-0">
-                                    <div class="info-label">Correo</div>
+                                    <div class="info-label"><?php te('profile.email'); ?></div>
                                     <div><?php echo htmlspecialchars(($tieneCorreo ? ($u['CORREO'] ?? '') : '') ?: '—'); ?></div>
                                 </div>
                             </div>
@@ -158,25 +159,25 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                     <div class="col-md-7 mb-3">
                         <div class="card shadow-sm h-100">
                             <div class="card-header py-2">
-                                <i class="bi bi-shield-lock me-1"></i> Cambiar contraseña
+                                <i class="bi bi-shield-lock me-1"></i> <?php te('profile.changePassword'); ?>
                             </div>
                             <div class="card-body">
                                 <form id="formClave" onsubmit="return false;">
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold">Contraseña actual</label>
+                                        <label class="form-label small fw-semibold"><?php te('profile.currentPassword'); ?></label>
                                         <input type="password" id="claveActual" name="claveActual" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold">Nueva contraseña</label>
+                                        <label class="form-label small fw-semibold"><?php te('profile.newPassword'); ?></label>
                                         <input type="password" id="claveNueva" name="claveNueva" class="form-control" minlength="6" required>
-                                        <small class="text-muted">Mínimo 6 caracteres.</small>
+                                        <small class="text-muted"><?php te('profile.minChars'); ?></small>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold">Confirmar nueva contraseña</label>
+                                        <label class="form-label small fw-semibold"><?php te('profile.confirmNewPassword'); ?></label>
                                         <input type="password" id="claveConfirmar" class="form-control" minlength="6" required>
                                     </div>
                                     <button type="button" class="btn btn-primary" id="btnGuardarClave" onclick="guardarClave()">
-                                        <i class="bi bi-check-lg"></i> Guardar nueva contraseña
+                                        <i class="bi bi-check-lg"></i> <?php te('profile.saveNewPassword'); ?>
                                     </button>
                                 </form>
                             </div>
@@ -192,21 +193,32 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
+var T = {
+    fillAll:        <?php echo json_encode(t('profile.js.fillAll')); ?>,
+    min6:           <?php echo json_encode(t('profile.js.min6')); ?>,
+    mismatch:       <?php echo json_encode(t('profile.js.mismatch')); ?>,
+    updated:        <?php echo json_encode(t('profile.js.updated')); ?>,
+    currentWrong:   <?php echo json_encode(t('profile.js.currentWrong')); ?>,
+    sessionExpired: <?php echo json_encode(t('profile.js.sessionExpired')); ?>,
+    updateError:    <?php echo json_encode(t('profile.js.updateError')); ?>,
+    connError:      <?php echo json_encode(t('common.js.connError')); ?>
+};
+
 function guardarClave() {
     const actual     = document.getElementById('claveActual').value;
     const nueva       = document.getElementById('claveNueva').value;
     const confirmar  = document.getElementById('claveConfirmar').value;
 
     if (!actual || !nueva || !confirmar) {
-        alert('Complete todos los campos.');
+        alert(T.fillAll);
         return;
     }
     if (nueva.length < 6) {
-        alert('La nueva contraseña debe tener al menos 6 caracteres.');
+        alert(T.min6);
         return;
     }
     if (nueva !== confirmar) {
-        alert('La nueva contraseña y su confirmación no coinciden.');
+        alert(T.mismatch);
         return;
     }
 
@@ -216,21 +228,21 @@ function guardarClave() {
     $.post('cambiar_clave_perfil.php', { claveActual: actual, claveNueva: nueva }, function(res) {
         res = res.trim();
         if (res === 'OK') {
-            alert('Contraseña actualizada correctamente.');
+            alert(T.updated);
             document.getElementById('formClave').reset();
         } else if (res === 'CLAVE_ACTUAL_INCORRECTA') {
-            alert('La contraseña actual es incorrecta.');
+            alert(T.currentWrong);
         } else if (res === 'CLAVE_CORTA') {
-            alert('La nueva contraseña debe tener al menos 6 caracteres.');
+            alert(T.min6);
         } else if (res === 'SIN_SESION') {
-            alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+            alert(T.sessionExpired);
             window.location.href = 'index.php';
         } else {
-            alert('Error al actualizar: ' + res);
+            alert(T.updateError + res);
         }
         btn.disabled = false;
     }).fail(function() {
-        alert('Error de conexión. Intente de nuevo.');
+        alert(T.connError);
         btn.disabled = false;
     });
 }

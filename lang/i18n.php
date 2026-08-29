@@ -42,3 +42,29 @@ if (!function_exists('te')) {
         echo htmlspecialchars(t($key, $default), ENT_QUOTES, 'UTF-8');
     }
 }
+
+if (!function_exists('estado_label')) {
+    // Traduce un estado de cita almacenado en español a la etiqueta del idioma actual.
+    function estado_label($estado) {
+        return t('estado.' . trim((string)$estado), (string)$estado);
+    }
+}
+
+if (!function_exists('fecha_larga')) {
+    // Fecha larga localizada (EN: "Saturday, August 29, 2026" / ES: "Sábado, 29 de Agosto de 2026")
+    function fecha_larga($ts = null) {
+        if ($ts === null) $ts = time();
+        $wd = (int)date('w', $ts);
+        $mo = (int)date('n', $ts);
+        $d  = (int)date('j', $ts);
+        $y  = date('Y', $ts);
+        if (current_lang() === 'es') {
+            $dias  = array('Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado');
+            $meses = array('','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre');
+            return $dias[$wd] . ', ' . $d . ' de ' . $meses[$mo] . ' de ' . $y;
+        }
+        $days   = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
+        $months = array('','January','February','March','April','May','June','July','August','September','October','November','December');
+        return $days[$wd] . ', ' . $months[$mo] . ' ' . $d . ', ' . $y;
+    }
+}
