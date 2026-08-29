@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if (!isset($_SESSION["rol"])) {
@@ -46,11 +47,11 @@ $result = $conexion->query($sql);
 $totalRows = $result ? $result->num_rows : 0;
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Listado de Pacientes</title>
+    <title><?php te('plist.title'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
@@ -112,7 +113,7 @@ $totalRows = $result ? $result->num_rows : 0;
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -140,15 +141,15 @@ $totalRows = $result ? $result->num_rows : 0;
                                 <i class="pe-7s-users icon-gradient bg-plum-plate"></i>
                             </div>
                             <div>
-                                Listado de Pacientes
+                                <?php te('plist.title'); ?>
                                 <div class="page-title-subheading">
-                                    Busca, consulta historial y gestiona pacientes
+                                    <?php te('plist.subtitle'); ?>
                                 </div>
                             </div>
                         </div>
                         <div class="page-title-actions">
                             <a href="PNC_PacienteCrear.php" class="btn btn-primary btn-sm">
-                                <i class="bi bi-person-plus-fill me-1"></i> Nuevo Paciente
+                                <i class="bi bi-person-plus-fill me-1"></i> <?php te('plist.new'); ?>
                             </a>
                         </div>
                     </div>
@@ -164,14 +165,14 @@ $totalRows = $result ? $result->num_rows : 0;
                                         <i class="bi bi-search text-muted"></i>
                                     </span>
                                     <input type="text" name="q" class="form-control border-start-0"
-                                           placeholder="Buscar por nombre, apellido, ID o teléfono…"
+                                           placeholder="<?php te('plist.searchPh'); ?>"
                                            value="<?php echo htmlspecialchars($q); ?>" autofocus>
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <button type="submit" class="btn btn-primary">Buscar</button>
+                                <button type="submit" class="btn btn-primary"><?php te('common.search'); ?></button>
                                 <?php if ($q !== ''): ?>
-                                    <a href="listado_pacientes.php" class="btn btn-outline-secondary ms-1">Limpiar</a>
+                                    <a href="listado_pacientes.php" class="btn btn-outline-secondary ms-1"><?php te('plist.clear'); ?></a>
                                 <?php endif; ?>
                             </div>
                         </form>
@@ -183,9 +184,9 @@ $totalRows = $result ? $result->num_rows : 0;
                     <div class="card-header d-flex justify-content-between align-items-center py-2">
                         <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;font-weight:600;">
                             <i class="bi bi-people-fill me-1"></i>
-                            <?php echo $totalRows; ?> paciente<?php echo $totalRows !== 1 ? 's' : ''; ?>
+                            <?php echo $totalRows; ?> <?php echo $totalRows !== 1 ? t('plist.patients') : t('plist.patient'); ?>
                             <?php if ($q !== ''): ?>
-                                — resultado<?php echo $totalRows !== 1 ? 's' : ''; ?> para
+                                — <?php echo $totalRows !== 1 ? t('plist.results') : t('plist.result'); ?> <?php te('plist.for'); ?>
                                 "<strong><?php echo htmlspecialchars($q); ?></strong>"
                             <?php endif; ?>
                         </span>
@@ -196,13 +197,13 @@ $totalRows = $result ? $result->num_rows : 0;
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width:36px;"></th>
-                                        <th>Paciente</th>
-                                        <th>ID</th>
-                                        <th>Teléfono</th>
-                                        <th>Correo</th>
-                                        <th class="text-center">Citas</th>
-                                        <th class="text-center">Atendidas</th>
-                                        <th>Última cita</th>
+                                        <th><?php te('plist.th.patient'); ?></th>
+                                        <th><?php te('pf.id'); ?></th>
+                                        <th><?php te('pf.phone'); ?></th>
+                                        <th><?php te('pf.email'); ?></th>
+                                        <th class="text-center"><?php te('plist.th.appointments'); ?></th>
+                                        <th class="text-center"><?php te('plist.th.attended'); ?></th>
+                                        <th><?php te('plist.th.lastAppointment'); ?></th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -246,19 +247,19 @@ $totalRows = $result ? $result->num_rows : 0;
                                             <?php if ($p['ULTIMA_CITA']): ?>
                                                 <small><?php echo date('d/m/Y', strtotime($p['ULTIMA_CITA'])); ?></small>
                                             <?php else: ?>
-                                                <small class="text-muted">Sin citas</small>
+                                                <small class="text-muted"><?php te('plist.noAppointments'); ?></small>
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-end pe-3" style="white-space:nowrap;">
                                             <button class="btn btn-sm btn-outline-secondary py-0 px-2"
                                                     onclick="editarPaciente(<?php echo $p['IDPACIENTE']; ?>)"
-                                                    title="Editar paciente">
-                                                <i class="bi bi-pencil-square"></i> Editar
+                                                    title="<?php te('plist.editTitle'); ?>">
+                                                <i class="bi bi-pencil-square"></i> <?php te('common.edit'); ?>
                                             </button>
                                             <button class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     onclick="verHistorial(<?php echo $p['IDPACIENTE']; ?>, '<?php echo htmlspecialchars(addslashes($p['APELLIDOS'] . ', ' . $p['NOMBRES'])); ?>')"
-                                                    title="Ver historial">
-                                                <i class="bi bi-clock-history"></i> Historial
+                                                    title="<?php te('plist.historyTitle'); ?>">
+                                                <i class="bi bi-clock-history"></i> <?php te('plist.historyBtn'); ?>
                                             </button>
                                         </td>
                                     </tr>
@@ -267,7 +268,7 @@ $totalRows = $result ? $result->num_rows : 0;
                                     <tr>
                                         <td colspan="9" class="text-center py-5 text-muted">
                                             <i class="bi bi-person-x fs-2 d-block mb-2"></i>
-                                            <?php echo $q !== '' ? 'No se encontraron pacientes para "' . htmlspecialchars($q) . '".' : 'No hay pacientes registrados.'; ?>
+                                            <?php echo $q !== '' ? t('plist.noneFoundPre') . ' "' . htmlspecialchars($q) . '".' : t('plist.noneRegistered'); ?>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -288,7 +289,7 @@ $totalRows = $result ? $result->num_rows : 0;
         <div class="modal-content">
             <div class="modal-header py-2" style="background:#5a2d82;">
                 <h6 class="modal-title text-white mb-0">
-                    <i class="bi bi-pencil-square me-2"></i>Editar Paciente
+                    <i class="bi bi-pencil-square me-2"></i><?php te('plist.editTitleModal'); ?>
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -297,75 +298,75 @@ $totalRows = $result ? $result->num_rows : 0;
                     <input type="hidden" id="epId" name="idPaciente">
 
                     <!-- Datos personales -->
-                    <h6 class="text-muted mb-2"><i class="bi bi-person-vcard"></i> Datos del paciente</h6>
+                    <h6 class="text-muted mb-2"><i class="bi bi-person-vcard"></i> <?php te('pf.patientData'); ?></h6>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nombres *</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.firstName'); ?> *</label>
                             <input type="text" id="epNombres" name="nombres" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Apellidos *</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.lastName'); ?> *</label>
                             <input type="text" id="epApellidos" name="apellidos" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">ID</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.id'); ?></label>
                             <input type="text" id="epCedula" name="cedula" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Teléfono</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.phone'); ?></label>
                             <input type="text" id="epTelefono" name="telefono" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Fecha de nacimiento</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.dob'); ?></label>
                             <input type="date" id="epFecNac" name="fecNac" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Correo</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.email'); ?></label>
                             <input type="email" id="epEmail" name="email" class="form-control">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Sexo</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.sex'); ?></label>
                             <input type="text" id="epSex" name="sex" class="form-control" placeholder="M / F">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Género</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.gender'); ?></label>
                             <input type="text" id="epGender" name="gender" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Dirección</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
                             <input type="text" id="epAddress" name="address" class="form-control">
                         </div>
                     </div>
 
                     <!-- Notas -->
-                    <h6 class="text-muted mb-2"><i class="bi bi-journal-text"></i> Notas</h6>
+                    <h6 class="text-muted mb-2"><i class="bi bi-journal-text"></i> <?php te('pf.notes'); ?></h6>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold text-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> Alerta
+                            <i class="bi bi-exclamation-triangle-fill"></i> <?php te('pf.alert'); ?>
                         </label>
                         <textarea id="epAlerta" name="alerta" class="form-control" rows="2"
-                                  placeholder="Aviso importante que debe verse siempre (alergias, condición crítica, etc.)"></textarea>
+                                  placeholder="<?php te('pf.alertPh'); ?>"></textarea>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Notas Importantes</label>
+                        <label class="form-label small fw-semibold"><?php te('pf.importantNotes'); ?></label>
                         <textarea id="epNotes" name="notes" class="form-control" rows="3"
-                                  placeholder="Notas clínicas o generales del paciente."></textarea>
+                                  placeholder="<?php te('pf.importantPh'); ?>"></textarea>
                     </div>
                     <div class="mb-1">
-                        <label class="form-label small fw-semibold">Notas de Facturación</label>
+                        <label class="form-label small fw-semibold"><?php te('pf.billingNotes'); ?></label>
                         <textarea id="epAddNotes" name="addNotes" class="form-control" rows="2"
-                                  placeholder="Notas relacionadas a facturación / seguros."></textarea>
+                                  placeholder="<?php te('pf.billingPh'); ?>"></textarea>
                     </div>
                     <div id="epAlertaAviso" class="small text-muted d-none mt-1">
-                        <i class="bi bi-info-circle"></i> El campo <strong>Alerta</strong> no se guardará hasta ejecutar
-                        <a href="migrar_notas_paciente.php" target="_blank">la migración de notas</a>.
+                        <i class="bi bi-info-circle"></i> <?php te('plist.alertNotSavedPre'); ?> <strong><?php te('pf.alert'); ?></strong> <?php te('plist.alertNotSavedMid'); ?>
+                        <a href="migrar_notas_paciente.php" target="_blank"><?php te('plist.notesMigration'); ?></a>.
                     </div>
                 </form>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
                 <button type="button" class="btn btn-primary btn-sm" id="epGuardar" onclick="guardarPaciente()">
-                    <i class="bi bi-check-lg"></i> Guardar cambios
+                    <i class="bi bi-check-lg"></i> <?php te('common.saveChanges'); ?>
                 </button>
             </div>
         </div>
@@ -385,11 +386,11 @@ $totalRows = $result ? $result->num_rows : 0;
             </div>
             <div class="modal-body p-0" id="modalHistorialBody">
                 <div class="text-center py-5 text-muted">
-                    <div class="spinner-border spinner-border-sm me-2"></div> Cargando…
+                    <div class="spinner-border spinner-border-sm me-2"></div> <?php te('common.loading'); ?>
                 </div>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
             </div>
         </div>
     </div>
@@ -400,7 +401,7 @@ $totalRows = $result ? $result->num_rows : 0;
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h6 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Informe de Atención</h6>
+                <h6 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i><?php te('plist.reportTitle'); ?></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="cuerpoInforme">
@@ -408,9 +409,9 @@ $totalRows = $result ? $result->num_rows : 0;
             </div>
             <div class="modal-footer py-2">
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-printer"></i> Imprimir
+                    <i class="bi bi-printer"></i> <?php te('common.print'); ?>
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
             </div>
         </div>
     </div>
@@ -419,6 +420,20 @@ $totalRows = $result ? $result->num_rows : 0;
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
+var T = {
+    loadError:      <?php echo json_encode(t('plist.js.loadError')); ?>,
+    loadHttp:       <?php echo json_encode(t('plist.js.loadHttp')); ?>,
+    nameRequired:   <?php echo json_encode(t('plist.js.nameRequired')); ?>,
+    updatedNoAlert: <?php echo json_encode(t('plist.js.updatedNoAlert')); ?>,
+    incomplete:     <?php echo json_encode(t('plist.js.incomplete')); ?>,
+    saveError:      <?php echo json_encode(t('plist.js.saveError')); ?>,
+    connError:      <?php echo json_encode(t('common.js.connError')); ?>,
+    loading:        <?php echo json_encode(t('common.loading')); ?>,
+    historyErrPre:  <?php echo json_encode(t('plist.js.historyErrPre')); ?>,
+    historyErrTail: <?php echo json_encode(t('plist.js.historyErrTail')); ?>,
+    reportErrPre:   <?php echo json_encode(t('plist.js.reportErrPre')); ?>
+};
+
 let epModal = null;
 
 function editarPaciente(idPaciente) {
@@ -430,7 +445,7 @@ function editarPaciente(idPaciente) {
 
     $.getJSON('get_paciente.php', { id: idPaciente })
         .done(function(p) {
-            if (p.error) { alert('No se pudo cargar el paciente: ' + p.error); return; }
+            if (p.error) { alert(T.loadError + p.error); return; }
             document.getElementById('epNombres').value   = p.NOMBRES   || '';
             document.getElementById('epApellidos').value = p.APELLIDOS || '';
             document.getElementById('epCedula').value    = p.CEDULA    || '';
@@ -451,7 +466,7 @@ function editarPaciente(idPaciente) {
             epModal.show();
         })
         .fail(function(xhr) {
-            alert('Error al cargar el paciente (HTTP ' + xhr.status + ').');
+            alert(T.loadHttp + xhr.status + ').');
         });
 }
 
@@ -459,7 +474,7 @@ function guardarPaciente() {
     const nombres   = document.getElementById('epNombres').value.trim();
     const apellidos = document.getElementById('epApellidos').value.trim();
     if (!nombres || !apellidos) {
-        alert('Nombres y apellidos son obligatorios.');
+        alert(T.nameRequired);
         return;
     }
 
@@ -470,18 +485,18 @@ function guardarPaciente() {
         res = res.trim();
         if (res === 'OK' || res === 'OK_SIN_ALERTA') {
             if (res === 'OK_SIN_ALERTA') {
-                alert('Paciente actualizado. Nota: el campo Alerta no se guardó porque falta ejecutar la migración de notas.');
+                alert(T.updatedNoAlert);
             }
             location.reload();
         } else if (res === 'DATOS_INCOMPLETOS') {
-            alert('Faltan datos obligatorios (nombres y apellidos).');
+            alert(T.incomplete);
             btn.disabled = false;
         } else {
-            alert('Error al guardar: ' + res);
+            alert(T.saveError + res);
             btn.disabled = false;
         }
     }).fail(function() {
-        alert('Error de conexión. Intente de nuevo.');
+        alert(T.connError);
         btn.disabled = false;
     });
 }
@@ -489,7 +504,7 @@ function guardarPaciente() {
 function verHistorial(idPaciente, nombre) {
     document.getElementById('modalPacienteNombre').textContent = nombre;
     document.getElementById('modalHistorialBody').innerHTML =
-        '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Cargando…</div>';
+        '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> ' + T.loading + '</div>';
 
     new bootstrap.Modal(document.getElementById('modalHistorial')).show();
 
@@ -499,7 +514,7 @@ function verHistorial(idPaciente, nombre) {
         })
         .fail(function(xhr) {
             document.getElementById('modalHistorialBody').innerHTML =
-                '<div class="alert alert-danger m-3">Error al cargar el historial (HTTP ' + xhr.status + '). Revisa los logs de PHP.</div>';
+                '<div class="alert alert-danger m-3">' + T.historyErrPre + xhr.status + T.historyErrTail + '</div>';
         });
 }
 
@@ -513,7 +528,7 @@ function verInforme(idHistorial) {
         })
         .fail(function(xhr) {
             document.getElementById('cuerpoInforme').innerHTML =
-                '<div class="alert alert-danger m-3">No se pudo cargar el informe (HTTP ' + xhr.status + ').</div>';
+                '<div class="alert alert-danger m-3">' + T.reportErrPre + xhr.status + ').</div>';
         });
 }
 </script>
