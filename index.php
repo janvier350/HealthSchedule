@@ -5,13 +5,15 @@ if (isset($_SESSION["loggedin"])) {
     header("Location: Home.php");
     exit();
 }
+require_once(__DIR__ . '/lang/i18n.php');
+$lang = current_lang();
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo $lang; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sross Nutritions — Iniciar Sesión</title>
+    <title><?php te('login.pageTitle'); ?></title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,6 +41,13 @@ if (isset($_SESSION["loggedin"])) {
             background: #fff;
             padding: 44px 36px;
         }
+
+        .login-lang { text-align: right; margin-bottom: 8px; font-size: .78rem; }
+        .login-lang a {
+            text-decoration: none; color: #5a2d82; font-weight: 700;
+            padding: 2px 7px; border-radius: 6px; margin-left: 2px;
+        }
+        .login-lang a.active { background: #5a2d82; color: #fff; }
 
         .login-form-panel h2 {
             font-size: 1.25rem;
@@ -174,26 +183,30 @@ if (isset($_SESSION["loggedin"])) {
 
     <!-- ── FORMULARIO ───────────────────────────────── -->
     <div class="login-form-panel">
-        <h2>Bienvenido</h2>
-        <p class="subtitle">Ingresa tus credenciales para continuar</p>
+        <div class="login-lang">
+            <a href="set_lang.php?lang=en&redir=index.php" class="<?php echo $lang === 'en' ? 'active' : ''; ?>">EN</a>
+            <a href="set_lang.php?lang=es&redir=index.php" class="<?php echo $lang === 'es' ? 'active' : ''; ?>">ES</a>
+        </div>
+        <h2><?php te('login.welcome'); ?></h2>
+        <p class="subtitle"><?php te('login.subtitle'); ?></p>
 
         <form action="class/checkLogin.php" method="post">
 
             <div class="input-group">
                 <span class="icon"><i class="fa fa-user"></i></span>
-                <input type="text" name="user" placeholder="Usuario" required autofocus>
+                <input type="text" name="user" placeholder="<?php te('login.user'); ?>" required autofocus>
             </div>
 
             <div class="input-group">
                 <span class="icon"><i class="fa fa-lock"></i></span>
-                <input type="password" name="password" placeholder="Contraseña" required>
+                <input type="password" name="password" placeholder="<?php te('login.password'); ?>" required>
             </div>
 
             <div class="login-extras">
-                <a href="#">¿Olvidaste tu contraseña?</a>
+                <a href="#"><?php te('login.forgot'); ?></a>
             </div>
 
-            <button type="submit" class="btn-login">Iniciar Sesión</button>
+            <button type="submit" class="btn-login"><?php te('login.signin'); ?></button>
 
         </form>
     </div>
@@ -267,7 +280,7 @@ if (isset($_SESSION["loggedin"])) {
 
         <div class="logo-divider"></div>
 
-        <span class="logo-caption">Sistema de Gestión<br>de Citas</span>
+        <span class="logo-caption"><?php echo t('login.caption'); ?></span>
 
     </div>
 

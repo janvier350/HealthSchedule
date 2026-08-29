@@ -3,6 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 require_once("funciones.php");
 require_once("conexionBD.php");
+require_once(__DIR__ . "/../lang/i18n.php");
 $conexion = conectarse();
 ?>
 <?php
@@ -36,12 +37,12 @@ if ($result->num_rows > 0) {
         echo "<script language='JavaScript'>";
         echo 'self.location = "../SCH_Calendar.php"';
         echo "</script>"; 
-    } else { 
-        echo "Usuario o Password están incorrectos.";
-        echo "<br><a href='../index.php'>Volver a Intentarlo</a>";
+    } else {
+        echo htmlspecialchars(t('login.error_wrong'), ENT_QUOTES, 'UTF-8');
+        echo "<br><a href='../index.php'>" . htmlspecialchars(t('login.retry'), ENT_QUOTES, 'UTF-8') . "</a>";
     }
 } else {
-    echo "Usuario no encontrado.";
+    echo htmlspecialchars(t('login.error_notfound'), ENT_QUOTES, 'UTF-8');
 }
 
 mysqli_close($conexion); 
