@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if(!isset($_SESSION["rol"])){
@@ -121,12 +122,12 @@ while ($a = $resAgencias->fetch_assoc()) {
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
-    <title>Calendario de Citas</title>
+    <title><?php te('cal.pageTitle'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
@@ -324,10 +325,10 @@ while ($a = $resAgencias->fetch_assoc()) {
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="perfil.php" class="dropdown-item">Perfil de Usuario</a>
-                                        <button type="button" class="dropdown-item">Configuración</button>
+                                        <a href="perfil.php" class="dropdown-item"><?php te('hdr.userProfile'); ?></a>
+                                        <button type="button" class="dropdown-item"><?php te('hdr.settings'); ?></button>
                                         <div class="dropdown-divider"></div>
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -361,17 +362,17 @@ while ($a = $resAgencias->fetch_assoc()) {
                             </div>
                             <div>
                                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#editModal">
-                                    <i class="bi bi-calendar-plus"></i> Agendar Cita
+                                    <i class="bi bi-calendar-plus"></i> <?php te('cal.newAppointment'); ?>
                                 </button>
                                 <div class="btn-group ms-2" role="group">
                                     <button type="button" id="btnVistaCalendario" class="btn btn-outline-primary active">
-                                        <i class="bi bi-calendar3"></i> Calendario
+                                        <i class="bi bi-calendar3"></i> <?php te('cal.viewCalendar'); ?>
                                     </button>
                                     <button type="button" id="btnVistaDoctor" class="btn btn-outline-primary">
-                                        <i class="bi bi-people"></i> Vista por Doctor
+                                        <i class="bi bi-people"></i> <?php te('cal.viewByDoctor'); ?>
                                     </button>
                                 </div>
-                                <div class="page-title-subheading">Citas agendadas.</div>
+                                <div class="page-title-subheading"><?php te('cal.subheading'); ?></div>
                             </div>
                         </div>
                     </div>
@@ -381,21 +382,21 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <div class="card-body">
                         <!-- Leyenda de colores (colapsable, para ganar espacio arriba) -->
                         <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#leyendaColores1" aria-expanded="false">
-                            <i class="bi bi-palette"></i> Ver leyenda de colores
+                            <i class="bi bi-palette"></i> <?php te('cal.legendToggle'); ?>
                         </button>
                         <div class="collapse" id="leyendaColores1">
                             <div class="leyenda-calendario">
-                                <span class="leyenda-label">Estado (relleno):</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
+                                <span class="leyenda-label"><?php te('cal.legendStatus'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> <?php te('cal.legendPendingResched'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> <?php echo estado_label('Confirmada'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> <?php echo estado_label('Atendida'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> <?php echo estado_label('Cancelada'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> <?php echo estado_label('Cancelación Tardía'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> <?php echo estado_label('Cancelado por Profesional'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> <?php echo estado_label('No Asistió'); ?></span>
                             </div>
                             <div class="leyenda-calendario">
-                                <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
+                                <span class="leyenda-label"><?php te('cal.legendType'); ?></span>
                                 <?php foreach ($tiposConsultaActivos as $tc): ?>
                                     <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
                                 <?php endforeach; ?>
@@ -409,28 +410,28 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <div class="card-body">
                         <!-- Leyenda de colores (colapsable, para ganar espacio arriba) -->
                         <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#leyendaColores2" aria-expanded="false">
-                            <i class="bi bi-palette"></i> Ver leyenda de colores
+                            <i class="bi bi-palette"></i> <?php te('cal.legendToggle'); ?>
                         </button>
                         <div class="collapse" id="leyendaColores2">
                             <div class="leyenda-calendario">
-                                <span class="leyenda-label">Estado (relleno):</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> Pendiente/Reagendada</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> Confirmada</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> Atendida</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> Cancelada</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> Cancelación Tardía</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> Cancelado por Profesional</span>
-                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> No Asistió</span>
+                                <span class="leyenda-label"><?php te('cal.legendStatus'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#212529"></span> <?php te('cal.legendPendingResched'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6f42c1"></span> <?php echo estado_label('Confirmada'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#28a745"></span> <?php echo estado_label('Atendida'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#fd7e14"></span> <?php echo estado_label('Cancelada'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> <?php echo estado_label('Cancelación Tardía'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> <?php echo estado_label('Cancelado por Profesional'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> <?php echo estado_label('No Asistió'); ?></span>
                             </div>
                             <div class="leyenda-calendario">
-                                <span class="leyenda-label">Tipo de consulta (franja izquierda):</span>
+                                <span class="leyenda-label"><?php te('cal.legendType'); ?></span>
                                 <?php foreach ($tiposConsultaActivos as $tc): ?>
                                     <span class="leyenda-item"><span class="leyenda-franja" style="border-left-color:<?php echo htmlspecialchars($tc['color']); ?>"></span> <?php echo htmlspecialchars($tc['nombre']); ?></span>
                                 <?php endforeach; ?>
                             </div>
                         </div>
                         <div class="cv-toolbar d-flex align-items-center gap-2 mb-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cvToday">Hoy</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cvToday"><?php te('cal.today'); ?></button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="cvPrev"><i class="bi bi-chevron-left"></i></button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="cvNext"><i class="bi bi-chevron-right"></i></button>
                             <strong id="cvRangeLabel" class="ms-2"></strong>
@@ -440,7 +441,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                         </div>
                         <div class="cv-list" id="cvList"></div>
                         <div class="cv-doctores mt-3" id="cvDoctorFiltros">
-                            <span class="fw-semibold me-2">Doctores:</span>
+                            <span class="fw-semibold me-2"><?php te('cal.doctors'); ?></span>
                         </div>
                     </div>
                 </div>
@@ -454,20 +455,20 @@ while ($a = $resAgencias->fetch_assoc()) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Agendar Cita</h5>
+                <h5 class="modal-title"><?php te('cal.newAppointment'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="insertCita" method="POST" action="class/Insert_cita.php">
                     <div class="mb-3">
-                        <label class="form-label">Fecha Consulta</label>
+                        <label class="form-label"><?php te('cal.appDate'); ?></label>
                         <input type="date" class="form-control" name="fechafactura" id="fechafactura">
                         <script>document.getElementById('fechafactura').value = new Date().toISOString().substring(0, 10);</script>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Paciente</label>
+                        <label class="form-label"><?php te('cal.patient'); ?></label>
                         <select class="form-select select-busqueda" name="IdPaciente" required>
-                            <option value="">Buscar paciente...</option>
+                            <option value=""><?php te('cal.searchPatient'); ?></option>
                             <?php
                             $queryP = $conexion->query("SELECT IDPACIENTE, NOMBRES, APELLIDOS FROM AG_PACIENTE WHERE ESTADO = 'A' ORDER BY NOMBRES");
                             while ($v = $queryP->fetch_assoc()):
@@ -477,11 +478,11 @@ while ($a = $resAgencias->fetch_assoc()) {
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Hora Inicio</label>
+                        <label class="form-label"><?php te('cal.startTime'); ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-clock"></i></span>
                             <select class="form-select select-busqueda" name="timeIni" id="timeIni" required>
-                                <option value="">Seleccione hora...</option>
+                                <option value=""><?php te('cal.selectTime'); ?></option>
                                 <?php
                                 $inicio    = new DateTime('07:00');
                                 $fin       = new DateTime('22:30');
@@ -495,9 +496,9 @@ while ($a = $resAgencias->fetch_assoc()) {
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tipo Consulta</label>
+                        <label class="form-label"><?php te('cal.consultType'); ?></label>
                         <select class="form-select select-busqueda" name="Idconsulta" required>
-                            <option value="">Buscar tipo consulta...</option>
+                            <option value=""><?php te('cal.searchType'); ?></option>
                             <?php
                             $queryC = $conexion->query("SELECT IDTIPOCONSULTA, NOMBRES FROM AG_TIPOCONSULTA WHERE ESTADO = 'A' ORDER BY NOMBRES");
                             while ($v = $queryC->fetch_assoc()):
@@ -507,18 +508,18 @@ while ($a = $resAgencias->fetch_assoc()) {
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Doctor</label>
+                        <label class="form-label"><?php te('cal.doctor'); ?></label>
                         <select class="form-select select-busqueda" name="IdDoctor" required>
-                            <option value="">Buscar doctor...</option>
+                            <option value=""><?php te('cal.searchDoctor'); ?></option>
                             <?php foreach ($doctoresActivos as $v): ?>
                             <option value="<?php echo $v['id']; ?>"><?php echo htmlspecialchars($v['nombre']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Location</label>
+                        <label class="form-label"><?php te('cal.location'); ?></label>
                         <select class="form-select select-busqueda" name="IdAgencia" required>
-                            <option value="">Seleccione location...</option>
+                            <option value=""><?php te('cal.selectLocation'); ?></option>
                             <?php
                             $queryAg = $conexion->query("SELECT IDAGENCIA, DESCRIPCION FROM ADM_AGENCIA WHERE ESTADO = 1 ORDER BY DESCRIPCION");
                             while ($v = $queryAg->fetch_assoc()):
@@ -528,7 +529,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-calendar-check"></i> Agendar
+                        <i class="bi bi-calendar-check"></i> <?php te('cal.scheduleBtn'); ?>
                     </button>
                 </form>
             </div>
@@ -541,7 +542,7 @@ while ($a = $resAgencias->fetch_assoc()) {
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Gestión de Cita</h5>
+                <h5 class="modal-title"><?php te('cal.manageTitle'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="formEstado" method="POST" action="class/actualizar_estado.php" onsubmit="return validarFormulario();">
@@ -553,42 +554,42 @@ while ($a = $resAgencias->fetch_assoc()) {
 
                     <!-- Panel Reagendar (oculto por defecto) -->
                     <div id="reagendarSection" class="d-none border rounded p-3 bg-light mt-2">
-                        <h6 class="mb-3"><i class="bi bi-calendar2-event"></i> Nueva fecha y hora</h6>
+                        <h6 class="mb-3"><i class="bi bi-calendar2-event"></i> <?php te('cal.newDateTime'); ?></h6>
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Fecha</label>
+                                <label class="form-label fw-semibold"><?php te('cal.date'); ?></label>
                                 <input type="date" id="nuevaFecha" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Hora</label>
+                                <label class="form-label fw-semibold"><?php te('cal.time'); ?></label>
                                 <select id="nuevaHora" class="form-select"></select>
                             </div>
                         </div>
                         <div class="d-flex gap-2 mt-3">
                             <button type="button" class="btn btn-warning flex-grow-1" onclick="guardarReagenda()">
-                                <i class="bi bi-calendar-check"></i> Guardar nueva fecha
+                                <i class="bi bi-calendar-check"></i> <?php te('cal.saveNewDate'); ?>
                             </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="cerrarReagendar()">
-                                Cancelar
+                                <?php te('common.cancel'); ?>
                             </button>
                         </div>
                     </div>
 
                     <!-- Panel Editar Cita (oculto por defecto) -->
                     <div id="editarSection" class="d-none border rounded p-3 bg-light mt-2">
-                        <h6 class="mb-1"><i class="bi bi-pencil-square"></i> Editar cita</h6>
-                        <p class="text-muted small mb-3">Corrija los datos de la cita si hubo un error al registrarla. El estado de la cita no cambia.</p>
+                        <h6 class="mb-1"><i class="bi bi-pencil-square"></i> <?php te('cal.editAppt'); ?></h6>
+                        <p class="text-muted small mb-3"><?php te('cal.editApptHelp'); ?></p>
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Fecha</label>
+                                <label class="form-label fw-semibold"><?php te('cal.date'); ?></label>
                                 <input type="date" id="editFecha" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Hora</label>
+                                <label class="form-label fw-semibold"><?php te('cal.time'); ?></label>
                                 <input type="time" id="editHora" class="form-control" min="07:00" max="22:30">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Tipo de consulta</label>
+                                <label class="form-label fw-semibold"><?php te('cal.consultTypeShort'); ?></label>
                                 <select id="editTipoConsulta" class="form-select">
                                     <?php foreach ($tiposConsultaActivos as $tc): ?>
                                     <option value="<?php echo $tc['id']; ?>"><?php echo htmlspecialchars($tc['nombre']); ?></option>
@@ -596,7 +597,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Doctor</label>
+                                <label class="form-label fw-semibold"><?php te('cal.doctor'); ?></label>
                                 <select id="editDoctor" class="form-select">
                                     <?php foreach ($doctoresActivos as $d): ?>
                                     <option value="<?php echo $d['id']; ?>"><?php echo htmlspecialchars($d['nombre']); ?></option>
@@ -604,9 +605,9 @@ while ($a = $resAgencias->fetch_assoc()) {
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Location</label>
+                                <label class="form-label fw-semibold"><?php te('cal.location'); ?></label>
                                 <select id="editAgencia" class="form-select">
-                                    <option value="0">Sin asignar</option>
+                                    <option value="0"><?php te('cal.unassigned'); ?></option>
                                     <?php foreach ($agenciasActivas as $a): ?>
                                     <option value="<?php echo $a['id']; ?>"><?php echo htmlspecialchars($a['nombre']); ?></option>
                                     <?php endforeach; ?>
@@ -615,10 +616,10 @@ while ($a = $resAgencias->fetch_assoc()) {
                         </div>
                         <div class="d-flex gap-2 mt-3">
                             <button type="button" class="btn btn-info text-white flex-grow-1" onclick="guardarEdicion()">
-                                <i class="bi bi-check2-square"></i> Guardar cambios
+                                <i class="bi bi-check2-square"></i> <?php te('common.saveChanges'); ?>
                             </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="cerrarEditar()">
-                                Cancelar
+                                <?php te('common.cancel'); ?>
                             </button>
                         </div>
                     </div>
@@ -628,42 +629,42 @@ while ($a = $resAgencias->fetch_assoc()) {
                 </div>
                 <div class="modal-footer" id="modalFooterBtns">
                     <button id="btnAtender" class="btn btn-primary" type="button" onclick="irAConsulta()">
-                        <i class="bi bi-person-check-fill"></i> Atender Paciente
+                        <i class="bi bi-person-check-fill"></i> <?php te('cal.attendPatient'); ?>
                     </button>
                     <a id="btnHistorial" href="#" class="btn btn-purple d-none"
                        style="background:#6f42c1;color:#fff;">
-                        <i class="bi bi-clipboard2-pulse"></i> Ver Historial
+                        <i class="bi bi-clipboard2-pulse"></i> <?php te('cal.viewHistory'); ?>
                     </a>
                     <button id="btnEditarPaciente" class="btn btn-outline-primary" type="button" onclick="editarPacienteDesdeCita()">
-                        <i class="bi bi-person-vcard"></i> Editar Paciente
+                        <i class="bi bi-person-vcard"></i> <?php te('cal.editPatient'); ?>
                     </button>
                     <button id="btnEditar" class="btn btn-info text-white" type="button" onclick="toggleEditar()">
-                        <i class="bi bi-pencil-square"></i> Editar
+                        <i class="bi bi-pencil-square"></i> <?php te('common.edit'); ?>
                     </button>
                     <button id="btnReagendar" class="btn btn-warning" type="button" onclick="toggleReagendar()">
-                        <i class="bi bi-calendar2-event"></i> Reagendar
+                        <i class="bi bi-calendar2-event"></i> <?php te('cal.reschedule'); ?>
                     </button>
                     <button id="btnConfirmar" class="btn btn-success" type="submit" onclick="setEstado('Confirmada')">
-                        <i class="bi bi-check-circle"></i> Confirmar
+                        <i class="bi bi-check-circle"></i> <?php te('cal.confirm'); ?>
                     </button>
                     <button id="btnCancelar" class="btn btn-danger" type="submit" onclick="setEstado('Cancelada')">
-                        <i class="bi bi-x-circle"></i> Cancelar
+                        <i class="bi bi-x-circle"></i> <?php te('common.cancel'); ?>
                     </button>
                     <div id="btnMasEstados" class="btn-group">
                         <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                            Otro estado
+                            <?php te('cal.otherStatus'); ?>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Reagendada')">Reagendada</button></li>
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelación Tardía')">Cancelación Tardía</button></li>
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelado por Profesional')">Cancelado por Profesional</button></li>
-                            <li><button class="dropdown-item" type="submit" onclick="setEstado('No Asistió')">No Asistió</button></li>
+                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Reagendada')"><?php echo estado_label('Reagendada'); ?></button></li>
+                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelación Tardía')"><?php echo estado_label('Cancelación Tardía'); ?></button></li>
+                            <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelado por Profesional')"><?php echo estado_label('Cancelado por Profesional'); ?></button></li>
+                            <li><button class="dropdown-item" type="submit" onclick="setEstado('No Asistió')"><?php echo estado_label('No Asistió'); ?></button></li>
                         </ul>
                     </div>
                     <button id="btnEliminar" class="btn btn-outline-danger" type="button" onclick="eliminarCita()">
-                        <i class="bi bi-trash"></i> Eliminar
+                        <i class="bi bi-trash"></i> <?php te('cal.delete'); ?>
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
                 </div>
             </form>
         </div>
@@ -676,7 +677,7 @@ while ($a = $resAgencias->fetch_assoc()) {
         <div class="modal-content">
             <div class="modal-header py-2" style="background:#5a2d82;">
                 <h6 class="modal-title text-white mb-0">
-                    <i class="bi bi-pencil-square me-2"></i>Editar Paciente
+                    <i class="bi bi-pencil-square me-2"></i><?php te('plist.editTitleModal'); ?>
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -684,74 +685,74 @@ while ($a = $resAgencias->fetch_assoc()) {
                 <form id="formEditarPaciente">
                     <input type="hidden" id="epId" name="idPaciente">
 
-                    <h6 class="text-muted mb-2"><i class="bi bi-person-vcard"></i> Datos del paciente</h6>
+                    <h6 class="text-muted mb-2"><i class="bi bi-person-vcard"></i> <?php te('pf.patientData'); ?></h6>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nombres *</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.firstName'); ?> *</label>
                             <input type="text" id="epNombres" name="nombres" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Apellidos *</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.lastName'); ?> *</label>
                             <input type="text" id="epApellidos" name="apellidos" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">ID</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.id'); ?></label>
                             <input type="text" id="epCedula" name="cedula" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Teléfono</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.phone'); ?></label>
                             <input type="text" id="epTelefono" name="telefono" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Fecha de nacimiento</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.dob'); ?></label>
                             <input type="date" id="epFecNac" name="fecNac" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Correo</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.email'); ?></label>
                             <input type="email" id="epEmail" name="email" class="form-control">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Sexo</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.sex'); ?></label>
                             <input type="text" id="epSex" name="sex" class="form-control" placeholder="M / F">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Género</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.gender'); ?></label>
                             <input type="text" id="epGender" name="gender" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Dirección</label>
+                            <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
                             <input type="text" id="epAddress" name="address" class="form-control">
                         </div>
                     </div>
 
-                    <h6 class="text-muted mb-2"><i class="bi bi-journal-text"></i> Notas</h6>
+                    <h6 class="text-muted mb-2"><i class="bi bi-journal-text"></i> <?php te('pf.notes'); ?></h6>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold text-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> Alerta
+                            <i class="bi bi-exclamation-triangle-fill"></i> <?php te('pf.alert'); ?>
                         </label>
                         <textarea id="epAlerta" name="alerta" class="form-control" rows="2"
-                                  placeholder="Aviso importante que debe verse siempre (alergias, condición crítica, etc.)"></textarea>
+                                  placeholder="<?php te('pf.alertPh'); ?>"></textarea>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Notas Importantes</label>
+                        <label class="form-label small fw-semibold"><?php te('pf.importantNotes'); ?></label>
                         <textarea id="epNotes" name="notes" class="form-control" rows="3"
-                                  placeholder="Notas clínicas o generales del paciente."></textarea>
+                                  placeholder="<?php te('pf.importantPh'); ?>"></textarea>
                     </div>
                     <div class="mb-1">
-                        <label class="form-label small fw-semibold">Notas de Facturación</label>
+                        <label class="form-label small fw-semibold"><?php te('pf.billingNotes'); ?></label>
                         <textarea id="epAddNotes" name="addNotes" class="form-control" rows="2"
-                                  placeholder="Notas relacionadas a facturación / seguros."></textarea>
+                                  placeholder="<?php te('pf.billingPh'); ?>"></textarea>
                     </div>
                     <div id="epAlertaAviso" class="small text-muted d-none mt-1">
-                        <i class="bi bi-info-circle"></i> El campo <strong>Alerta</strong> no se guardará hasta ejecutar
-                        <a href="migrar_notas_paciente.php" target="_blank">la migración de notas</a>.
+                        <i class="bi bi-info-circle"></i> <?php te('plist.alertNotSavedPre'); ?> <strong><?php te('pf.alert'); ?></strong> <?php te('plist.alertNotSavedMid'); ?>
+                        <a href="migrar_notas_paciente.php" target="_blank"><?php te('plist.notesMigration'); ?></a>.
                     </div>
                 </form>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
                 <button type="button" class="btn btn-primary btn-sm" id="epGuardar" onclick="guardarPacienteCita()">
-                    <i class="bi bi-check-lg"></i> Guardar cambios
+                    <i class="bi bi-check-lg"></i> <?php te('common.saveChanges'); ?>
                 </button>
             </div>
         </div>
@@ -763,7 +764,7 @@ while ($a = $resAgencias->fetch_assoc()) {
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h6 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Informe de Atención</h6>
+                <h6 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i><?php te('plist.reportTitle'); ?></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="cuerpoInforme">
@@ -771,9 +772,9 @@ while ($a = $resAgencias->fetch_assoc()) {
             </div>
             <div class="modal-footer py-2">
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-printer"></i> Imprimir
+                    <i class="bi bi-printer"></i> <?php te('common.print'); ?>
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
             </div>
         </div>
     </div>
@@ -787,21 +788,97 @@ while ($a = $resAgencias->fetch_assoc()) {
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 
 <script>
+// ── i18n (inyectado desde PHP) ───────────────────────────────────────
+const CAL_LANG = <?php echo json_encode(current_lang()); ?>;
+const CAL_DIAS  = <?php echo json_encode(current_lang() === 'es'
+    ? ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
+    : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']); ?>;
+const CAL_MESES = <?php echo json_encode(current_lang() === 'es'
+    ? ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+    : ['January','February','March','April','May','June','July','August','September','October','November','December']); ?>;
+const ESTADO_LABELS = {
+    'Pendiente':                   <?php echo json_encode(estado_label('Pendiente')); ?>,
+    'Reagendada':                  <?php echo json_encode(estado_label('Reagendada')); ?>,
+    'Confirmada':                  <?php echo json_encode(estado_label('Confirmada')); ?>,
+    'A':                           <?php echo json_encode(estado_label('Atendida')); ?>,
+    'Cancelada':                   <?php echo json_encode(estado_label('Cancelada')); ?>,
+    'Cancelado':                   <?php echo json_encode(estado_label('Cancelado')); ?>,
+    'Atrasado':                    <?php echo json_encode(estado_label('Atrasado')); ?>,
+    'Cancelación Tardía':          <?php echo json_encode(estado_label('Cancelación Tardía')); ?>,
+    'Cancelado por Profesional':   <?php echo json_encode(estado_label('Cancelado por Profesional')); ?>,
+    'No Asistió':                  <?php echo json_encode(estado_label('No Asistió')); ?>,
+};
+const TC = <?php echo json_encode(array(
+    'lblPatient'      => t('cal.js.lblPatient'),
+    'lblPhone'        => t('cal.js.lblPhone'),
+    'lblStart'        => t('cal.js.lblStart'),
+    'lblDoctor'       => t('cal.js.lblDoctor'),
+    'lblLocation'     => t('cal.js.lblLocation'),
+    'lblStatus'       => t('cal.js.lblStatus'),
+    'lblType'         => t('cal.js.lblType'),
+    'lblComment'      => t('cal.js.lblComment'),
+    'notRegisteredM'  => t('cal.js.notRegisteredM'),
+    'notRegisteredF'  => t('cal.js.notRegisteredF'),
+    'confirmWhatsapp' => t('cal.js.confirmWhatsapp'),
+    'noWhatsapp'      => t('cal.js.noWhatsapp'),
+    'loadingPatient'  => t('cal.js.loadingPatient'),
+    'couldNotLoadPat' => t('cal.js.couldNotLoadPat'),
+    'consultations'   => t('cal.js.consultations'),
+    'noApptsWeek'     => t('cal.js.noApptsWeek'),
+    'unassigned'      => t('cal.unassigned'),
+    'waPre'           => t('cal.js.waPre'),
+    'waMid'           => t('cal.js.waMid'),
+    'waAt'            => t('cal.js.waAt'),
+    'waEnd'           => t('cal.js.waEnd'),
+    'selectDateTime'  => t('cal.js.selectDateTime'),
+    'confirmReschedPre'=> t('cal.js.confirmReschedPre'),
+    'at'              => t('cal.js.at'),
+    'reschedOk'       => t('cal.js.reschedOk'),
+    'reschedNoEmail'  => t('cal.js.reschedNoEmail'),
+    'reschedError'    => t('cal.js.reschedError'),
+    'confirmSavePre'  => t('cal.js.confirmSavePre'),
+    'updatedOk'       => t('cal.js.updatedOk'),
+    'updatedEmail'    => t('cal.js.updatedEmail'),
+    'updatedNoEmail'  => t('cal.js.updatedNoEmail'),
+    'editError'       => t('cal.js.editError'),
+    'confirmDelete'   => t('cal.js.confirmDelete'),
+    'deletedOk'       => t('cal.js.deletedOk'),
+    'deletedNoEmail'  => t('cal.js.deletedNoEmail'),
+    'deleteError'     => t('cal.js.deleteError'),
+    'deleteConnError' => t('cal.js.deleteConnError'),
+    'noPatientId'     => t('cal.js.noPatientId'),
+    'patientUpdatedOk'=> t('cal.js.patientUpdatedOk'),
+    'formIncomplete'  => t('cal.js.formIncomplete'),
+    'completeFields'  => t('cal.js.completeFields'),
+    'timeRange'       => t('cal.js.timeRange'),
+    'apptGone'        => t('cal.js.apptGone'),
+    'slotTaken'       => t('cal.js.slotTaken'),
+    'apptGonePrev'    => t('cal.js.apptGonePrev'),
+    'connError'       => t('common.js.connError'),
+    'loadError'       => t('plist.js.loadError'),
+    'loadHttp'        => t('plist.js.loadHttp'),
+    'nameRequired'    => t('plist.js.nameRequired'),
+    'updatedNoAlert'  => t('plist.js.updatedNoAlert'),
+    'incomplete'      => t('plist.js.incomplete'),
+    'saveError'       => t('plist.js.saveError'),
+)); ?>;
+
 // ── Helpers ──────────────────────────────────────────────────────────
 function estadoBadge(estado) {
     const map = {
-        'Pendiente':                   ['#212529', 'Pendiente'],
-        'Reagendada':                  ['#212529', 'Reagendada'],
-        'Confirmada':                  ['#6f42c1', 'Confirmada'],
-        'A':                           ['#28a745', 'Atendida'],
-        'Cancelada':                   ['#fd7e14', 'Cancelada'],
-        'Cancelado':                   ['#fd7e14', 'Cancelado'],
-        'Atrasado':                    ['#ffc107', 'Atrasado'],
-        'Cancelación Tardía':          ['#ffc107', 'Cancelación Tardía'],
-        'Cancelado por Profesional':   ['#ff8a80', 'Cancelado por Profesional'],
-        'No Asistió':                  ['#dc3545', 'No Asistió'],
+        'Pendiente':                   '#212529',
+        'Reagendada':                  '#212529',
+        'Confirmada':                  '#6f42c1',
+        'A':                           '#28a745',
+        'Cancelada':                   '#fd7e14',
+        'Cancelado':                   '#fd7e14',
+        'Atrasado':                    '#ffc107',
+        'Cancelación Tardía':          '#ffc107',
+        'Cancelado por Profesional':   '#ff8a80',
+        'No Asistió':                  '#dc3545',
     };
-    const [color, label] = map[estado] || ['#6c757d', estado];
+    const color = map[estado] || '#6c757d';
+    const label = ESTADO_LABELS[estado] || estado;
     return `<span class="badge" style="background:${color}">${label}</span>`;
 }
 
@@ -851,30 +928,30 @@ function guardarReagenda() {
     const hora  = document.getElementById('nuevaHora').value;
 
     if (!fecha || !hora) {
-        alert('Seleccione fecha y hora.');
+        alert(TC.selectDateTime);
         return;
     }
 
     // Formatear fecha para confirmar
     const [y, mo, d] = fecha.split('-');
-    if (!confirm(`¿Reagendar la cita al ${d}/${mo}/${y} a las ${hora}?`)) return;
+    if (!confirm(`${TC.confirmReschedPre} ${d}/${mo}/${y} ${TC.at} ${hora}?`)) return;
 
     $.post('reagendar_cita.php', { idCita: id, fecha: fecha, hora: hora }, function(res) {
         res = res.trim();
         if (res === 'OK') {
-            alert('Cita reagendada con éxito. Se notificó al paciente por correo.');
+            alert(TC.reschedOk);
             location.reload();
         } else if (res === 'OK_SIN_CORREO') {
-            alert('Cita reagendada. No se pudo enviar el correo de aviso (el paciente no tiene correo registrado o falló el envío).');
+            alert(TC.reschedNoEmail);
             location.reload();
         } else if (res === 'NO_ENCONTRADA') {
-            alert('La cita ya no existe o fue eliminada.');
+            alert(TC.apptGone);
             location.reload();
         } else {
-            alert('Error al reagendar: ' + res);
+            alert(TC.reschedError + res);
         }
     }).fail(function() {
-        alert('Error de conexión. Intente de nuevo.');
+        alert(TC.connError);
     });
 }
 
@@ -906,17 +983,17 @@ function guardarEdicion() {
     const agencia = document.getElementById('editAgencia').value;
 
     if (!fecha || !hora || !tipo || !doctor) {
-        alert('Complete fecha, hora, tipo de consulta y doctor.');
+        alert(TC.completeFields);
         return;
     }
 
     if (hora < '07:00' || hora > '22:30') {
-        alert('La hora debe estar entre las 07:00 y las 22:30.');
+        alert(TC.timeRange);
         return;
     }
 
     const [y, mo, d] = fecha.split('-');
-    if (!confirm(`¿Guardar los cambios de la cita? Quedará el ${d}/${mo}/${y} a las ${hora}.`)) return;
+    if (!confirm(`${TC.confirmSavePre} ${d}/${mo}/${y} ${TC.at} ${hora}.`)) return;
 
     $.post('editar_cita.php', {
         idCita: id,
@@ -928,26 +1005,26 @@ function guardarEdicion() {
     }, function(res) {
         res = res.trim();
         if (res === 'OK') {
-            alert('Cita actualizada con éxito.');
+            alert(TC.updatedOk);
             location.reload();
         } else if (res === 'OK_MODIFICADA') {
-            alert('Cita actualizada. Se notificó al paciente por correo del cambio de fecha/hora.');
+            alert(TC.updatedEmail);
             location.reload();
         } else if (res === 'OK_SIN_CORREO') {
-            alert('Cita actualizada. No se pudo enviar el correo de aviso (el paciente no tiene correo registrado o falló el envío).');
+            alert(TC.updatedNoEmail);
             location.reload();
         } else if (res === 'HORARIO_OCUPADO') {
-            alert('El horario elegido se cruza con otra cita existente. Elija otra hora.');
+            alert(TC.slotTaken);
         } else if (res === 'HORA_FUERA_RANGO') {
-            alert('La hora debe estar entre las 07:00 y las 22:30.');
+            alert(TC.timeRange);
         } else if (res === 'NO_ENCONTRADA') {
-            alert('La cita ya no existe o fue eliminada.');
+            alert(TC.apptGone);
             location.reload();
         } else {
-            alert('Error al editar: ' + res);
+            alert(TC.editError + res);
         }
     }).fail(function() {
-        alert('Error de conexión. Intente de nuevo.');
+        alert(TC.connError);
     });
 }
 
@@ -956,24 +1033,24 @@ function eliminarCita() {
     const id = document.getElementById('idCita').value;
     if (!id) return;
 
-    if (!confirm('¿Eliminar esta cita? Se notificará al paciente por correo que su cita fue cancelada. Esta acción no se puede deshacer.')) return;
+    if (!confirm(TC.confirmDelete)) return;
 
     $.post('eliminar_cita.php', { idCita: id }, function(res) {
         res = res.trim();
         if (res === 'OK') {
-            alert('Cita eliminada. Se envió el correo de cancelación al paciente.');
+            alert(TC.deletedOk);
             location.reload();
         } else if (res === 'OK_SIN_CORREO') {
-            alert('Cita eliminada. No se pudo enviar el correo (el paciente no tiene correo registrado o falló el envío).');
+            alert(TC.deletedNoEmail);
             location.reload();
         } else if (res === 'NO_ENCONTRADA') {
-            alert('La cita ya no existe o fue eliminada previamente.');
+            alert(TC.apptGonePrev);
             location.reload();
         } else {
-            alert('Error al eliminar: ' + res);
+            alert(TC.deleteError + res);
         }
     }).fail(function() {
-        alert('Error de conexión al eliminar. Intente de nuevo.');
+        alert(TC.deleteConnError);
     });
 }
 
@@ -982,7 +1059,7 @@ let epModal = null;
 
 function editarPacienteDesdeCita() {
     const idPaciente = citaActual ? citaActual.idpaciente : null;
-    if (!idPaciente) { alert('No se pudo identificar al paciente de esta cita.'); return; }
+    if (!idPaciente) { alert(TC.noPatientId); return; }
 
     if (!epModal) epModal = new bootstrap.Modal(document.getElementById('modalEditarPaciente'));
 
@@ -991,7 +1068,7 @@ function editarPacienteDesdeCita() {
 
     $.getJSON('get_paciente.php', { id: idPaciente })
         .done(function(p) {
-            if (p.error) { alert('No se pudo cargar el paciente: ' + p.error); return; }
+            if (p.error) { alert(TC.loadError + p.error); return; }
             document.getElementById('epNombres').value   = p.NOMBRES   || '';
             document.getElementById('epApellidos').value = p.APELLIDOS || '';
             document.getElementById('epCedula').value    = p.CEDULA    || '';
@@ -1015,7 +1092,7 @@ function editarPacienteDesdeCita() {
             epModal.show();
         })
         .fail(function(xhr) {
-            alert('Error al cargar el paciente (HTTP ' + xhr.status + ').');
+            alert(TC.loadHttp + xhr.status + ').');
         });
 }
 
@@ -1023,7 +1100,7 @@ function guardarPacienteCita() {
     const nombres   = document.getElementById('epNombres').value.trim();
     const apellidos = document.getElementById('epApellidos').value.trim();
     if (!nombres || !apellidos) {
-        alert('Nombres y apellidos son obligatorios.');
+        alert(TC.nameRequired);
         return;
     }
 
@@ -1034,20 +1111,20 @@ function guardarPacienteCita() {
         res = res.trim();
         if (res === 'OK' || res === 'OK_SIN_ALERTA') {
             if (res === 'OK_SIN_ALERTA') {
-                alert('Paciente actualizado. Nota: el campo Alerta no se guardó porque falta ejecutar la migración de notas.');
+                alert(TC.updatedNoAlert);
             } else {
-                alert('Paciente actualizado con éxito.');
+                alert(TC.patientUpdatedOk);
             }
             location.reload();
         } else if (res === 'DATOS_INCOMPLETOS') {
-            alert('Faltan datos obligatorios (nombres y apellidos).');
+            alert(TC.incomplete);
             btn.disabled = false;
         } else {
-            alert('Error al guardar: ' + res);
+            alert(TC.saveError + res);
             btn.disabled = false;
         }
     }).fail(function() {
-        alert('Error de conexión. Intente de nuevo.');
+        alert(TC.connError);
         btn.disabled = false;
     });
 }
@@ -1056,7 +1133,7 @@ function validarFormulario() {
     const id     = document.getElementById('idCita').value;
     const estado = document.getElementById('estadoCita').value;
     if (!id || !estado) {
-        alert("Error: Los datos del formulario no están completos.");
+        alert(TC.formIncomplete);
         return false;
     }
     return true;
@@ -1082,34 +1159,34 @@ function abrirModalCita(id, title, startDate, p) {
     else if (tel.length === 10 && tel.startsWith('09')) tel = '593' + tel.substring(1);
 
     const msg = encodeURIComponent(
-        `Hola, le saludamos de SROSS Nutritions. Le recordamos su cita de ${p.consulta} para el día ` +
-        `${startDate.toLocaleDateString()} a las ` +
-        `${startDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}. ¿Nos confirma su asistencia?`
+        `${TC.waPre} ${p.consulta} ${TC.waMid} ` +
+        `${startDate.toLocaleDateString()} ${TC.waAt} ` +
+        `${startDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}. ${TC.waEnd}`
     );
 
     document.getElementById('eventDetails').innerHTML = `
         <div class="row">
             <div class="col-md-8">
-                <p><strong>Paciente:</strong> ${title}</p>
-                <p><strong>Teléfono:</strong> ${p.telefono || 'No registrado'}</p>
-                <p><strong>Inicio:</strong> ${startDate.toLocaleString()}</p>
-                <p><strong>Doctor:</strong> ${p.medico}</p>
-                <p><strong>Location:</strong> ${p.agencia || 'No registrada'}</p>
-                <p><strong>Estado:</strong> ${estadoBadge(est)}</p>
+                <p><strong>${TC.lblPatient}</strong> ${title}</p>
+                <p><strong>${TC.lblPhone}</strong> ${p.telefono || TC.notRegisteredM}</p>
+                <p><strong>${TC.lblStart}</strong> ${startDate.toLocaleString()}</p>
+                <p><strong>${TC.lblDoctor}</strong> ${p.medico}</p>
+                <p><strong>${TC.lblLocation}</strong> ${p.agencia || TC.notRegisteredF}</p>
+                <p><strong>${TC.lblStatus}</strong> ${estadoBadge(est)}</p>
             </div>
             <div class="col-md-4 text-center">
                 ${tel
                     ? `<a href="https://wa.me/${tel}?text=${msg}" target="_blank"
                         class="btn btn-outline-success btn-lg mb-2">
-                        <i class="bi bi-whatsapp"></i> Confirmar por WhatsApp
+                        <i class="bi bi-whatsapp"></i> ${TC.confirmWhatsapp}
                        </a>`
-                    : '<p class="text-danger small">Sin número para WhatsApp</p>'
+                    : `<p class="text-danger small">${TC.noWhatsapp}</p>`
                 }
             </div>
         </div>
         <hr>
-        <p><strong>Tipo consulta:</strong> ${p.consulta}</p>
-        ${p.comentario ? `<p><strong>Comentario:</strong> ${p.comentario}</p>` : ''}
+        <p><strong>${TC.lblType}</strong> ${p.consulta}</p>
+        ${p.comentario ? `<p><strong>${TC.lblComment}</strong> ${p.comentario}</p>` : ''}
     `;
 
     // Controlar visibilidad de botones según estado
@@ -1173,7 +1250,7 @@ function cargarInfoPacienteCita(idPaciente) {
     const cont = document.getElementById('citaPacienteInfo');
     if (!cont) return;
     if (!idPaciente) { cont.innerHTML = ''; return; }
-    cont.innerHTML = '<div class="text-muted small py-2"><span class="spinner-border spinner-border-sm me-1"></span> Cargando datos del paciente...</div>';
+    cont.innerHTML = '<div class="text-muted small py-2"><span class="spinner-border spinner-border-sm me-1"></span> ' + TC.loadingPatient + '</div>';
     fetch('get_historial_paciente.php?id=' + encodeURIComponent(idPaciente))
         .then(function (r) { return r.text(); })
         .then(function (html) {
@@ -1191,7 +1268,7 @@ function cargarInfoPacienteCita(idPaciente) {
             // Consultas anteriores como tarjetas (estilo agenda)
             if (filas.length) {
                 out += '<div class="mt-3">' +
-                       '<div class="fw-semibold mb-2"><i class="bi bi-clock-history"></i> Consultas (' + filas.length + ')</div>' +
+                       '<div class="fw-semibold mb-2"><i class="bi bi-clock-history"></i> ' + TC.consultations + ' (' + filas.length + ')</div>' +
                        '<div class="cita-hist-lista">';
                 filas.forEach(function (tr) {
                     var td = tr.querySelectorAll('td');
@@ -1228,7 +1305,7 @@ function cargarInfoPacienteCita(idPaciente) {
             cont.innerHTML = out;
         })
         .catch(function () {
-            cont.innerHTML = '<p class="text-muted small mb-0">No se pudieron cargar los datos del paciente.</p>';
+            cont.innerHTML = '<p class="text-muted small mb-0">' + TC.couldNotLoadPat + '</p>';
         });
 }
 
@@ -1255,7 +1332,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var calendarEl = document.getElementById('calendar1');
     var calendar   = new FullCalendar.Calendar(calendarEl, {
-        locale: 'es',
+        locale: CAL_LANG,
         headerToolbar: {
             left:   'prev,next today',
             center: 'title',
@@ -1289,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<div class="fc-event-time-custom">' + rango + '</div>' +
                 '<div class="fc-event-title-custom">' + esc(arg.event.title) + '</div>' +
                 '<div class="fc-event-sub-custom">Dr. ' + esc(p.medico || '') + '</div>' +
-                '<div class="fc-event-sub-custom">L: ' + esc(p.agencia || 'Sin asignar') + '</div>';
+                '<div class="fc-event-sub-custom">L: ' + esc(p.agencia || TC.unassigned) + '</div>';
             return { domNodes: [div] };
         },
 
@@ -1329,8 +1406,8 @@ const CV_TIME_COL_W    = 64;
 const CV_DAY_HEAD_H    = 30;
 const CV_DOC_HEAD_H    = 28;
 const CV_HEADER_H      = CV_DAY_HEAD_H + CV_DOC_HEAD_H;
-const CV_DIAS          = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const CV_MESES         = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const CV_DIAS          = CAL_DIAS;
+const CV_MESES         = CAL_MESES;
 
 let cvWeekStart      = startOfWeek(new Date());
 const cvDoctoresOcultos = new Set();
@@ -1354,10 +1431,14 @@ function mismaFecha(a, b) {
 function cvRangeLabel(weekStart) {
     const end = new Date(weekStart);
     end.setDate(end.getDate() + 6);
-    if (weekStart.getMonth() === end.getMonth()) {
-        return `${weekStart.getDate()} - ${end.getDate()} de ${CV_MESES[end.getMonth()]} ${end.getFullYear()}`;
+    const sd = weekStart.getDate(), ed = end.getDate(), yr = end.getFullYear();
+    const sm = CV_MESES[weekStart.getMonth()], em = CV_MESES[end.getMonth()];
+    if (CAL_LANG === 'es') {
+        if (weekStart.getMonth() === end.getMonth()) return `${sd} - ${ed} de ${em} ${yr}`;
+        return `${sd} de ${sm} - ${ed} de ${em} ${yr}`;
     }
-    return `${weekStart.getDate()} de ${CV_MESES[weekStart.getMonth()]} - ${end.getDate()} de ${CV_MESES[end.getMonth()]} ${end.getFullYear()}`;
+    if (weekStart.getMonth() === end.getMonth()) return `${em} ${sd} - ${ed}, ${yr}`;
+    return `${sm} ${sd} - ${em} ${ed}, ${yr}`;
 }
 
 function inicializarVistaPorDoctor() {
@@ -1523,7 +1604,9 @@ function renderVistaPorDoctorLista(doctores, weekEnd) {
 
         const titulo = document.createElement('div');
         titulo.className = 'cv-list-day';
-        titulo.textContent = `${CV_DIAS[fecha.getDay()]} ${fecha.getDate()} de ${CV_MESES[fecha.getMonth()]}`;
+        titulo.textContent = CAL_LANG === 'es'
+            ? `${CV_DIAS[fecha.getDay()]} ${fecha.getDate()} de ${CV_MESES[fecha.getMonth()]}`
+            : `${CV_DIAS[fecha.getDay()]}, ${CV_MESES[fecha.getMonth()]} ${fecha.getDate()}`;
         cont.appendChild(titulo);
 
         citasDia.forEach(function (ev) {
@@ -1546,7 +1629,7 @@ function renderVistaPorDoctorLista(doctores, weekEnd) {
     }
 
     if (!cont.children.length) {
-        cont.innerHTML = '<p class="text-muted text-center my-3">No hay citas esta semana.</p>';
+        cont.innerHTML = '<p class="text-muted text-center my-3">' + TC.noApptsWeek + '</p>';
     }
 }
 
