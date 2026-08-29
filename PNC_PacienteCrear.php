@@ -1,17 +1,18 @@
-<!doctype html>
-<html lang="en">
-<?
+<?php
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion=conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 ?>
+<!doctype html>
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Language" content="en">
+    <meta http-equiv="Content-Language" content="<?php echo current_lang(); ?>">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Calendar - Calendars are used in a lot of apps. We thought to include one for React.</title>
+    <title><?php te('pcreate.pageTitle'); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
     <meta name="description" content="Calendars are used in a lot of apps. We thought to include one for React.">
     <meta name="msapplication-tap-highlight" content="no">
@@ -94,13 +95,13 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                 <li class="nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-database"> </i>
-                                        Estadistica
+                                        <?php te('hdr.statistics'); ?>
                                     </a>
                                 </li>
                                 <li class="dropdown nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-cog"></i>
-                                        Configuracion
+                                        <?php te('hdr.settings'); ?>
                                     </a>
                                 </li>
                             </ul>        </div>
@@ -115,10 +116,10 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                     <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                                 </a>
                                                 <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
-                                                    <button type="button" tabindex="0" class="dropdown-item">Perfil de Usuario</button>
-                                                    <button type="button" tabindex="0" class="dropdown-item">Configuración</button>
+                                                    <a href="perfil.php" tabindex="0" class="dropdown-item"><?php te('hdr.userProfile'); ?></a>
+                                                    <button type="button" tabindex="0" class="dropdown-item"><?php te('hdr.settings'); ?></button>
                                                     <div tabindex="-1" class="dropdown-divider"></div>
-                                                    <a type="button" tabindex="0" href="" class="dropdown-item">Cerrar Sesión</a>
+                                                    <a type="button" tabindex="0" href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -181,8 +182,8 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                         <i class="pe-7s-add-user icon-gradient bg-warm-flame">
                                         </i>
                                     </div>
-                                    <div>Crear nuevo
-                                        <div class="page-title-subheading">Paciente.
+                                    <div><?php te('pcreate.newTitle'); ?>
+                                        <div class="page-title-subheading"><?php te('pcreate.newSub'); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -242,12 +243,12 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                         <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
                             <li class="nav-item">
                                 <a role="tab" class="nav-link active" id="tab-0" data-toggle="tab" href="#tab-content-0">
-                                    <span>Register</span>
+                                    <span><?php te('pcreate.tab.register'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a role="tab" class="nav-link" id="tab-1" data-toggle="tab" href="#tab-content-1">
-                                    <span>List View</span>
+                                    <span><?php te('pcreate.tab.list'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -263,7 +264,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                         <!-- <div id='calendar1'></div> -->
                                         <div class="main-card mb-3 card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Información del paciente</h5>
+                                                <h5 class="card-title"><?php te('pcreate.info'); ?></h5>
                                                 <form class="needs-validation" novalidate method="post" action="class/Insert_Pacientev2.php">
                                                     <div class="form-row">
                                                         <div class="col-md-2 mb-3">
@@ -274,7 +275,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                             </div>
                                                         </div>
                                                         <div class="col-md-2 mb-3">
-                                                            <label for="validationCustom05">Title</label>
+                                                            <label for="validationCustom05"><?php te('pcreate.title'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select name="title" id="validationCustom05" class="form-control" required>
                                                                 <option>Default Select</option>
@@ -296,22 +297,22 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3 mb-3">
-                                                            <label for="validationCustom01">First name</label>
-                                                            <input type="text" class="form-control" name="nombres" id="validationCustom01" placeholder="First name"  required>
+                                                            <label for="validationCustom01"><?php te('pf.firstName'); ?></label>
+                                                            <input type="text" class="form-control" name="nombres" id="validationCustom01" placeholder="<?php te('pf.firstName'); ?>"  required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3 mb-3">
-                                                            <label for="validationCustom02">Last name</label>
-                                                            <input type="text" class="form-control" id="validationCustom02"  name="apellidos" placeholder="Last name"  required>
+                                                            <label for="validationCustom02"><?php te('pf.lastName'); ?></label>
+                                                            <input type="text" class="form-control" id="validationCustom02"  name="apellidos" placeholder="<?php te('pf.lastName'); ?>"  required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                        <div class="col-md-2 mb-3">
-                                                           <label for="validationCustom04">Phone</label>
-                                                           <input type="text" class="form-control" name="telefono" id="validationCustom04" placeholder="Pone" required>
+                                                           <label for="validationCustom04"><?php te('pf.phone'); ?></label>
+                                                           <input type="text" class="form-control" name="telefono" id="validationCustom04" placeholder="<?php te('pf.phone'); ?>" required>
                                                            <div class="invalid-feedback">
                                                                Please provide a valid state.
                                                            </div>
@@ -319,7 +320,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                     </div>
                                                     <div class="form-row">
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustomUsername">E-MAIL</label>
+                                                            <label for="validationCustomUsername"><?php te('pf.email'); ?></label>
                                                             <div class="input-group">
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text" id="inputGroupPrepend">@</span>
@@ -332,7 +333,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                         </div>
                                                      
                                                         <div class="col-md-3 mb-3">
-                                                            <label for="validationCustom05">Sex</label>
+                                                            <label for="validationCustom05"><?php te('pf.sex'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select name="sex" id="validationCustom05" class="form-control" required>
                                                                 <option value="N/A">Default Select</option>
@@ -346,7 +347,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                         </div>
 
                                                         <div class="col-md-5 mb-3">
-                                                            <label for="validationCustom05">Gender Identity</label>
+                                                            <label for="validationCustom05"><?php te('pcreate.genderIdentity'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select name="gender" id="validationCustom05" class="form-control" required>
                                                                 <option value="Default Select">Default Select</option>
@@ -366,7 +367,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                             <div class="position-relative form-group">
                                                                 <div class="">
                                                                    <div class="card-body">
-                                                                       <h5 class="card-title">Birth of day</h5>
+                                                                       <h5 class="card-title"><?php te('pf.dob'); ?></h5>
                                                                        <input type="date" name="feNac" class="form-control" data-toggle="datepicker-year">
                                                                    </div>
                                                                 </div>
@@ -377,7 +378,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                     </div>
                                                     <div class="form-row">
                                                         <div class="col-md-4 mb-4">
-                                                            <label for="validationCustomID">ADDRESS</label>
+                                                            <label for="validationCustomID"><?php te('pf.address'); ?></label>
                                                             <input type="text" class="form-control" id="address" name= "address" placeholder=""  >
                                                             <div class="valid-feedback">
                                                                 Looks good!
@@ -385,14 +386,14 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                         </div>
                                                         
                                                         <div class="col-md-4 mb-4">
-                                                            <label for="validationCustom01">Notes</label>
+                                                            <label for="validationCustom01"><?php te('pf.importantNotes'); ?></label>
                                                             <input type="text" class="form-control" name="notes" id="notes" placeholder=""  >
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4 mb-4">
-                                                            <label for="validationCustom02">Add Notes</label>
+                                                            <label for="validationCustom02"><?php te('pf.billingNotes'); ?></label>
                                                             <input type="text" class="form-control" id="addNotes"  name="addNotes" placeholder=""  >
                                                             <div class="valid-feedback">
                                                                 Looks good!
@@ -403,7 +404,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                     
                                                      
                                                     
-                                                    <button class="btn btn-primary" type="submit">Save </button>
+                                                    <button class="btn btn-primary" type="submit"><?php te('pcreate.save'); ?></button>
                                                 </form>
                                         
                                                 <script>
@@ -442,8 +443,8 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Paciente</th>
-                                                    <th>Acciones</th>
+                                                    <th><?php te('plist.th.patient'); ?></th>
+                                                    <th><?php te('pcreate.th.actions'); ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -481,15 +482,15 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                             <tfoot>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Paciente</th>
-                                                    <th>Acciones</th>
+                                                    <th><?php te('plist.th.patient'); ?></th>
+                                                    <th><?php te('pcreate.th.actions'); ?></th>
                                                 </tr>
                                             </tfoot>
                                         </table>
                                        
                                         <script>
                                             function confirmarEliminacion(idPaciente) {
-                                                if (confirm("¿Estás seguro de eliminar este paciente?")) {
+                                                if (confirm(<?php echo json_encode(t('pcreate.js.confirmDelete')); ?>)) {
                                                     window.location.href = "class/Eliminar_pacienteV2.php?idPaciente=" + idPaciente;
                                                 }
                                             }
@@ -530,11 +531,11 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
     function cargarSegurosPaciente(idPaciente) {
         const cont = document.getElementById('psLista');
         if (!cont) return;
-        cont.innerHTML = '<div class="text-muted small">Cargando…</div>';
+        cont.innerHTML = '<div class="text-muted small">' + <?php echo json_encode(t('common.loading')); ?> + '</div>';
         fetch('seguro_paciente_listar.php?id_paciente=' + encodeURIComponent(idPaciente))
             .then(r => r.text())
             .then(html => { cont.innerHTML = html; })
-            .catch(() => { cont.innerHTML = '<div class="text-danger small">Error al cargar seguros.</div>'; });
+            .catch(() => { cont.innerHTML = '<div class="text-danger small">' + <?php echo json_encode(t('pcreate.js.insLoadError')); ?> + '</div>'; });
     }
 
     function agregarSeguroPaciente() {
@@ -542,8 +543,8 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
         const idSeguro   = document.getElementById('psSeguro').value;
         const poliza     = document.getElementById('psPoliza').value;
         const prioridad  = document.getElementById('psPrioridad').value;
-        if (!idPaciente) { alert('Primero abra un paciente para editar.'); return; }
-        if (!idSeguro)   { alert('Seleccione una aseguradora.'); return; }
+        if (!idPaciente) { alert(<?php echo json_encode(t('pcreate.js.openPatient')); ?>); return; }
+        if (!idSeguro)   { alert(<?php echo json_encode(t('pcreate.js.selectInsurer')); ?>); return; }
 
         fetch('seguro_paciente_guardar.php', {
             method: 'POST',
@@ -559,16 +560,16 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                 document.getElementById('psPrioridad').value = 'Primario';
                 cargarSegurosPaciente(idPaciente);
             } else if (res === 'DUP') {
-                alert('Ese seguro ya está asignado a este paciente.');
+                alert(<?php echo json_encode(t('pcreate.js.insDup')); ?>);
             } else {
-                alert('No se pudo agregar: ' + res);
+                alert(<?php echo json_encode(t('pcreate.js.insAddError')); ?> + res);
             }
         })
-        .catch(() => alert('Error de conexión.'));
+        .catch(() => alert(<?php echo json_encode(t('common.js.connError')); ?>));
     }
 
     function eliminarSeguroPaciente(id) {
-        if (!confirm('¿Quitar este seguro del paciente?')) return;
+        if (!confirm(<?php echo json_encode(t('pcreate.js.insRemoveConf')); ?>)) return;
         const idPaciente = document.getElementById('idPaciente').value;
         fetch('seguro_paciente_eliminar.php', {
             method: 'POST',
@@ -578,9 +579,9 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
         .then(r => r.text())
         .then(res => {
             if (res.trim() === 'OK') cargarSegurosPaciente(idPaciente);
-            else alert('No se pudo quitar: ' + res);
+            else alert(<?php echo json_encode(t('pcreate.js.insRemoveErr')); ?> + res);
         })
-        .catch(() => alert('Error de conexión.'));
+        .catch(() => alert(<?php echo json_encode(t('common.js.connError')); ?>));
     }
 
     function subirImagenSeguro(input, id, lado) {
@@ -595,10 +596,10 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                 if (res.trim().startsWith('OK')) {
                     cargarSegurosPaciente(document.getElementById('idPaciente').value);
                 } else {
-                    alert('No se pudo subir la imagen: ' + res);
+                    alert(<?php echo json_encode(t('pcreate.js.imgUploadErr')); ?> + res);
                 }
             })
-            .catch(() => alert('Error de conexión al subir la imagen.'));
+            .catch(() => alert(<?php echo json_encode(t('pcreate.js.imgConnErr')); ?>));
     }
 </script>
                                     </div>
@@ -638,49 +639,49 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Editar Paciente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="editModalLabel"><?php te('plist.editTitleModal'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditar">
                     <input type="hidden" id="idPaciente" name="idPaciente">
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
+                        <label class="form-label"><?php te('pf.firstName'); ?></label>
                         <input type="text" class="form-control" id="nombre" name="nombres">
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Apellido</label>
+                        <label class="form-label"><?php te('pf.lastName'); ?></label>
                         <input type="text" class="form-control" id="apellido" name="apellidos">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">E-mail</label>
+                        <label class="form-label"><?php te('pf.email'); ?></label>
                         <input type="email" class="form-control" id="email" name="email">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Teléfono</label>
+                        <label class="form-label"><?php te('pf.phone'); ?></label>
                         <input type="text" class="form-control" id="telefono" name="telefono">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Fecha Nacimiento</label>
+                        <label class="form-label"><?php te('pf.dob'); ?></label>
                         <input type="date" class="form-control" id="fecNac" name="fecNac">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">ID</label>
+                        <label class="form-label"><?php te('pf.id'); ?></label>
                         <input type="text" class="form-control" id="identificacion" name="identificacion">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">ADDRESS</label>
+                        <label class="form-label"><?php te('pf.address'); ?></label>
                         <input type="text" class="form-control" id="address" name="address">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Title</label>
+                        <label class="form-label"><?php te('pcreate.title'); ?></label>
                         <select name="title" id="title" class="form-control" required>
                                                                 <option>Default Select</option>
                                                                 <option value="Dr">Dr</option>
@@ -698,9 +699,9 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Sex</label>
-                        
-                        
+                        <label class="form-label"><?php te('pf.sex'); ?></label>
+
+
                                                                 <select name="sex" id="sex" class="form-control" required>
                                                                 
                                                                 <option value="Male">Male</option>
@@ -710,7 +711,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Gender</label>
+                        <label class="form-label"><?php te('pf.gender'); ?></label>
                        <select name="gender" id="gender" class="form-control" required>
                                                                 <option value="Default Select">Default Select</option>
                                                                 <option value="Male">Male</option>
@@ -724,17 +725,17 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
                     
 
-                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()"><?php te('common.saveChanges'); ?></button>
                 </form>
 
                 <hr class="my-3">
                 <div>
-                    <h6 class="mb-2">🛡️ Seguros del paciente</h6>
+                    <h6 class="mb-2">🛡️ <?php te('pcreate.insurance'); ?></h6>
                     <div class="row g-2 align-items-end mb-2">
                         <div class="col-12 col-md-5">
-                            <label class="form-label small mb-1">Aseguradora</label>
+                            <label class="form-label small mb-1"><?php te('pcreate.insurer'); ?></label>
                             <select id="psSeguro" class="form-select form-select-sm">
-                                <option value="">— Seleccione —</option>
+                                <option value=""><?php te('pcreate.selectDash'); ?></option>
                                 <?php
                                 $resSegPac = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
                                 while ($resSegPac && $sp = $resSegPac->fetch_assoc()):
@@ -744,19 +745,19 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                             </select>
                         </div>
                         <div class="col-6 col-md-3">
-                            <label class="form-label small mb-1">N° póliza</label>
+                            <label class="form-label small mb-1"><?php te('pcreate.policyNo'); ?></label>
                             <input type="text" id="psPoliza" class="form-control form-control-sm" maxlength="60">
                         </div>
                         <div class="col-6 col-md-2">
-                            <label class="form-label small mb-1">Prioridad</label>
+                            <label class="form-label small mb-1"><?php te('pcreate.priority'); ?></label>
                             <select id="psPrioridad" class="form-select form-select-sm">
-                                <option value="Primario">Primario</option>
-                                <option value="Secundario">Secundario</option>
-                                <option value="Terciario">Terciario</option>
+                                <option value="Primario"><?php te('pcreate.priorityPrimary'); ?></option>
+                                <option value="Secundario"><?php te('pcreate.prioritySecondary'); ?></option>
+                                <option value="Terciario"><?php te('pcreate.priorityTertiary'); ?></option>
                             </select>
                         </div>
                         <div class="col-12 col-md-2">
-                            <button type="button" class="btn btn-sm btn-success w-100" onclick="agregarSeguroPaciente()">+ Agregar</button>
+                            <button type="button" class="btn btn-sm btn-success w-100" onclick="agregarSeguroPaciente()"><?php te('pcreate.addBtn'); ?></button>
                         </div>
                     </div>
                     <div id="psLista"><div class="text-muted small">—</div></div>

@@ -1,8 +1,7 @@
-<!doctype html>
-<html lang="en">
-<?
+<?php
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion=conectarse();
 
 $rolesHtml = '';
@@ -15,12 +14,14 @@ if ($queryRoles) {
     }
 }
 ?>
+<!doctype html>
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Language" content="en">
+    <meta http-equiv="Content-Language" content="<?php echo current_lang(); ?>">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Calendar - Calendars are used in a lot of apps. We thought to include one for React.</title>
+    <title><?php te('ucreate.pageTitle'); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
     <meta name="description" content="Calendars are used in a lot of apps. We thought to include one for React.">
     <meta name="msapplication-tap-highlight" content="no">
@@ -89,13 +90,13 @@ if ($queryRoles) {
                                 <li class="nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-database"> </i>
-                                        Estadistica
+                                        <?php te('hdr.statistics'); ?>
                                     </a>
                                 </li>
                                 <li class="dropdown nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-cog"></i>
-                                        Configuracion
+                                        <?php te('hdr.settings'); ?>
                                     </a>
                                 </li>
                             </ul>        </div>
@@ -110,10 +111,10 @@ if ($queryRoles) {
                                                     <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                                 </a>
                                                 <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
-                                                    <button type="button" tabindex="0" class="dropdown-item">Perfil de Usuario</button>
-                                                    <button type="button" tabindex="0" class="dropdown-item">Configuración</button>
+                                                    <a href="perfil.php" tabindex="0" class="dropdown-item"><?php te('hdr.userProfile'); ?></a>
+                                                    <button type="button" tabindex="0" class="dropdown-item"><?php te('hdr.settings'); ?></button>
                                                     <div tabindex="-1" class="dropdown-divider"></div>
-                                                    <a type="button" tabindex="0" href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                                    <a type="button" tabindex="0" href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -176,8 +177,8 @@ if ($queryRoles) {
                                         <i class="pe-7s-add-user icon-gradient bg-warm-flame">
                                         </i>
                                     </div>
-                                    <div>Crear nuevo
-                                        <div class="page-title-subheading">Usuario.
+                                    <div><?php te('pcreate.newTitle'); ?>
+                                        <div class="page-title-subheading"><?php te('ucreate.newSub'); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -237,12 +238,12 @@ if ($queryRoles) {
                         <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
                             <li class="nav-item">
                                 <a role="tab" class="nav-link active" id="tab-0" data-toggle="tab" href="#tab-content-0">
-                                    <span>Register</span>
+                                    <span><?php te('pcreate.tab.register'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a role="tab" class="nav-link" id="tab-1" data-toggle="tab" href="#tab-content-1">
-                                    <span>List View</span>
+                                    <span><?php te('pcreate.tab.list'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -258,26 +259,26 @@ if ($queryRoles) {
                                         <!-- <div id='calendar1'></div> -->
                                         <div class="main-card mb-3 card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Información del usuario</h5>
+                                                <h5 class="card-title"><?php te('ucreate.info'); ?></h5>
                                                 <form class="needs-validation" novalidate method="post" action="class/Insert_Usuario.php">
                                                     <div class="form-row">
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom01">First name</label>
-                                                            <input type="text" class="form-control" id="validationCustom01" name="nombres" placeholder="First name" value="Mark" required>
+                                                            <label for="validationCustom01"><?php te('pf.firstName'); ?></label>
+                                                            <input type="text" class="form-control" id="validationCustom01" name="nombres" placeholder="<?php te('pf.firstName'); ?>" value="" required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom02">Last name</label>
-                                                            <input type="text" class="form-control" id="validationCustom02"  name="apellidos" placeholder="Last name" value="Otto" required>
+                                                            <label for="validationCustom02"><?php te('pf.lastName'); ?></label>
+                                                            <input type="text" class="form-control" id="validationCustom02"  name="apellidos" placeholder="<?php te('pf.lastName'); ?>" value="" required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                        <div class="col-md-4 mb-3">
-                                                           <label for="validationCustom04">Phone</label>
-                                                           <input type="text" class="form-control" id="validationCustom04" name="telefono" placeholder="Pone" required>
+                                                           <label for="validationCustom04"><?php te('pf.phone'); ?></label>
+                                                           <input type="text" class="form-control" id="validationCustom04" name="telefono" placeholder="<?php te('pf.phone'); ?>" required>
                                                            <div class="invalid-feedback">
                                                                Please provide a valid state.
                                                            </div>
@@ -285,27 +286,27 @@ if ($queryRoles) {
                                                     </div>
                                                     <div class="form-row">
                                                        <div class="col-md-8 mb-3">
-                                                           <label for="validationCustomCorreo">Correo electrónico</label>
-                                                           <input type="email" class="form-control" id="validationCustomCorreo" name="correo" placeholder="usuario@dominio.com">
-                                                           <small class="text-muted">Si se indica, se le enviará un correo de bienvenida con el enlace de la aplicación.</small>
+                                                           <label for="validationCustomCorreo"><?php te('pf.email'); ?></label>
+                                                           <input type="email" class="form-control" id="validationCustomCorreo" name="correo" placeholder="name@mail.com">
+                                                           <small class="text-muted"><?php te('ucreate.emailHelp'); ?></small>
                                                        </div>
                                                     </div>
                                                     <div class="form-row">
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustomUsername">Username</label>
+                                                            <label for="validationCustomUsername"><?php te('ucreate.username'); ?></label>
                                                             <div class="input-group">
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text" id="inputGroupPrepend"><i class="pe-7s-user"> </i></span>
                                                                 </div>
-                                                                <input type="text" class="form-control" id="validationCustomUsername" name="usuario" placeholder="Username" aria-describedby="inputGroupPrepend" required>
+                                                                <input type="text" class="form-control" id="validationCustomUsername" name="usuario" placeholder="<?php te('ucreate.username'); ?>" aria-describedby="inputGroupPrepend" required>
                                                                 <div class="invalid-feedback">
                                                                     Please choose a username.
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom03">Password</label>
-                                                            <input type="text" class="form-control" id="validationCustom03" name="clave" placeholder="Password" required>
+                                                            <label for="validationCustom03"><?php te('ucreate.password'); ?></label>
+                                                            <input type="text" class="form-control" id="validationCustom03" name="clave" placeholder="<?php te('ucreate.password'); ?>" required>
                                                             <div class="invalid-feedback">
                                                                 Please provide a valid Password.
                                                             </div>
@@ -314,7 +315,7 @@ if ($queryRoles) {
 
 
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom05">Rol</label>
+                                                            <label for="validationCustom05"><?php te('ucreate.role'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select  id="validationCustom05" name="Idrol" class="form-control" required>
                                                                 <option value="0">Default Select</option>
@@ -327,7 +328,7 @@ if ($queryRoles) {
                                                         </div>
                                                     </div>
                                                    
-                                                    <button class="btn btn-primary" type="submit">Registrar Usuario</button>
+                                                    <button class="btn btn-primary" type="submit"><?php te('ucreate.registerBtn'); ?></button>
                                                 </form>
                                         
                                                 <script>
@@ -365,11 +366,11 @@ if ($queryRoles) {
                                         <table class="table align-middle mb-0 bg-white">
     <thead class="bg-light">
         <tr>
-            <th>Name</th>
-            <th>Contact</th>
+            <th><?php te('ucreate.th.name'); ?></th>
+            <th><?php te('ucreate.th.contact'); ?></th>
 
-            <th>Rol</th>
-            <th>Actions</th>
+            <th><?php te('ucreate.role'); ?></th>
+            <th><?php te('pcreate.th.actions'); ?></th>
         </tr>
     </thead>
     <tbody>
@@ -460,7 +461,7 @@ if ($queryRoles) {
     </div>
     <script>
                                             function confirmarEliminacion(idUsuario) {
-                                                if (confirm("¿Estás seguro de desactivar este usuario?")) {
+                                                if (confirm(<?php echo json_encode(t('ucreate.js.confirmDeact')); ?>)) {
                                                     window.location.href = "class/Desactivar_UsuarioV2.php?idUsuario=" + idUsuario;
                                                 }
                                             }
@@ -517,40 +518,40 @@ if ($queryRoles) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Editar Paciente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="editModalLabel"><?php te('ucreate.editUserTitle'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditar">
                     <input type="hidden" id="idUsuario" name="idUsuario">
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Nombres</label>
+                        <label class="form-label"><?php te('pf.firstName'); ?></label>
                         <input type="text" class="form-control" id="nombres" name="nombres">
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Apellidos</label>
+                        <label class="form-label"><?php te('pf.lastName'); ?></label>
                         <input type="text" class="form-control" id="apellidos" name="apellidos">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Usuario</label>
+                        <label class="form-label"><?php te('ucreate.username'); ?></label>
                         <input type="text" class="form-control" id="usuario" name="usuario">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-danger">Restablecer Clave</label>
+                        <label class="form-label text-danger"><?php te('ucreate.resetPassword'); ?></label>
                         <input type="text" class="form-control" id="clave" name="clave">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Teléfono</label>
+                        <label class="form-label"><?php te('pf.phone'); ?></label>
                         <input type="text" class="form-control" id="telefono" name="telefono">
                     </div>
 
 
                     <div class="mb-3">
-                        <label class="form-label">Rol</label>
+                        <label class="form-label"><?php te('ucreate.role'); ?></label>
                         <select name="idRol" id="idRol" class="form-control" required>
                                                                 <option value="0">Default Select</option>
                                                                 <?php echo $rolesHtml; ?>
@@ -559,15 +560,15 @@ if ($queryRoles) {
                     
 
                     <div class="mb-3">
-                        <label class="form-label">Sucursal</label>
+                        <label class="form-label"><?php te('ucreate.branch'); ?></label>
                                                                 <select name="idAgencia" id="idAgencia" class="form-control" required>
                                                                 <option>Default Select</option>
                                                                 <option value="1">Sucursal 1</option>
                                                                 <option value="2">Sucursal 2</option>
                                                                 </select>
-                                                            
+
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()"><?php te('common.saveChanges'); ?></button>
                 </form>
             </div>
         </div>
@@ -578,20 +579,20 @@ if ($queryRoles) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Editar Clave</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="editModalLabel"><?php te('ucreate.editPassTitle'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditarClave">
                     <input type="text" id="idUsuarioCl" name="idUsuarioCl">
                     <input type="hidden" id="idUsuario" name="idUsuario">
                     <div class="mb-3">
-                        <label class="form-label text-danger">Restablecer clave</label>
+                        <label class="form-label text-danger"><?php te('ucreate.resetPasswordLc'); ?></label>
                         <input type="text" class="form-control" id="clave" name="clave">
                     </div>
-                    
-                    
-                    <button type="button" class="btn btn-primary" onclick="guardarEdicionClave()">Guardar Cambios</button>
+
+
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionClave()"><?php te('common.saveChanges'); ?></button>
                 </form>
             </div>
         </div>
