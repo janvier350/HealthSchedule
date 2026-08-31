@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if (!isset($_SESSION["rol"])) {
@@ -15,7 +16,7 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
     exit();
 }
 if ($_SESSION['rol'] !== 'SISTEMA') {
-    die('<p style="color:red;font-family:sans-serif;padding:2rem;">Acceso restringido — solo SISTEMA.</p>');
+    die('<p style="color:red;font-family:sans-serif;padding:2rem;">'.htmlspecialchars(t('common.accessRestricted')).'</p>');
 }
 
 $mensaje = null;
@@ -41,21 +42,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($descripcion === '') {
-            $mensaje = ['err', 'La descripción es obligatoria.'];
+            $mensaje = ['err', t('tseg.msg.descRequired')];
         } elseif ($dup > 0) {
-            $mensaje = ['err', 'Ya existe un tipo de seguro con esa descripción.'];
+            $mensaje = ['err', t('tseg.msg.dup')];
         } elseif ($id > 0) {
             $stmt = $conexion->prepare("UPDATE tipo_seguro SET Descripcion = ? WHERE id_tipo_seguro = ?");
             $stmt->bind_param("si", $descripcion, $id);
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Tipo de seguro actualizado.'];
+            $mensaje = ['ok', t('tseg.msg.updated')];
         } else {
             $stmt = $conexion->prepare("INSERT INTO tipo_seguro (Descripcion) VALUES (?)");
             $stmt->bind_param("s", $descripcion);
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Tipo de seguro creado.'];
+            $mensaje = ['ok', t('tseg.msg.created')];
         }
     } elseif ($accion === 'eliminar') {
         $id = (int)($_POST['id'] ?? 0);
@@ -68,13 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtU->close();
 
         if ($enUso > 0) {
-            $mensaje = ['err', 'No se puede eliminar: hay ' . $enUso . ' seguro(s) usando este tipo.'];
+            $mensaje = ['err', t('tseg.msg.inUsePre').' '.$enUso.' '.t('tseg.msg.inUseSuf')];
         } else {
             $stmt = $conexion->prepare("DELETE FROM tipo_seguro WHERE id_tipo_seguro = ?");
             $stmt->bind_param("i", $id);
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Tipo de seguro eliminado.'];
+            $mensaje = ['ok', t('tseg.msg.deleted')];
         }
     }
 }
@@ -84,11 +85,11 @@ $res = $conexion->query("SELECT id_tipo_seguro, Descripcion FROM tipo_seguro ORD
 while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tipos de Seguro</title>
+    <title><?php te('menu.insuranceTypes'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
@@ -133,7 +134,7 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -161,15 +162,15 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
                                 <i class="pe-7s-ribbon icon-gradient bg-plum-plate"></i>
                             </div>
                             <div>
-                                Tipos de Seguro
+                                <?php te('menu.insuranceTypes'); ?>
                                 <div class="page-title-subheading">
-                                    Catálogo de tipos de seguro para asignar a las empresas aseguradoras
+                                    <?php te('tseg.subtitle'); ?>
                                 </div>
                             </div>
                         </div>
                         <div class="page-title-actions">
                             <button type="button" class="btn btn-primary btn-sm" onclick="nuevoTipo()">
-                                <i class="bi bi-plus-circle me-1"></i> Nuevo Tipo
+                                <i class="bi bi-plus-circle me-1"></i> <?php te('tc.newBtn'); ?>
                             </button>
                         </div>
                     </div>
@@ -185,7 +186,7 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
                 <div class="card shadow-sm">
                     <div class="card-header py-2">
                         <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;font-weight:600;">
-                            <i class="bi bi-card-list me-1"></i> <?php echo count($tipos); ?> tipo(s) de seguro
+                            <i class="bi bi-card-list me-1"></i> <?php echo count($tipos); ?> <?php te('tseg.countSuffix'); ?>
                         </span>
                     </div>
                     <div class="card-body p-0">
@@ -194,13 +195,13 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width:80px;">#</th>
-                                        <th>Descripción</th>
-                                        <th class="text-end">Acciones</th>
+                                        <th><?php te('tseg.description'); ?></th>
+                                        <th class="text-end"><?php te('common.actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 <?php if (empty($tipos)): ?>
-                                    <tr><td colspan="3" class="text-center text-muted py-4">No hay tipos de seguro registrados.</td></tr>
+                                    <tr><td colspan="3" class="text-center text-muted py-4"><?php te('tseg.none'); ?></td></tr>
                                 <?php else: foreach ($tipos as $t): ?>
                                     <tr>
                                         <td class="text-muted"><?php echo (int)$t['id_tipo_seguro']; ?></td>
@@ -210,7 +211,7 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
                                                 onclick='editarTipo(<?php echo json_encode($t, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'>
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este tipo de seguro?');">
+                                            <form method="POST" class="d-inline" onsubmit="return confirm(<?php echo json_encode(t('tseg.confirmDelete')); ?>);">
                                                 <input type="hidden" name="accion" value="eliminar">
                                                 <input type="hidden" name="id" value="<?php echo (int)$t['id_tipo_seguro']; ?>">
                                                 <button type="submit" class="btn btn-outline-danger btn-sm">
@@ -236,21 +237,21 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTipoTitulo">Nuevo Tipo de Seguro</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="modalTipoTitulo"><?php te('tseg.modalNew'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <form method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="accion" value="guardar">
                     <input type="hidden" name="id" id="ftId" value="0">
                     <div class="mb-3">
-                        <label class="form-label">Descripción</label>
+                        <label class="form-label"><?php te('tseg.description'); ?></label>
                         <input type="text" class="form-control" name="descripcion" id="ftDescripcion" maxlength="150" required>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
+                    <button type="submit" class="btn btn-primary"><?php te('common.save'); ?></button>
                 </div>
             </form>
         </div>
@@ -263,14 +264,14 @@ while ($r = $res->fetch_assoc()) { $tipos[] = $r; }
 const modalTipo = new bootstrap.Modal(document.getElementById('modalTipo'));
 
 function nuevoTipo() {
-    document.getElementById('modalTipoTitulo').textContent = 'Nuevo Tipo de Seguro';
+    document.getElementById('modalTipoTitulo').textContent = <?php echo json_encode(t('tseg.modalNew')); ?>;
     document.getElementById('ftId').value = '0';
     document.getElementById('ftDescripcion').value = '';
     modalTipo.show();
 }
 
 function editarTipo(t) {
-    document.getElementById('modalTipoTitulo').textContent = 'Editar Tipo de Seguro';
+    document.getElementById('modalTipoTitulo').textContent = <?php echo json_encode(t('tseg.modalEdit')); ?>;
     document.getElementById('ftId').value = t.id_tipo_seguro;
     document.getElementById('ftDescripcion').value = t.Descripcion || '';
     modalTipo.show();

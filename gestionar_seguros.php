@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if (!isset($_SESSION["rol"])) {
@@ -15,7 +16,7 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
     exit();
 }
 if ($_SESSION['rol'] !== 'SISTEMA') {
-    die('<p style="color:red;font-family:sans-serif;padding:2rem;">Acceso restringido — solo SISTEMA.</p>');
+    die('<p style="color:red;font-family:sans-serif;padding:2rem;">'.htmlspecialchars(t('common.accessRestricted')).'</p>');
 }
 
 $mensaje = null;
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $idAgencia = ($_POST['id_agencia']     ?? '') === '' ? null : (int)$_POST['id_agencia'];
 
         if ($empresa === '') {
-            $mensaje = ['err', 'El nombre de la empresa de seguro es obligatorio.'];
+            $mensaje = ['err', t('seg.msg.companyRequired')];
         } elseif ($id > 0) {
             $stmt = $conexion->prepare(
                 "UPDATE seguros
@@ -44,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sssisii", $empresa, $telefono, $direccion, $idTipo, $notas, $idAgencia, $id);
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Seguro actualizado.'];
+            $mensaje = ['ok', t('seg.msg.updated')];
         } else {
             $stmt = $conexion->prepare(
                 "INSERT INTO seguros
@@ -54,12 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sssisi", $empresa, $telefono, $direccion, $idTipo, $notas, $idAgencia);
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Seguro creado.'];
+            $mensaje = ['ok', t('seg.msg.created')];
         }
     } elseif ($accion === 'toggle') {
         $id = (int)($_POST['id'] ?? 0);
         $conexion->query("UPDATE seguros SET estado = IF(estado = 1, 0, 1) WHERE Id_seguro = $id");
-        $mensaje = ['ok', 'Estado actualizado.'];
+        $mensaje = ['ok', t('common.statusUpdated')];
     }
 }
 
@@ -88,11 +89,11 @@ $res = $conexion->query(
 while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Seguros</title>
+    <title><?php te('menu.insurance'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
@@ -137,7 +138,7 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -165,15 +166,15 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                                 <i class="pe-7s-shield icon-gradient bg-plum-plate"></i>
                             </div>
                             <div>
-                                Seguros
+                                <?php te('menu.insurance'); ?>
                                 <div class="page-title-subheading">
-                                    Administra las empresas de seguro y sus datos
+                                    <?php te('seg.subtitle'); ?>
                                 </div>
                             </div>
                         </div>
                         <div class="page-title-actions">
                             <button type="button" class="btn btn-primary btn-sm" onclick="nuevoSeguro()">
-                                <i class="bi bi-plus-circle me-1"></i> Nuevo Seguro
+                                <i class="bi bi-plus-circle me-1"></i> <?php te('seg.newBtn'); ?>
                             </button>
                         </div>
                     </div>
@@ -189,7 +190,7 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                 <div class="card shadow-sm">
                     <div class="card-header py-2">
                         <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;font-weight:600;">
-                            <i class="bi bi-shield-fill-check me-1"></i> <?php echo count($seguros); ?> seguro(s)
+                            <i class="bi bi-shield-fill-check me-1"></i> <?php echo count($seguros); ?> <?php te('seg.countSuffix'); ?>
                         </span>
                     </div>
                     <div class="card-body p-0">
@@ -197,18 +198,18 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Empresa</th>
-                                        <th>Teléfono</th>
-                                        <th>Dirección</th>
-                                        <th>Tipo</th>
-                                        <th>Location</th>
-                                        <th class="text-center">Estado</th>
-                                        <th class="text-end">Acciones</th>
+                                        <th><?php te('seg.th.company'); ?></th>
+                                        <th><?php te('pf.phone'); ?></th>
+                                        <th><?php te('pf.address'); ?></th>
+                                        <th><?php te('seg.th.type'); ?></th>
+                                        <th><?php te('cal.location'); ?></th>
+                                        <th class="text-center"><?php te('common.status'); ?></th>
+                                        <th class="text-end"><?php te('common.actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 <?php if (empty($seguros)): ?>
-                                    <tr><td colspan="7" class="text-center text-muted py-4">No hay seguros registrados.</td></tr>
+                                    <tr><td colspan="7" class="text-center text-muted py-4"><?php te('seg.none'); ?></td></tr>
                                 <?php else: foreach ($seguros as $s): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($s['Empresa_seguro']); ?></td>
@@ -218,9 +219,9 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                                         <td><?php echo htmlspecialchars($s['AGENCIA'] ?: '—'); ?></td>
                                         <td class="text-center">
                                             <?php if ((int)$s['estado'] === 1): ?>
-                                                <span class="badge bg-success">Activo</span>
+                                                <span class="badge bg-success"><?php te('common.active'); ?></span>
                                             <?php else: ?>
-                                                <span class="badge bg-secondary">Inactivo</span>
+                                                <span class="badge bg-secondary"><?php te('common.inactive'); ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-end">
@@ -228,7 +229,7 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                                                 onclick='editarSeguro(<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'>
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Cambiar el estado de este seguro?');">
+                                            <form method="POST" class="d-inline" onsubmit="return confirm(<?php echo json_encode(t('seg.confirmToggle')); ?>);">
                                                 <input type="hidden" name="accion" value="toggle">
                                                 <input type="hidden" name="id" value="<?php echo (int)$s['Id_seguro']; ?>">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm">
@@ -254,8 +255,8 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalSeguroTitulo">Nuevo Seguro</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="modalSeguroTitulo"><?php te('seg.modalNew'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <form method="POST">
                 <div class="modal-body">
@@ -263,19 +264,19 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                     <input type="hidden" name="id" id="fsId" value="0">
 
                     <div class="mb-3">
-                        <label class="form-label">Empresa de seguro</label>
+                        <label class="form-label"><?php te('seg.company'); ?></label>
                         <input type="text" class="form-control" name="empresa" id="fsEmpresa" required>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Teléfono</label>
+                            <label class="form-label"><?php te('pf.phone'); ?></label>
                             <input type="text" class="form-control" name="telefono" id="fsTelefono" maxlength="30">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Tipo de seguro</label>
+                            <label class="form-label"><?php te('seg.typeLabel'); ?></label>
                             <select class="form-select" name="id_tipo_seguro" id="fsTipo">
-                                <option value="">— Seleccione —</option>
+                                <option value=""><?php te('pcreate.selectDash'); ?></option>
                                 <?php foreach ($tiposSeguro as $ts): ?>
                                     <option value="<?php echo (int)$ts['id_tipo_seguro']; ?>">
                                         <?php echo htmlspecialchars($ts['Descripcion']); ?>
@@ -286,14 +287,14 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Dirección</label>
+                        <label class="form-label"><?php te('pf.address'); ?></label>
                         <input type="text" class="form-control" name="direccion" id="fsDireccion" maxlength="255">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Location (Agencia)</label>
+                        <label class="form-label"><?php te('seg.locationAgency'); ?></label>
                         <select class="form-select" name="id_agencia" id="fsAgencia">
-                            <option value="">— Seleccione —</option>
+                            <option value=""><?php te('pcreate.selectDash'); ?></option>
                             <?php foreach ($agencias as $a): ?>
                                 <option value="<?php echo (int)$a['IDAGENCIA']; ?>">
                                     <?php echo htmlspecialchars($a['DESCRIPCION']); ?>
@@ -303,13 +304,13 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Notas</label>
+                        <label class="form-label"><?php te('pf.notes'); ?></label>
                         <textarea class="form-control" name="notas" id="fsNotas" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
+                    <button type="submit" class="btn btn-primary"><?php te('common.save'); ?></button>
                 </div>
             </form>
         </div>
@@ -322,7 +323,7 @@ while ($r = $res->fetch_assoc()) { $seguros[] = $r; }
 const modalSeguro = new bootstrap.Modal(document.getElementById('modalSeguro'));
 
 function nuevoSeguro() {
-    document.getElementById('modalSeguroTitulo').textContent = 'Nuevo Seguro';
+    document.getElementById('modalSeguroTitulo').textContent = <?php echo json_encode(t('seg.modalNew')); ?>;
     document.getElementById('fsId').value        = '0';
     document.getElementById('fsEmpresa').value   = '';
     document.getElementById('fsTelefono').value  = '';
@@ -334,7 +335,7 @@ function nuevoSeguro() {
 }
 
 function editarSeguro(s) {
-    document.getElementById('modalSeguroTitulo').textContent = 'Editar Seguro';
+    document.getElementById('modalSeguroTitulo').textContent = <?php echo json_encode(t('seg.modalEdit')); ?>;
     document.getElementById('fsId').value        = s.Id_seguro;
     document.getElementById('fsEmpresa').value   = s.Empresa_seguro || '';
     document.getElementById('fsTelefono').value  = s.telefono || '';
