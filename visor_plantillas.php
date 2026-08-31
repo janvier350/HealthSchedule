@@ -4,6 +4,7 @@ session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once("class/CalculadoraNutricional.php");
+require_once(__DIR__ . "/lang/i18n.php");
 
 
 // 1. Conexión usando tu función personalizada
@@ -85,10 +86,10 @@ function renderizar($html, $datos) {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Visor de Plantillas Kalix | Buadnet</title>
+    <title><?php te('tpl.pageTitle'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .card-plantilla { min-height: 500px; border: 1px solid #ddd; }
@@ -99,7 +100,7 @@ function renderizar($html, $datos) {
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-3 bg-white shadow-sm sidebar-menu p-4">
-                <h5 class="text-primary mb-4">Plantillas Nutrición</h5>
+                <h5 class="text-primary mb-4"><?php te('tpl.sidebarHeading'); ?></h5>
                 <div class="list-group">
                     <?php while($row = $todas->fetch_assoc()): ?>
                         <a href="?id=<?php echo $row['id']; ?>" 
@@ -113,15 +114,15 @@ function renderizar($html, $datos) {
             <div class="col-md-9 p-5">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-uppercase">Vista Previa: <?php echo $plantilla['nombre_plantilla'] ?? 'Seleccione'; ?></span>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">Imprimir</button>
+                        <span class="fw-bold text-uppercase"><?php te('tpl.preview'); ?> <?php echo $plantilla['nombre_plantilla'] ?? t('tpl.select'); ?></span>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><?php te('common.print'); ?></button>
                     </div>
                     <div class="card-body bg-white p-5 card-plantilla">
                         <?php 
                         if($plantilla) {
                             echo renderizar($plantilla['cuerpo_html'], $datos_demo); 
                         } else {
-                            echo '<div class="alert alert-warning">No hay datos en la tabla cat_plantillas_nutricion.</div>';
+                            echo '<div class="alert alert-warning">'.htmlspecialchars(t('tpl.noData')).'</div>';
                         }
                         ?>
                     </div>

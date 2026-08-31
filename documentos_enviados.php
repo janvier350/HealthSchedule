@@ -3,13 +3,14 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
 if (!isset($_SESSION["rol"])) { header("Location: break.php"); exit(); }
 if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) { session_destroy(); header("Location: expirada.php"); exit(); }
 if ($_SESSION['rol'] !== 'SISTEMA') {
-    die('<p style="color:red;font-family:sans-serif;padding:2rem;">Acceso restringido — solo SISTEMA.</p>');
+    die('<p style="color:red;font-family:sans-serif;padding:2rem;">'.htmlspecialchars(t('common.accessRestricted')).'</p>');
 }
 
 $envios = [];
@@ -25,11 +26,11 @@ $res = $conexion->query(
 while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentos Enviados</title>
+    <title><?php te('menu.sentDocuments'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
@@ -71,7 +72,7 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
                                 <div class="btn-group">
                                     <a data-toggle="dropdown" class="p-0 btn" href="#"><i class="fa fa-angle-down ml-2 opacity-8"></i></a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -97,8 +98,8 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
                                 <i class="bi bi-send-check icon-gradient bg-plum-plate"></i>
                             </div>
                             <div>
-                                Documentos Enviados
-                                <div class="page-title-subheading">Documentos enviados a pacientes y su estado de firma</div>
+                                <?php te('menu.sentDocuments'); ?>
+                                <div class="page-title-subheading"><?php te('sent.subtitle'); ?></div>
                             </div>
                         </div>
                     </div>
@@ -107,11 +108,11 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
                 <div class="card shadow-sm">
                     <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
                         <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;font-weight:600;">
-                            <i class="bi bi-send me-1"></i> <span id="contadorEnvios"><?php echo count($envios); ?></span> envío(s)
+                            <i class="bi bi-send me-1"></i> <span id="contadorEnvios"><?php echo count($envios); ?></span> <?php te('sent.countSuffix'); ?>
                         </span>
                         <div style="max-width:300px;width:100%;">
                             <input type="text" id="buscarEnvio" class="form-control form-control-sm"
-                                   placeholder="Buscar por paciente, documento o estado...">
+                                   placeholder="<?php te('sent.searchPh'); ?>">
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -119,34 +120,34 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
                             <table class="table table-hover align-middle mb-0" id="tablaEnvios">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Paciente</th>
-                                        <th>Documento</th>
-                                        <th class="text-center">Estado</th>
-                                        <th>Enviado</th>
-                                        <th>Firmado</th>
-                                        <th class="text-end">Acciones</th>
+                                        <th><?php te('plist.th.patient'); ?></th>
+                                        <th><?php te('sent.th.document'); ?></th>
+                                        <th class="text-center"><?php te('common.status'); ?></th>
+                                        <th><?php te('sent.th.sent'); ?></th>
+                                        <th><?php te('sent.th.signed'); ?></th>
+                                        <th class="text-end"><?php te('common.actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 <?php if (empty($envios)): ?>
-                                    <tr><td colspan="6" class="text-center text-muted py-4">No hay documentos enviados.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted py-4"><?php te('sent.none'); ?></td></tr>
                                 <?php else: foreach ($envios as $e): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($e['paciente']); ?></td>
                                         <td><?php echo htmlspecialchars($e['titulo']); ?></td>
                                         <td class="text-center">
                                             <?php if ($e['estado'] === 'Firmado'): ?>
-                                                <span class="badge bg-success">Firmado</span>
+                                                <span class="badge bg-success"><?php te('sent.signed'); ?></span>
                                             <?php else: ?>
-                                                <span class="badge bg-warning text-dark">Pendiente</span>
+                                                <span class="badge bg-warning text-dark"><?php echo estado_label('Pendiente'); ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="small"><?php echo $e['fecha_envio'] ? date('d/m/Y H:i', strtotime($e['fecha_envio'])) : '—'; ?></td>
                                         <td class="small"><?php echo $e['fecha_firma'] ? date('d/m/Y H:i', strtotime($e['fecha_firma'])) : '—'; ?></td>
                                         <td class="text-end">
                                             <a href="ver_documento_firmado.php?id=<?php echo (int)$e['id_envio']; ?>" target="_blank"
-                                               class="btn btn-outline-primary btn-sm" title="Ver">
-                                                <i class="bi bi-eye"></i> Ver
+                                               class="btn btn-outline-primary btn-sm" title="<?php te('sent.view'); ?>">
+                                                <i class="bi bi-eye"></i> <?php te('sent.view'); ?>
                                             </a>
                                         </td>
                                     </tr>

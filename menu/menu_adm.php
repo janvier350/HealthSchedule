@@ -105,13 +105,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
             </li>
             <?php endif; ?>
-            <?php if ($esSistema): ?>
-            <li>
-                <a href="VTA_Concretado.php" class="<?php echo menuActivo('VTA_Concretado.php', $paginaActual); ?>">
-                    <i class="metismenu-icon bi bi-x-octagon"></i> <?php te('menu.cancelled'); ?>
-                </a>
-            </li>
-            <?php endif; ?>
             <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="Enviar_Notificacion.php" class="<?php echo menuActivo('Enviar_Notificacion.php', $paginaActual); ?>">
@@ -238,23 +231,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <?php endif; ?>
 
             <!-- ══ REPORTES ════════════════════════════════════════════ -->
-            <li class="app-sidebar__heading"><?php te('menu.heading.reports'); ?></li>
-            <li>
-                <a href="RPT_Vendedor_Vta.php" class="<?php echo menuActivo('RPT_Vendedor_Vta.php', $paginaActual); ?>">
-                    <i class="metismenu-icon bi bi-display"></i> <?php te('menu.myAppointments'); ?>
-                </a>
-            </li>
             <?php if ($esSistema || $esDoctor): ?>
+            <li class="app-sidebar__heading"><?php te('menu.heading.reports'); ?></li>
             <li>
                 <a href="visor_plantillas.php" class="<?php echo menuActivo('visor_plantillas.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> <?php te('menu.templates'); ?>
-                </a>
-            </li>
-            <?php endif; ?>
-            <?php if ($esSistema): ?>
-            <li>
-                <a href="RPT_General_vta.php" class="<?php echo menuActivo('RPT_General_vta.php', $paginaActual); ?>">
-                    <i class="metismenu-icon bi bi-graph-up"></i> <?php te('menu.allAppointments'); ?>
                 </a>
             </li>
             <?php endif; ?>
