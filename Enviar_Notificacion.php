@@ -1,14 +1,11 @@
-<!doctype html>
-<html lang="en">
-<?
+<?php
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
-
-
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion=conectarse();
-
-
 ?>
+<!doctype html>
+<html lang="<?php echo current_lang(); ?>">
 
 <?php
 error_reporting(E_ALL);
@@ -51,7 +48,7 @@ try {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Language" content="en">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Calendar - Calendars are used in a lot of apps. We thought to include one for React.</title>
+    <title><?php te('notif.pageTitle'); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
     <meta name="description" content="Calendars are used in a lot of apps. We thought to include one for React.">
     <meta name="msapplication-tap-highlight" content="no">
@@ -109,13 +106,13 @@ try {
                                 <li class="nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-database"> </i>
-                                        Estadistica
+                                        <?php te('hdr.statistics'); ?>
                                     </a>
                                 </li>
                                 <li class="dropdown nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-cog"></i>
-                                        Configuracion
+                                        <?php te('hdr.settings'); ?>
                                     </a>
                                 </li>
                             </ul>        </div>
@@ -130,10 +127,10 @@ try {
                                                     <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                                 </a>
                                                 <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
-                                                    <button type="button" tabindex="0" class="dropdown-item">Perfil de Usuario</button>
-                                                    <button type="button" tabindex="0" class="dropdown-item">Configuración</button>
+                                                    <a href="perfil.php" tabindex="0" class="dropdown-item"><?php te('hdr.userProfile'); ?></a>
+                                                    <button type="button" tabindex="0" class="dropdown-item"><?php te('hdr.settings'); ?></button>
                                                     <div tabindex="-1" class="dropdown-divider"></div>
-                                                    <a type="button" tabindex="0" href="" class="dropdown-item">Cerrar Sesión</a>
+                                                    <a type="button" tabindex="0" href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -258,12 +255,12 @@ try {
                         <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
                             <li class="nav-item">
                                 <a role="tab" class="nav-link active" id="tab-0" data-toggle="tab" href="#tab-content-0">
-                                    <span>Register</span>
+                                    <span><?php te('pcreate.tab.register'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a role="tab" class="nav-link" id="tab-1" data-toggle="tab" href="#tab-content-1">
-                                    <span>List View</span>
+                                    <span><?php te('pcreate.tab.list'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -279,7 +276,7 @@ try {
                                         <!-- <div id='calendar1'></div> -->
                                         <div class="main-card mb-3 card">
                                             <div class="card-body">
-                                           <!-- <h5 class="card-title">Información de la notificación</h5>
+                                           <!-- <h5 class="card-title"><?php te('notif.info'); ?></h5>
                                             <form method="POST" action="enviar_correo.php">
                                                 <input type="email" name="email" placeholder="Correo destino" required>
                                                 <textarea name="mensaje" placeholder="Mensaje"></textarea>
@@ -287,25 +284,25 @@ try {
                                             </form> -->
 
 
-                                                <h5 class="card-title">Información de la notificación</h5>
+                                                <h5 class="card-title"><?php te('notif.info'); ?></h5>
                                                 <form class="needs-validation" novalidate method="post" action="class/Insert_cita.php">
                                                     <div class="form-row">
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom01">Asunto</label>
+                                                            <label for="validationCustom01"><?php te('notif.subject'); ?></label>
                                                             <input type="text" class="form-control" id="asunto" name="asunto" placeholder="asunto" value="Cita Programada" required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom02">Destinatario</label>
+                                                            <label for="validationCustom02"><?php te('notif.recipient'); ?></label>
                                                             <input type="text" class="form-control" id="email" name="email" placeholder="correo@dominio.com" value="jvaras@overclocking.com.ec" required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                        <div class="col-md-4 mb-3">
-                                                           <label for="validationCustom04">Mensaje</label>
+                                                           <label for="validationCustom04"><?php te('notif.message'); ?></label>
                                                            <input type="text" class="form-control" id="mensaje" name="mensaje" placeholder="mensaje"  value="Ud, tinee una cita programada para hoy" required>
                                                            <div class="invalid-feedback">
                                                                Please provide a valid Phone.
@@ -326,7 +323,7 @@ try {
                                                             </div> -->
                                                         </div>
                                                           <!-- <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom03">E-Mail</label>
+                                                            <label for="validationCustom03"><?php te('notif.email'); ?></label>
                                                             <input type="email" class="form-control" id="validationCustom03" placeholder="E-mail" required>
                                                             <div class="invalid-feedback">
                                                                 Please provide a valid Password.
@@ -362,7 +359,7 @@ try {
                                                             </div>
                                                         </div>
                                                     </div> -->
-                                                    <button class="btn btn-primary" type="submit">Save register</button>
+                                                    <button class="btn btn-primary" type="submit"><?php te('common.save'); ?></button>
                                                 </form>
                                         
                                                 <script>
@@ -400,11 +397,11 @@ try {
                                         <table class="table align-middle mb-0 bg-white">
                                           <thead class="bg-light">
                                             <tr>
-                                              <th>Name</th>
-                                              <th>Especialidad</th>
-                                              <th>Status</th>
+                                              <th><?php te('ucreate.th.name'); ?></th>
+                                              <th><?php te('doc.th.specialty'); ?></th>
+                                              <th><?php te('doc.th.status'); ?></th>
                                               <!-- <th>Position</th> -->
-                                              <th>Actions</th>
+                                              <th><?php te('pcreate.th.actions'); ?></th>
                                             </tr>
                                           </thead>
                                           <tbody>
@@ -440,10 +437,10 @@ try {
                                               </td>
                                               <td>
                                                <?php if($valores['ESTADO']== "A") {?>
-                                                <span class="badge badge-success rounded-pill d-inline">Activo</span>
+                                                <span class="badge badge-success rounded-pill d-inline"><?php te('doc.active'); ?></span>
                                                 <?php
                                                }else{ ?> 
-                                                 <span class="badge badge-danger rounded-pill d-inline">Inactivo</span>
+                                                 <span class="badge badge-danger rounded-pill d-inline"><?php te('doc.inactive'); ?></span>
                                                   <?  }?>
                                               </td>
                                               <!-- <td>Senior</td> -->
@@ -479,7 +476,7 @@ try {
                                              <?php 
                                                     }
                                                 } else {
-                                                    echo "<tr><td colspan='4' class='text-center'>No hay datos disponibles</td></tr>";
+                                                    echo "<tr><td colspan='4' class='text-center'>".htmlspecialchars(t('doc.noData'))."</td></tr>";
                                                 }
                                                 ?>
                                           </tbody>
@@ -510,12 +507,12 @@ try {
     </div>
     <script>
                                             function confirmarEliminacion(idDoctor) {
-                                                if (confirm("¿Estás seguro de desactivar este Doctor?")) {
+                                                if (confirm(<?php echo json_encode(t('doc.confirmDeactivate')); ?>)) {
                                                     window.location.href = "class/Desactivar_DoctorV2.php?idDoctor=" + idDoctor;
                                                 }
                                             }
                                             function confirmarActivacion(idDoctor) {
-                                                if (confirm("¿Estás seguro de activar este Doctor?")) {
+                                                if (confirm(<?php echo json_encode(t('doc.confirmActivate')); ?>)) {
                                                     window.location.href = "class/Activar_DoctorV2.php?idDoctor=" + idDoctor;
                                                 }
                                             }
@@ -550,7 +547,7 @@ try {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Editar datos Doctor</h5>
+                <h5 class="modal-title" id="editModalLabel"><?php te('doc.editTitle'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
@@ -558,25 +555,25 @@ try {
                     <input type="hidden" id="idDoctor" name="idDoctor">
                     
                     <div class="mb-3">
-                        <label class="form-label">Nombres</label>
+                        <label class="form-label"><?php te('pf.firstName'); ?></label>
                         <input type="text" class="form-control" id="nombresD" name="nombresD">
                     </div>
                     
                    
 
                     <div class="mb-3">
-                        <label class="form-label">Apellidos</label>
+                        <label class="form-label"><?php te('pf.lastName'); ?></label>
                         <input type="text" class="form-control" id="apellidosD" name="apellidosD">
                     </div>
                      <div class="mb-3">
-                        <label class="form-label">Especialidad</label>
+                        <label class="form-label"><?php te('doc.specialty'); ?></label>
                         <input type="text" class="form-control" id="especialidadD" name="especialidadD">
                     </div>
 
                     
 
                     
-                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()"><?php te('common.saveChanges'); ?></button>
                 </form>
             </div>
         </div>

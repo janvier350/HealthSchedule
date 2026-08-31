@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if(!isset($_SESSION["rol"])){
@@ -38,10 +39,10 @@ $sql = "SELECT
 $result = $conexion->query($sql);
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Historial de Atenciones</title>
+    <title><?php te('hist.pageTitle'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link href="main.css" rel="stylesheet">
@@ -52,9 +53,9 @@ $result = $conexion->query($sql);
 <div class="container-fluid mt-4 mb-5">
     <div class="card shadow">
         <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Historial de Atenciones</h5>
+            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i><?php te('hist.title'); ?></h5>
             <a href="SCH_Calendar.php" class="btn btn-light btn-sm">
-                <i class="bi bi-arrow-left"></i> Calendario
+                <i class="bi bi-arrow-left"></i> <?php te('hist.backCalendar'); ?>
             </a>
         </div>
 
@@ -63,32 +64,32 @@ $result = $conexion->query($sql);
             <!-- FILTROS -->
             <form method="GET" class="row g-2 mb-4 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label">Buscar paciente o ID</label>
+                    <label class="form-label"><?php te('hist.searchLabel'); ?></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" name="q" class="form-control"
-                               placeholder="Nombre o ID..."
+                               placeholder="<?php te('hist.searchPh'); ?>"
                                value="<?php echo htmlspecialchars($busqueda); ?>">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Desde</label>
+                    <label class="form-label"><?php te('hist.from'); ?></label>
                     <input type="date" name="desde" class="form-control"
                            value="<?php echo htmlspecialchars($fechaDesde); ?>">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Hasta</label>
+                    <label class="form-label"><?php te('hist.to'); ?></label>
                     <input type="date" name="hasta" class="form-control"
                            value="<?php echo htmlspecialchars($fechaHasta); ?>">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-funnel"></i> Filtrar
+                        <i class="bi bi-funnel"></i> <?php te('hist.filter'); ?>
                     </button>
                 </div>
                 <div class="col-md-2">
                     <a href="historial_atenciones.php" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-x-circle"></i> Limpiar
+                        <i class="bi bi-x-circle"></i> <?php te('plist.clear'); ?>
                     </a>
                 </div>
             </form>
@@ -96,7 +97,7 @@ $result = $conexion->query($sql);
             <!-- TABLA -->
             <?php if(!$result || $result->num_rows === 0): ?>
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>No se encontraron atenciones con los filtros aplicados.
+                    <i class="bi bi-info-circle me-2"></i><?php te('hist.none'); ?>
                 </div>
             <?php else: ?>
             <div class="table-responsive">
@@ -104,16 +105,16 @@ $result = $conexion->query($sql);
                     <thead class="table-dark">
                         <tr>
                             <th>#</th>
-                            <th>Paciente</th>
-                            <th>ID</th>
-                            <th>Fecha Cita</th>
-                            <th>Tipo Consulta</th>
-                            <th>Doctor</th>
-                            <th class="text-center">Peso (kg)</th>
-                            <th class="text-center">Talla (cm)</th>
-                            <th class="text-center">IMC</th>
-                            <th class="text-center">Fecha Registro</th>
-                            <th class="text-center">Acciones</th>
+                            <th><?php te('plist.th.patient'); ?></th>
+                            <th><?php te('pf.id'); ?></th>
+                            <th><?php te('hist.th.appointmentDate'); ?></th>
+                            <th><?php te('cal.consultType'); ?></th>
+                            <th><?php te('cal.doctor'); ?></th>
+                            <th class="text-center"><?php te('hist.th.weight'); ?></th>
+                            <th class="text-center"><?php te('hist.th.height'); ?></th>
+                            <th class="text-center"><?php te('common.bmi'); ?></th>
+                            <th class="text-center"><?php te('hist.th.registerDate'); ?></th>
+                            <th class="text-center"><?php te('pcreate.th.actions'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -122,10 +123,10 @@ $result = $conexion->query($sql);
                     while($h = $result->fetch_assoc()):
                         // Estado IMC
                         $imc = (float)$h['IMC'];
-                        if     ($imc < 18.5) { $imcBadge = 'bg-info';    $imcLabel = 'Bajo Peso'; }
-                        elseif ($imc < 25)   { $imcBadge = 'bg-success'; $imcLabel = 'Normal'; }
-                        elseif ($imc < 30)   { $imcBadge = 'bg-warning text-dark'; $imcLabel = 'Sobrepeso'; }
-                        else                 { $imcBadge = 'bg-danger';  $imcLabel = 'Obesidad'; }
+                        if     ($imc < 18.5) { $imcBadge = 'bg-info';    $imcLabel = t('imc.underweight'); }
+                        elseif ($imc < 25)   { $imcBadge = 'bg-success'; $imcLabel = t('imc.normal'); }
+                        elseif ($imc < 30)   { $imcBadge = 'bg-warning text-dark'; $imcLabel = t('imc.overweight'); }
+                        else                 { $imcBadge = 'bg-danger';  $imcLabel = t('imc.obese'); }
                     ?>
                         <tr>
                             <td><?php echo $n++; ?></td>
@@ -161,12 +162,12 @@ $result = $conexion->query($sql);
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary"
                                         onclick="verInforme(<?php echo $h['IDHISTORIAL']; ?>)"
-                                        title="Ver informe">
+                                        title="<?php te('hist.viewReport'); ?>">
                                     <i class="bi bi-file-earmark-text"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-secondary"
                                         onclick="imprimirInforme(<?php echo $h['IDHISTORIAL']; ?>)"
-                                        title="Imprimir">
+                                        title="<?php te('common.print'); ?>">
                                     <i class="bi bi-printer"></i>
                                 </button>
                             </td>
@@ -186,16 +187,16 @@ $result = $conexion->query($sql);
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Informe de Atención</h5>
+                <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i><?php te('plist.reportTitle'); ?></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="modalInformeBody" style="min-height:400px;">
                 <div class="text-center p-4"><div class="spinner-border text-primary"></div></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
                 <button type="button" class="btn btn-primary" id="btnImprimirModal" onclick="imprimirDesdeModal()">
-                    <i class="bi bi-printer"></i> Imprimir
+                    <i class="bi bi-printer"></i> <?php te('common.print'); ?>
                 </button>
             </div>
         </div>
@@ -220,14 +221,14 @@ function verInforme(idHistorial){
         informesCache[idHistorial] = html;
         $('#modalInformeBody').html(html);
     }).fail(function(){
-        $('#modalInformeBody').html('<div class="alert alert-danger">Error al cargar el informe.</div>');
+        $('#modalInformeBody').html('<div class="alert alert-danger">' + <?php echo json_encode(t('hist.js.loadError')); ?> + '</div>');
     });
 }
 
 function imprimirDesdeModal(){
     const contenido = $('#modalInformeBody').html();
     const ventana = window.open('','_blank','height=800,width=900');
-    ventana.document.write(`<html><head><title>Informe</title>
+    ventana.document.write(`<html><head><title><?php echo addslashes(t('hist.js.reportWindow')); ?></title>
         <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}</style>
         </head><body>${contenido}</body></html>`);
     ventana.document.close();
@@ -237,7 +238,7 @@ function imprimirDesdeModal(){
 function imprimirInforme(idHistorial){
     $.get('get_informe_html.php', { id: idHistorial }, function(html){
         const ventana = window.open('','_blank','height=800,width=900');
-        ventana.document.write(`<html><head><title>Informe</title>
+        ventana.document.write(`<html><head><title><?php echo addslashes(t('hist.js.reportWindow')); ?></title>
             <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}</style>
             </head><body>${html}</body></html>`);
         ventana.document.close();

@@ -151,6 +151,55 @@ return array(
     'cal.js.slotTaken'         => 'The chosen time overlaps another existing appointment. Choose a different time.',
     'cal.js.apptGonePrev'      => 'The appointment no longer exists or was already deleted.',
 
+    // ── IMC / BMI categorías ───────────────────────────────────────────
+    'imc.underweight'          => 'Underweight',
+    'imc.normal'               => 'Normal',
+    'imc.overweight'           => 'Overweight',
+    'imc.obese'                => 'Obese',
+
+    // ── Historial de atenciones (Atendidas) ────────────────────────────
+    'hist.pageTitle'           => 'Care History',
+    'hist.title'               => 'Care History',
+    'hist.backCalendar'        => 'Calendar',
+    'hist.searchLabel'         => 'Search patient or ID',
+    'hist.searchPh'            => 'Name or ID...',
+    'hist.from'                => 'From',
+    'hist.to'                  => 'To',
+    'hist.filter'              => 'Filter',
+    'hist.none'                => 'No visits found with the applied filters.',
+    'hist.th.appointmentDate'  => 'Appointment Date',
+    'hist.th.weight'           => 'Weight (kg)',
+    'hist.th.height'           => 'Height (cm)',
+    'hist.th.registerDate'     => 'Registered',
+    'hist.viewReport'          => 'View report',
+    'hist.js.loadError'        => 'Error loading the report.',
+    'hist.js.reportWindow'     => 'Report',
+
+    // ── Pendientes / tabla de citas ────────────────────────────────────
+    'pend.pageTitle'           => 'Pending',
+    'pend.th.date'             => 'Date',
+    'pend.th.start'            => 'Start',
+    'pend.th.end'              => 'End',
+    'pend.th.consult'          => 'Consultation',
+    'pend.th.user'             => 'User',
+
+    // ── Enviar notificación / doctores ─────────────────────────────────
+    'notif.pageTitle'          => 'Send Notification',
+    'notif.info'               => 'Notification information',
+    'notif.subject'            => 'Subject',
+    'notif.recipient'          => 'Recipient',
+    'notif.message'            => 'Message',
+    'notif.email'              => 'E-Mail',
+    'doc.th.specialty'         => 'Specialty',
+    'doc.th.status'            => 'Status',
+    'doc.active'               => 'Active',
+    'doc.inactive'             => 'Inactive',
+    'doc.noData'               => 'No data available',
+    'doc.confirmDeactivate'    => 'Are you sure you want to deactivate this doctor?',
+    'doc.confirmActivate'      => 'Are you sure you want to activate this doctor?',
+    'doc.editTitle'            => 'Edit Doctor details',
+    'doc.specialty'            => 'Specialty',
+
     // ── Dashboard (home) ───────────────────────────────────────────────
     'home.pageTitle'           => 'Dashboard — HealthSchedule',
     'home.welcome'             => 'Welcome,',

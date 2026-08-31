@@ -1,17 +1,17 @@
-
-<!doctype html>
-<html lang="en">
-<?
+<?php
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion=conectarse();
 ?>
+<!doctype html>
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Language" content="en">
+    <meta http-equiv="Content-Language" content="<?php echo current_lang(); ?>">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Calendar - Pendientes.</title>
+    <title><?php te('pend.pageTitle'); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
     <meta name="description" content="Calendars are used in a lot of apps. We thought to include one for React.">
     <meta name="msapplication-tap-highlight" content="no">
@@ -81,13 +81,13 @@ $conexion=conectarse();
                                 <li class="nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-database"> </i>
-                                        Estadistica
+                                        <?php te('hdr.statistics'); ?>
                                     </a>
                                 </li>
                                 <li class="dropdown nav-item">
                                     <a href="javascript:void(0);" class="nav-link">
                                         <i class="nav-link-icon fa fa-cog"></i>
-                                        Configuracion
+                                        <?php te('hdr.settings'); ?>
                                     </a>
                                 </li>
                             </ul>        </div>
@@ -102,10 +102,10 @@ $conexion=conectarse();
                                                     <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                                 </a>
                                                 <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
-                                                    <button type="button" tabindex="0" class="dropdown-item">Perfil de Usuario</button>
-                                                    <button type="button" tabindex="0" class="dropdown-item">Configuración</button>
+                                                    <a href="perfil.php" tabindex="0" class="dropdown-item"><?php te('hdr.userProfile'); ?></a>
+                                                    <button type="button" tabindex="0" class="dropdown-item"><?php te('hdr.settings'); ?></button>
                                                     <div tabindex="-1" class="dropdown-divider"></div>
-                                                    <a type="button" tabindex="0" href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                                    <a type="button" tabindex="0" href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -229,7 +229,7 @@ $conexion=conectarse();
                         <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
                               <li class="nav-item">
                                 <a role="tab" class="nav-link active" id="tab-1" data-toggle="tab" href="#tab-content-1">
-                                    <span>List View</span>
+                                    <span><?php te('pcreate.tab.list'); ?></span>
                                 </a>
                             </li>
                             <!-- <li class="nav-item">
@@ -257,7 +257,7 @@ $conexion=conectarse();
                                         <!-- <div id='calendar1'></div> -->
                                         <div class="main-card mb-3 card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Información del paciente</h5>
+                                                <h5 class="card-title"><?php te('pcreate.info'); ?></h5>
                                                 <form class="needs-validation" novalidate method="post" action="class/Insert_Pacientev2.php">
                                                     <div class="form-row">
                                                         <div class="col-md-2 mb-3">
@@ -268,7 +268,7 @@ $conexion=conectarse();
                                                             </div>
                                                         </div>
                                                         <div class="col-md-2 mb-3">
-                                                            <label for="validationCustom05">Title</label>
+                                                            <label for="validationCustom05"><?php te('pcreate.title'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select name="title" id="validationCustom05" class="form-control" required>
                                                                 <option>Default Select</option>
@@ -290,21 +290,21 @@ $conexion=conectarse();
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3 mb-3">
-                                                            <label for="validationCustom01">First name</label>
+                                                            <label for="validationCustom01"><?php te('pf.firstName'); ?></label>
                                                             <input type="text" class="form-control" name="nombres" id="validationCustom01" placeholder="First name" value="Mark" required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3 mb-3">
-                                                            <label for="validationCustom02">Last name</label>
+                                                            <label for="validationCustom02"><?php te('pf.lastName'); ?></label>
                                                             <input type="text" class="form-control" id="validationCustom02"  name="apellidos" placeholder="Last name" value="Otto" required>
                                                             <div class="valid-feedback">
                                                                 Looks good!
                                                             </div>
                                                         </div>
                                                        <div class="col-md-2 mb-3">
-                                                           <label for="validationCustom04">Phone</label>
+                                                           <label for="validationCustom04"><?php te('pf.phone'); ?></label>
                                                            <input type="text" class="form-control" name="telefono" id="validationCustom04" placeholder="Pone" required>
                                                            <div class="invalid-feedback">
                                                                Please provide a valid state.
@@ -313,7 +313,7 @@ $conexion=conectarse();
                                                     </div>
                                                     <div class="form-row">
                                                         <div class="col-md-4 mb-3">
-                                                            <label for="validationCustomUsername">E-MAIL</label>
+                                                            <label for="validationCustomUsername"><?php te('pf.email'); ?></label>
                                                             <div class="input-group">
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text" id="inputGroupPrepend">@</span>
@@ -326,7 +326,7 @@ $conexion=conectarse();
                                                         </div>
                                                      
                                                         <div class="col-md-3 mb-3">
-                                                            <label for="validationCustom05">Sex</label>
+                                                            <label for="validationCustom05"><?php te('pf.sex'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select name="sex" id="validationCustom05" class="form-control" required>
                                                                 <option value="N/A">Default Select</option>
@@ -340,7 +340,7 @@ $conexion=conectarse();
                                                         </div>
 
                                                         <div class="col-md-5 mb-3">
-                                                            <label for="validationCustom05">Gender Identity</label>
+                                                            <label for="validationCustom05"><?php te('pcreate.genderIdentity'); ?></label>
                                                             <div class="position-relative form-group">
                                                                 <select name="gender" id="validationCustom05" class="form-control" required>
                                                                 <option value="Default Select">Default Select</option>
@@ -360,7 +360,7 @@ $conexion=conectarse();
                                                             <div class="position-relative form-group">
                                                                 <div class="">
                                                                    <div class="card-body">
-                                                                       <h5 class="card-title">Birth of day</h5>
+                                                                       <h5 class="card-title"><?php te('pf.dob'); ?></h5>
                                                                        <input type="date" name="feNac" class="form-control" data-toggle="datepicker-year">
                                                                    </div>
                                                                 </div>
@@ -371,7 +371,7 @@ $conexion=conectarse();
                                                     
                                                      
                                                     
-                                                    <button class="btn btn-primary" type="submit">Save </button>
+                                                    <button class="btn btn-primary" type="submit"><?php te('pcreate.save'); ?></button>
                                                 </form>
                                         
                                                 <script>
@@ -410,17 +410,17 @@ $conexion=conectarse();
                                             <thead>
                                                 <tr>
                                                     <!--<th>#</th> -->
-                                                    <th>Fecha</th>
-                                                    <th>Inicio</th>
-                                                    <th>Fin</th>
-                                                    <th>Doctor</th>
-                                                    <th>Paciente</th>
-                                                    <th>Consulta</th>
-                                                    <th>Usuario</th>
+                                                    <th><?php te('pend.th.date'); ?></th>
+                                                    <th><?php te('pend.th.start'); ?></th>
+                                                    <th><?php te('pend.th.end'); ?></th>
+                                                    <th><?php te('cal.doctor'); ?></th>
+                                                    <th><?php te('plist.th.patient'); ?></th>
+                                                    <th><?php te('pend.th.consult'); ?></th>
+                                                    <th><?php te('pend.th.user'); ?></th>
                                                    <!-- <th>Sex</th>
                                                     <th>Gender</th>
                                                      -->
-                                                     <th>Actions</th>
+                                                     <th><?php te('pcreate.th.actions'); ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -472,21 +472,21 @@ $conexion=conectarse();
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                     <th>Fecha</th>
-                                                    <th>Inicio</th>
-                                                    <th>Fin</th>
-                                                    <th>Doctor</th>
-                                                    <th>Paciente</th>
-                                                    <th>Consulta</th>
-                                                    <th>Usuario</th>
-                                                    <th>Actions</th>
+                                                     <th><?php te('pend.th.date'); ?></th>
+                                                    <th><?php te('pend.th.start'); ?></th>
+                                                    <th><?php te('pend.th.end'); ?></th>
+                                                    <th><?php te('cal.doctor'); ?></th>
+                                                    <th><?php te('plist.th.patient'); ?></th>
+                                                    <th><?php te('pend.th.consult'); ?></th>
+                                                    <th><?php te('pend.th.user'); ?></th>
+                                                    <th><?php te('pcreate.th.actions'); ?></th>
                                                 </tr>
                                             </tfoot>
                                         </table>
                                        
                                         <script>
                                             function confirmarEliminacion(idPaciente) {
-                                                if (confirm("¿Estás seguro de eliminar este paciente?")) {
+                                                if (confirm(<?php echo json_encode(t('pcreate.js.confirmDelete')); ?>)) {
                                                     window.location.href = "class/Eliminar_pacienteV2.php?idPaciente=" + idPaciente;
                                                 }
                                             }
@@ -557,45 +557,45 @@ $conexion=conectarse();
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Editar Paciente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="editModalLabel"><?php te('plist.editTitleModal'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditar">
                     <input type="hidden" id="idPaciente" name="idPaciente">
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
+                        <label class="form-label"><?php te('pf.firstName'); ?></label>
                         <input type="text" class="form-control" id="nombre" name="nombres">
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Apellido</label>
+                        <label class="form-label"><?php te('pf.lastName'); ?></label>
                         <input type="text" class="form-control" id="apellido" name="apellidos">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">E-mail</label>
+                        <label class="form-label"><?php te('pf.email'); ?></label>
                         <input type="email" class="form-control" id="email" name="email">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Teléfono</label>
+                        <label class="form-label"><?php te('pf.phone'); ?></label>
                         <input type="text" class="form-control" id="telefono" name="telefono">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Fecha Nacimiento</label>
+                        <label class="form-label"><?php te('pf.dob'); ?></label>
                         <input type="date" class="form-control" id="fecNac" name="fecNac">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">ID</label>
+                        <label class="form-label"><?php te('pf.id'); ?></label>
                         <input type="text" class="form-control" id="identificacion" name="identificacion">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Title</label>
+                        <label class="form-label"><?php te('pcreate.title'); ?></label>
                         <select name="title" id="title" class="form-control" required>
                                                                 <option>Default Select</option>
                                                                 <option value="Dr">Dr</option>
@@ -613,9 +613,9 @@ $conexion=conectarse();
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Sex</label>
-                        
-                        
+                        <label class="form-label"><?php te('pf.sex'); ?></label>
+
+
                                                                 <select name="sex" id="sex" class="form-control" required>
                                                                 
                                                                 <option value="Male">Male</option>
@@ -625,7 +625,7 @@ $conexion=conectarse();
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Gender</label>
+                        <label class="form-label"><?php te('pf.gender'); ?></label>
                        <select name="gender" id="gender" class="form-control" required>
                                                                 <option value="Default Select">Default Select</option>
                                                                 <option value="Male">Male</option>
@@ -639,7 +639,7 @@ $conexion=conectarse();
 
                     
 
-                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()"><?php te('common.saveChanges'); ?></button>
                 </form>
             </div>
         </div>
