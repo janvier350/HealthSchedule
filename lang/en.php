@@ -476,6 +476,10 @@ return array(
     'ucreate.resetPasswordLc'  => 'Reset password',
     'ucreate.branch'           => 'Branch',
     'ucreate.editPassTitle'    => 'Edit Password',
+    'ucreate.pw.for'           => 'User',
+    'ucreate.pw.enter'         => 'Enter the new password.',
+    'ucreate.pw.updated'       => 'Password updated successfully.',
+    'ucreate.pw.error'         => 'Could not update the password.',
 
     // ── Menú lateral ───────────────────────────────────────────────────
     'menu.heading.dashboard'   => 'Dashboard',

@@ -479,10 +479,11 @@ if ($queryRoles) {
       
 
     }
-    function cargarDatosClave(clave) {
-        document.getElementById('idUsuarioCl').value = clave.IDADM_USUARIO;
-        document.getElementById('clave').value = clave.NOMBRES;
-        
+    function cargarDatosClave(u) {
+        document.getElementById('claveUserId').value = u.IDADM_USUARIO;
+        document.getElementById('claveUserNombre').textContent =
+            ((u.NOMBRES || '') + ' ' + (u.APELLIDOS || '')).trim() + (u.USUARIO ? ' (' + u.USUARIO + ')' : '');
+        document.getElementById('claveNueva').value = '';
     }
 
     function guardarEdicion() {
@@ -500,6 +501,10 @@ if ($queryRoles) {
         .catch(error => console.error("Error:", error));
     }
     function guardarEdicionClave() {
+        var nueva = document.getElementById('claveNueva').value;
+        if (!nueva.trim()) { alert(<?php echo json_encode(t('ucreate.pw.enter')); ?>); return; }
+        if (nueva.length < 6) { alert(<?php echo json_encode(t('profile.js.min6')); ?>); return; }
+
         var formData = new FormData(document.getElementById("formEditarClave"));
 
         fetch("class/Editar_Usuario_Clave.php", {
@@ -508,10 +513,19 @@ if ($queryRoles) {
         })
         .then(response => response.text())
         .then(data => {
-            alert(data);
-            location.reload(); // Recargar la página tras la edición
+            data = (data || '').trim();
+            if (data === 'OK') {
+                alert(<?php echo json_encode(t('ucreate.pw.updated')); ?>);
+                location.reload();
+            } else if (data === 'CORTA') {
+                alert(<?php echo json_encode(t('profile.js.min6')); ?>);
+            } else if (data === 'INCOMPLETO') {
+                alert(<?php echo json_encode(t('ucreate.pw.enter')); ?>);
+            } else {
+                alert(<?php echo json_encode(t('ucreate.pw.error')); ?> + (data ? '\n' + data : ''));
+            }
         })
-        .catch(error => console.error("Error:", error));
+        .catch(() => alert(<?php echo json_encode(t('common.js.connError')); ?>));
     }
 </script>
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
@@ -584,14 +598,16 @@ if ($queryRoles) {
             </div>
             <div class="modal-body">
                 <form id="formEditarClave">
-                    <input type="text" id="idUsuarioCl" name="idUsuarioCl">
-                    <input type="hidden" id="idUsuario" name="idUsuario">
+                    <input type="hidden" id="claveUserId" name="idUsuarioCl">
+                    <p class="mb-3 small text-muted">
+                        <i class="bi bi-person"></i> <?php te('ucreate.pw.for'); ?>:
+                        <strong id="claveUserNombre" class="text-dark"></strong>
+                    </p>
                     <div class="mb-3">
                         <label class="form-label text-danger"><?php te('ucreate.resetPasswordLc'); ?></label>
-                        <input type="text" class="form-control" id="clave" name="clave">
+                        <input type="text" class="form-control" id="claveNueva" name="clave" minlength="6" placeholder="<?php te('ucreate.password'); ?>" autocomplete="new-password">
+                        <small class="text-muted"><?php te('profile.minChars'); ?></small>
                     </div>
-
-
                     <button type="button" class="btn btn-primary" onclick="guardarEdicionClave()"><?php te('common.saveChanges'); ?></button>
                 </form>
             </div>

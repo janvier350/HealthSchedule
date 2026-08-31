@@ -476,6 +476,10 @@ return array(
     'ucreate.resetPasswordLc'  => 'Restablecer clave',
     'ucreate.branch'           => 'Sucursal',
     'ucreate.editPassTitle'    => 'Editar Clave',
+    'ucreate.pw.for'           => 'Usuario',
+    'ucreate.pw.enter'         => 'Ingresa la nueva contraseña.',
+    'ucreate.pw.updated'       => 'Contraseña actualizada correctamente.',
+    'ucreate.pw.error'         => 'No se pudo actualizar la contraseña.',
 
     // ── Menú lateral ───────────────────────────────────────────────────
     'menu.heading.dashboard'   => 'Panel',
