@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -16,7 +17,7 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
     exit();
 }
 if ($_SESSION['rol'] !== 'SISTEMA') {
-    die('<p style="color:red;font-family:sans-serif;padding:2rem;">Acceso restringido — solo SISTEMA.</p>');
+    die('<p style="color:red;font-family:sans-serif;padding:2rem;">'.htmlspecialchars(t('common.accessRestricted')).'</p>');
 }
 
 $mensaje = null;
@@ -35,9 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $f   = $_FILES['archivo_pdf'];
             $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
             if ($ext !== 'pdf') {
-                $errPdf = 'El archivo adjunto debe ser PDF.';
+                $errPdf = t('docm.msg.pdfMustBePdf');
             } elseif ($f['size'] > 10 * 1024 * 1024) {
-                $errPdf = 'El PDF supera el límite de 10MB.';
+                $errPdf = t('docm.msg.pdfTooBig');
             } else {
                 $dir = __DIR__ . '/uploads/documentos';
                 if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
@@ -45,13 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (move_uploaded_file($f['tmp_name'], $dir . '/' . $nombre)) {
                     $pdfPath = 'uploads/documentos/' . $nombre; $tienePdf = true;
                 } else {
-                    $errPdf = 'No se pudo guardar el PDF.';
+                    $errPdf = t('docm.msg.pdfSaveFail');
                 }
             }
         }
 
         if ($titulo === '') {
-            $mensaje = ['err', 'El título es obligatorio.'];
+            $mensaje = ['err', t('docm.msg.titleRequired')];
         } elseif ($errPdf !== '') {
             $mensaje = ['err', $errPdf];
         } elseif ($id > 0) {
@@ -64,18 +65,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Documento actualizado.'];
+            $mensaje = ['ok', t('docm.msg.updated')];
         } else {
             $stmt = $conexion->prepare("INSERT INTO documentos (titulo, contenido, archivo_pdf, estado) VALUES (?, ?, ?, 1)");
             $stmt->bind_param("sss", $titulo, $contenido, $pdfPath);
             $stmt->execute();
             $stmt->close();
-            $mensaje = ['ok', 'Documento creado.'];
+            $mensaje = ['ok', t('docm.msg.created')];
         }
     } elseif ($accion === 'toggle') {
         $id = (int)($_POST['id'] ?? 0);
         $conexion->query("UPDATE documentos SET estado = IF(estado = 1, 0, 1) WHERE id_documento = $id");
-        $mensaje = ['ok', 'Estado actualizado.'];
+        $mensaje = ['ok', t('common.statusUpdated')];
     }
 }
 
@@ -89,11 +90,11 @@ $resP = $conexion->query("SELECT IDPACIENTE, NOMBRES, APELLIDOS, EMAIL FROM AG_P
 while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentos</title>
+    <title><?php te('menu.documents'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
@@ -144,7 +145,7 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -172,15 +173,15 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                                 <i class="pe-7s-note2 icon-gradient bg-plum-plate"></i>
                             </div>
                             <div>
-                                Documentos
+                                <?php te('menu.documents'); ?>
                                 <div class="page-title-subheading">
-                                    Plantillas de documentos y políticas que se envían a los pacientes para firmar
+                                    <?php te('docm.subtitle'); ?>
                                 </div>
                             </div>
                         </div>
                         <div class="page-title-actions">
                             <button type="button" class="btn btn-primary btn-sm" onclick="nuevoDoc()">
-                                <i class="bi bi-plus-circle me-1"></i> Nuevo Documento
+                                <i class="bi bi-plus-circle me-1"></i> <?php te('docm.newBtn'); ?>
                             </button>
                         </div>
                     </div>
@@ -196,7 +197,7 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                 <div class="card shadow-sm">
                     <div class="card-header py-2">
                         <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;font-weight:600;">
-                            <i class="bi bi-file-earmark-text me-1"></i> <?php echo count($documentos); ?> documento(s)
+                            <i class="bi bi-file-earmark-text me-1"></i> <?php echo count($documentos); ?> <?php te('docm.countSuffix'); ?>
                         </span>
                     </div>
                     <div class="card-body p-0">
@@ -204,35 +205,35 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Título</th>
-                                        <th class="text-center">Estado</th>
-                                        <th class="text-end">Acciones</th>
+                                        <th><?php te('docm.th.title'); ?></th>
+                                        <th class="text-center"><?php te('common.status'); ?></th>
+                                        <th class="text-end"><?php te('common.actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 <?php if (empty($documentos)): ?>
-                                    <tr><td colspan="3" class="text-center text-muted py-4">No hay documentos registrados.</td></tr>
+                                    <tr><td colspan="3" class="text-center text-muted py-4"><?php te('docm.none'); ?></td></tr>
                                 <?php else: foreach ($documentos as $d): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($d['titulo']); ?></td>
                                         <td class="text-center">
                                             <?php if ((int)$d['estado'] === 1): ?>
-                                                <span class="badge bg-success">Activo</span>
+                                                <span class="badge bg-success"><?php te('common.active'); ?></span>
                                             <?php else: ?>
-                                                <span class="badge bg-secondary">Inactivo</span>
+                                                <span class="badge bg-secondary"><?php te('common.inactive'); ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-end">
                                             <button type="button" class="btn btn-outline-primary btn-sm"
                                                 onclick='abrirEnviar(<?php echo (int)$d['id_documento']; ?>, <?php echo json_encode($d['titulo'], JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'
-                                                <?php echo (int)$d['estado'] !== 1 ? 'disabled' : ''; ?> title="Enviar a paciente">
+                                                <?php echo (int)$d['estado'] !== 1 ? 'disabled' : ''; ?> title="<?php te('docm.sendTitle'); ?>">
                                                 <i class="bi bi-send"></i>
                                             </button>
                                             <button type="button" class="btn btn-outline-warning btn-sm"
                                                 onclick='editarDoc(<?php echo json_encode($d, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP); ?>)'>
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Cambiar el estado de este documento?');">
+                                            <form method="POST" class="d-inline" onsubmit="return confirm(<?php echo json_encode(t('docm.confirmToggle')); ?>);">
                                                 <input type="hidden" name="accion" value="toggle">
                                                 <input type="hidden" name="id" value="<?php echo (int)$d['id_documento']; ?>">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm">
@@ -258,8 +259,8 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalDocTitulo">Nuevo Documento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="modalDocTitulo"><?php te('docm.modalNew'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
             </div>
             <form method="POST" enctype="multipart/form-data" onsubmit="return sincronizarContenido();">
                 <div class="modal-body">
@@ -267,59 +268,59 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
                     <input type="hidden" name="id" id="dId" value="0">
 
                     <div class="mb-3">
-                        <label class="form-label">Título</label>
+                        <label class="form-label"><?php te('docm.title'); ?></label>
                         <input type="text" class="form-control" name="titulo" id="dTitulo" maxlength="180" required>
                     </div>
 
-                    <label class="form-label">Contenido</label>
+                    <label class="form-label"><?php te('docm.content'); ?></label>
                     <div class="btn-toolbar gap-1 mb-1" role="toolbar">
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('bold')" title="Negrita"><b>B</b></button>
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('italic')" title="Cursiva"><i>I</i></button>
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('underline')" title="Subrayado"><u>U</u></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('bold')" title="<?php te('docm.tb.bold'); ?>"><b>B</b></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('italic')" title="<?php te('docm.tb.italic'); ?>"><i>I</i></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('underline')" title="<?php te('docm.tb.underline'); ?>"><u>U</u></button>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('H2')" title="Título">Título</button>
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('H3')" title="Subtítulo">Subtítulo</button>
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('P')" title="Texto normal">Normal</button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('H2')" title="<?php te('docm.tb.heading'); ?>"><?php te('docm.tb.heading'); ?></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('H3')" title="<?php te('docm.tb.subheading'); ?>"><?php te('docm.tb.subheading'); ?></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmtBlock('P')" title="<?php te('docm.tb.normal'); ?>"><?php te('docm.tb.normal'); ?></button>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('insertUnorderedList')" title="Lista">&bull; Lista</button>
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('insertOrderedList')" title="Lista numerada">1. Lista</button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('insertUnorderedList')" title="<?php te('docm.tb.list'); ?>">&bull; <?php te('docm.tb.list'); ?></button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('insertOrderedList')" title="<?php te('docm.tb.numberedList'); ?>">1. <?php te('docm.tb.list'); ?></button>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" onmousedown="event.preventDefault()" title="Insertar dato del paciente">Insertar dato</button>
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" onmousedown="event.preventDefault()" title="<?php te('docm.tb.insertData'); ?>"><?php te('docm.tb.insertDataBtn'); ?></button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{paciente}}');return false;">Nombre del paciente</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{paciente}}');return false;"><?php te('docm.tb.patientName'); ?></a></li>
                                 <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{cedula}}');return false;">ID</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha_nacimiento}}');return false;">Fecha de nacimiento</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha}}');return false;">Fecha (del documento)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha_nacimiento}}');return false;"><?php te('pf.dob'); ?></a></li>
+                                <li><a class="dropdown-item" href="#" onclick="insertarCampo('{{fecha}}');return false;"><?php te('docm.tb.docDate'); ?></a></li>
                             </ul>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="insertarTabla()" title="Insertar tabla">&#8862; Tabla</button>
-                            <button type="button" class="btn btn-outline-secondary" id="btnHtml" onmousedown="event.preventDefault()" onclick="toggleHtml()" title="Editar el HTML (para pegar tablas o contenido avanzado)">&lt;/&gt; HTML</button>
+                            <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="insertarTabla()" title="<?php te('docm.tb.insertTable'); ?>">&#8862; <?php te('docm.tb.table'); ?></button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnHtml" onmousedown="event.preventDefault()" onclick="toggleHtml()" title="<?php te('docm.tb.htmlTitle'); ?>">&lt;/&gt; HTML</button>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-warning" onmousedown="event.preventDefault()" onclick="insertarCampoLlenar('texto')" title="Campo en blanco que el paciente completará al firmar">&#9998; Campo</button>
-                            <button type="button" class="btn btn-outline-warning" onmousedown="event.preventDefault()" onclick="insertarCampoLlenar('checkbox')" title="Casilla que el paciente marcará al firmar">&#9745; Casilla</button>
+                            <button type="button" class="btn btn-outline-warning" onmousedown="event.preventDefault()" onclick="insertarCampoLlenar('texto')" title="<?php te('docm.tb.blankField'); ?>">&#9998; <?php te('docm.tb.fieldBtn'); ?></button>
+                            <button type="button" class="btn btn-outline-warning" onmousedown="event.preventDefault()" onclick="insertarCampoLlenar('checkbox')" title="<?php te('docm.tb.checkboxTitle'); ?>">&#9745; <?php te('docm.tb.checkboxBtn'); ?></button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('removeFormat')" title="Quitar formato">Limpiar</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onmousedown="event.preventDefault()" onclick="fmt('removeFormat')" title="<?php te('docm.tb.clearTitle'); ?>"><?php te('docm.tb.clearBtn'); ?></button>
                     </div>
                     <div id="dEditor" contenteditable="true" class="form-control" style="min-height:240px;max-height:50vh;overflow:auto;"></div>
                     <textarea id="dHtml" class="form-control" style="display:none;min-height:240px;max-height:50vh;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;"></textarea>
                     <input type="hidden" name="contenido" id="dContenido">
-                    <div class="form-text">Da formato con los botones. <strong>"Insertar dato"</strong> agrega campos que se completan solos. <strong>"Campo"/"Casilla"</strong> agregan espacios en blanco que el <u>paciente</u> llena al firmar (ej. número de tarjeta, nombre del titular). <strong>"HTML"</strong> te deja pegar tablas/contenido avanzado.</div>
+                    <div class="form-text"><?php echo t('docm.helpText'); ?></div>
 
                     <div class="mt-3">
-                        <label class="form-label">Adjuntar PDF (opcional)</label>
+                        <label class="form-label"><?php te('docm.attachPdf'); ?></label>
                         <input type="file" name="archivo_pdf" id="dPdf" accept="application/pdf" class="form-control form-control-sm">
                         <div class="form-text" id="dPdfActual"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
+                    <button type="submit" class="btn btn-primary"><?php te('common.save'); ?></button>
                 </div>
             </form>
         </div>
@@ -331,30 +332,30 @@ while ($resP && $p = $resP->fetch_assoc()) { $pacientesEnvio[] = $p; }
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Enviar documento</h5>
+                <h5 class="modal-title"><?php te('docm.sendModalTitle'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="envDocId">
-                <p class="mb-2">Documento: <strong id="envDocTitulo"></strong></p>
+                <p class="mb-2"><?php te('docm.docLabel'); ?> <strong id="envDocTitulo"></strong></p>
                 <div class="mb-2">
-                    <label class="form-label">Paciente (con correo registrado)</label>
+                    <label class="form-label"><?php te('docm.patientWithEmail'); ?></label>
                     <select class="form-select" id="envPaciente">
-                        <option value="">— Seleccione —</option>
+                        <option value=""><?php te('pcreate.selectDash'); ?></option>
                         <?php foreach ($pacientesEnvio as $p): ?>
                             <option value="<?php echo (int)$p['IDPACIENTE']; ?>">
                                 <?php echo htmlspecialchars(trim($p['NOMBRES'].' '.$p['APELLIDOS'])); ?> — <?php echo htmlspecialchars($p['EMAIL']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <div class="form-text">Se enviará un correo con un link y un código de acceso.</div>
+                    <div class="form-text"><?php te('docm.sendHelp'); ?></div>
                 </div>
                 <div id="envResultado" class="mt-2"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
                 <button type="button" class="btn btn-primary" id="envBtn" onclick="enviarDocumento()">
-                    <i class="bi bi-send"></i> Enviar
+                    <i class="bi bi-send"></i> <?php te('docm.sendBtn'); ?>
                 </button>
             </div>
         </div>
@@ -374,7 +375,7 @@ $(function () {
         theme: 'bootstrap-5',
         dropdownParent: $('#modalEnviar'),
         width: '100%',
-        placeholder: 'Escribe el nombre del paciente…'
+        placeholder: <?php echo json_encode(t('docm.js.searchPatientPh')); ?>
     });
 });
 
@@ -391,9 +392,9 @@ function enviarDocumento() {
     const idPac = document.getElementById('envPaciente').value;
     const res   = document.getElementById('envResultado');
     const btn   = document.getElementById('envBtn');
-    if (!idPac) { alert('Seleccione un paciente.'); return; }
+    if (!idPac) { alert(<?php echo json_encode(t('docm.js.selectPatient')); ?>); return; }
     btn.disabled = true;
-    res.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span> Enviando…</div>';
+    res.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span> "+<?php echo json_encode(t('docm.js.sending')); ?>+"</div>';
     fetch('enviar_documento_guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -406,15 +407,15 @@ function enviarDocumento() {
             let html = '<div class="alert alert-' + (d.correo_fallo ? 'warning' : 'success') + ' py-2 small mb-0">' + d.msg + '</div>';
             if (d.link) {
                 html += '<div class="mt-2 small border rounded p-2">'
-                      + '<strong>Link:</strong> <a href="' + d.link + '" target="_blank">' + d.link + '</a><br>'
-                      + '<strong>Código:</strong> <span style="font-size:1.1rem;letter-spacing:2px;">' + d.codigo + '</span></div>';
+                      + '<strong>'+<?php echo json_encode(t('docm.js.link')); ?>+'</strong> <a href="' + d.link + '" target="_blank">' + d.link + '</a><br>'
+                      + '<strong>'+<?php echo json_encode(t('docm.js.code')); ?>+'</strong> <span style="font-size:1.1rem;letter-spacing:2px;">' + d.codigo + '</span></div>';
             }
             res.innerHTML = html;
         } else {
-            res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">' + (d.msg || 'Error al enviar.') + '</div>';
+            res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">' + (d.msg || <?php echo json_encode(t('docm.js.sendError')); ?>) + '</div>';
         }
     })
-    .catch(() => { btn.disabled = false; res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">Error de conexión.</div>'; });
+    .catch(() => { btn.disabled = false; res.innerHTML = '<div class="alert alert-danger py-2 small mb-0">'+<?php echo json_encode(t('common.js.connError')); ?>+'</div>'; });
 }
 
 // ── Editor con formato ───────────────────────────────────────────────
@@ -433,8 +434,8 @@ function insertarCampo(texto) {
     document.execCommand('insertText', false, texto);
 }
 function insertarTabla() {
-    var filas = parseInt(prompt('¿Cuántas filas?', '3'), 10) || 0;
-    var cols  = parseInt(prompt('¿Cuántas columnas?', '2'), 10) || 0;
+    var filas = parseInt(prompt(<?php echo json_encode(t('docm.js.rows')); ?>, '3'), 10) || 0;
+    var cols  = parseInt(prompt(<?php echo json_encode(t('docm.js.cols')); ?>, '2'), 10) || 0;
     if (filas < 1 || cols < 1) return;
     var html = '<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;">';
     for (var i = 0; i < filas; i++) { html += '<tr>'; for (var j = 0; j < cols; j++) html += '<td>&nbsp;</td>'; html += '</tr>'; }
@@ -448,7 +449,7 @@ function insertarCampoLlenar(tipo) {
     if (tipo === 'checkbox') {
         html = '<input type="checkbox" class="campo-llenar" style="width:16px;height:16px;vertical-align:middle;margin:0 4px;">';
     } else {
-        var ancho = parseInt(prompt('Ancho aproximado del campo (en caracteres)', '20'), 10) || 20;
+        var ancho = parseInt(prompt(<?php echo json_encode(t('docm.js.fieldWidth')); ?>, '20'), 10) || 20;
         var px = Math.max(60, ancho * 8);
         html = '<input type="text" class="campo-llenar" style="border:none;border-bottom:1px solid #333;background:#fff8e1;padding:1px 4px;min-width:' + px + 'px;">';
     }
@@ -481,7 +482,7 @@ function resetEditor(html) {
 }
 
 function nuevoDoc() {
-    document.getElementById('modalDocTitulo').textContent = 'Nuevo Documento';
+    document.getElementById('modalDocTitulo').textContent = <?php echo json_encode(t('docm.modalNew')); ?>;
     document.getElementById('dId').value = '0';
     document.getElementById('dTitulo').value = '';
     resetEditor('');
@@ -491,13 +492,13 @@ function nuevoDoc() {
 }
 
 function editarDoc(d) {
-    document.getElementById('modalDocTitulo').textContent = 'Editar Documento';
+    document.getElementById('modalDocTitulo').textContent = <?php echo json_encode(t('docm.modalEdit')); ?>;
     document.getElementById('dId').value = d.id_documento;
     document.getElementById('dTitulo').value = d.titulo || '';
     resetEditor(d.contenido || '');
     document.getElementById('dPdf').value = '';
     document.getElementById('dPdfActual').innerHTML = d.archivo_pdf
-        ? 'PDF actual: <a href="' + d.archivo_pdf + '" target="_blank">ver</a> — sube otro para reemplazarlo.'
+        ? <?php echo json_encode(t('docm.js.pdfCurrentPre')); ?>+' <a href="' + d.archivo_pdf + '" target="_blank">'+<?php echo json_encode(t('docm.js.viewLink')); ?>+'</a> '+<?php echo json_encode(t('docm.js.pdfReplaceSuf')); ?>
         : '';
     modalDoc.show();
 }
