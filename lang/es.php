@@ -151,6 +151,55 @@ return array(
     'cal.js.slotTaken'         => 'El horario elegido se cruza con otra cita existente. Elija otra hora.',
     'cal.js.apptGonePrev'      => 'La cita ya no existe o fue eliminada previamente.',
 
+    // ── IMC / BMI categorías ───────────────────────────────────────────
+    'imc.underweight'          => 'Bajo Peso',
+    'imc.normal'               => 'Normal',
+    'imc.overweight'           => 'Sobrepeso',
+    'imc.obese'                => 'Obesidad',
+
+    // ── Historial de atenciones (Atendidas) ────────────────────────────
+    'hist.pageTitle'           => 'Historial de Atenciones',
+    'hist.title'               => 'Historial de Atenciones',
+    'hist.backCalendar'        => 'Calendario',
+    'hist.searchLabel'         => 'Buscar paciente o ID',
+    'hist.searchPh'            => 'Nombre o ID...',
+    'hist.from'                => 'Desde',
+    'hist.to'                  => 'Hasta',
+    'hist.filter'              => 'Filtrar',
+    'hist.none'                => 'No se encontraron atenciones con los filtros aplicados.',
+    'hist.th.appointmentDate'  => 'Fecha Cita',
+    'hist.th.weight'           => 'Peso (kg)',
+    'hist.th.height'           => 'Talla (cm)',
+    'hist.th.registerDate'     => 'Fecha Registro',
+    'hist.viewReport'          => 'Ver informe',
+    'hist.js.loadError'        => 'Error al cargar el informe.',
+    'hist.js.reportWindow'     => 'Informe',
+
+    // ── Pendientes / tabla de citas ────────────────────────────────────
+    'pend.pageTitle'           => 'Pendientes',
+    'pend.th.date'             => 'Fecha',
+    'pend.th.start'            => 'Inicio',
+    'pend.th.end'              => 'Fin',
+    'pend.th.consult'          => 'Consulta',
+    'pend.th.user'             => 'Usuario',
+
+    // ── Enviar notificación / doctores ─────────────────────────────────
+    'notif.pageTitle'          => 'Enviar Notificación',
+    'notif.info'               => 'Información de la notificación',
+    'notif.subject'            => 'Asunto',
+    'notif.recipient'          => 'Destinatario',
+    'notif.message'            => 'Mensaje',
+    'notif.email'              => 'E-Mail',
+    'doc.th.specialty'         => 'Especialidad',
+    'doc.th.status'            => 'Estado',
+    'doc.active'               => 'Activo',
+    'doc.inactive'             => 'Inactivo',
+    'doc.noData'               => 'No hay datos disponibles',
+    'doc.confirmDeactivate'    => '¿Estás seguro de desactivar este Doctor?',
+    'doc.confirmActivate'      => '¿Estás seguro de activar este Doctor?',
+    'doc.editTitle'            => 'Editar datos Doctor',
+    'doc.specialty'            => 'Especialidad',
+
     // ── Dashboard (home) ───────────────────────────────────────────────
     'home.pageTitle'           => 'Panel — HealthSchedule',
     'home.welcome'             => 'Bienvenido,',
