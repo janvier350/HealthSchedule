@@ -24,16 +24,32 @@ if (!function_exists('current_lang')) {
     }
 }
 
-if (!function_exists('t')) {
-    function t($key, $default = null) {
-        static $dict = null;
-        if ($dict === null) {
-            $file = __DIR__ . '/' . current_lang() . '.php';
-            $dict = file_exists($file) ? include $file : array();
-            if (!is_array($dict)) $dict = array();
+if (!function_exists('_i18n_load')) {
+    // Carga (y cachea) el diccionario de un idioma dado.
+    function _i18n_load($lang) {
+        static $cache = array();
+        $lang = in_array($lang, array('en', 'es'), true) ? $lang : 'en';
+        if (!isset($cache[$lang])) {
+            $file = __DIR__ . '/' . $lang . '.php';
+            $d = file_exists($file) ? include $file : array();
+            $cache[$lang] = is_array($d) ? $d : array();
         }
+        return $cache[$lang];
+    }
+}
+
+if (!function_exists('tl')) {
+    // Traducción en un idioma ESPECÍFICO (para correos en el idioma del paciente).
+    function tl($lang, $key, $default = null) {
+        $dict = _i18n_load($lang);
         if (array_key_exists($key, $dict)) return $dict[$key];
         return ($default !== null) ? $default : $key;
+    }
+}
+
+if (!function_exists('t')) {
+    function t($key, $default = null) {
+        return tl(current_lang(), $key, $default);
     }
 }
 

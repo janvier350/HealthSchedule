@@ -2,6 +2,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once("class/email_cita.php");
 $conexion = conectarse();
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -25,7 +26,7 @@ if (!$idCita) {
 
 // Obtener los datos de la cita ANTES de eliminarla (para el correo de cancelación)
 $stmt_info = $conexion->prepare(
-    "SELECT P.NOMBRES, P.APELLIDOS, P.EMAIL,
+    "SELECT P.IDPACIENTE, P.NOMBRES, P.APELLIDOS, P.EMAIL,
             A.FECHA_CITA, A.HORA_INICIO, A.HORA_FIN,
             TC.NOMBRES AS TIPO_CONSULTA,
             CONCAT(D.NOMBRES,' ',D.APELLIDOS) AS DOCTOR
@@ -85,99 +86,17 @@ if (!$correoPaciente) {
     exit;
 }
 
-$htmlBody = "
-<!DOCTYPE html>
-<html lang='es'>
-<head><meta charset='UTF-8'></head>
-<body style='margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;'>
-  <table width='100%' cellpadding='0' cellspacing='0' style='background:#f4f6f9;padding:30px 0;'>
-    <tr><td align='center'>
-      <table width='580' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
-
-        <!-- Encabezado -->
-        <tr>
-          <td style='background:#b02a37;padding:28px 32px;text-align:center;'>
-            <h1 style='color:#ffffff;margin:0;font-size:22px;'>Cita Cancelada</h1>
-            <p style='color:#f5d0d4;margin:6px 0 0;font-size:13px;'>Sross Nutritions</p>
-          </td>
-        </tr>
-
-        <!-- Saludo -->
-        <tr>
-          <td style='padding:28px 32px 10px;'>
-            <p style='font-size:15px;color:#333;margin:0;'>
-              Hola, <strong>" . htmlspecialchars($nombrePaciente) . "</strong>
-            </p>
-            <p style='font-size:14px;color:#555;margin:10px 0 0;'>
-              Le informamos que la siguiente cita ha sido <strong>cancelada</strong>:
-            </p>
-          </td>
-        </tr>
-
-        <!-- Detalles -->
-        <tr>
-          <td style='padding:16px 32px;'>
-            <table width='100%' cellpadding='0' cellspacing='0'
-                   style='background:#fdf2f3;border-radius:6px;border-left:4px solid #b02a37;'>
-              <tr>
-                <td style='padding:16px 20px;'>
-                  <table width='100%' cellpadding='6' cellspacing='0' style='font-size:14px;color:#333;'>
-                    <tr>
-                      <td style='width:40%;color:#888;'>📅 Fecha</td>
-                      <td><strong>" . htmlspecialchars($fechaBonita) . "</strong></td>
-                    </tr>
-                    <tr>
-                      <td style='color:#888;'>🕐 Hora</td>
-                      <td><strong>" . htmlspecialchars($horaIni) . " – " . htmlspecialchars($horaFin) . "</strong></td>
-                    </tr>
-                    <tr>
-                      <td style='color:#888;'>🩺 Tipo de consulta</td>
-                      <td><strong>" . htmlspecialchars($tipoConsulta) . "</strong></td>
-                    </tr>
-                    " . ($doctorNombre ? "
-                    <tr>
-                      <td style='color:#888;'>👨‍⚕️ Doctor</td>
-                      <td><strong>" . htmlspecialchars($doctorNombre) . "</strong></td>
-                    </tr>" : "") . "
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- Recordatorio -->
-        <tr>
-          <td style='padding:10px 32px 24px;'>
-            <p style='font-size:13px;color:#777;margin:0;'>
-              Si desea reagendar una nueva cita, comuníquese con nosotros. Lamentamos cualquier inconveniente.
-            </p>
-          </td>
-        </tr>
-
-        <!-- Pie -->
-        <tr>
-          <td style='background:#f7e9ea;padding:16px 32px;text-align:center;'>
-            <p style='margin:0;font-size:12px;color:#999;'>
-              Este correo fue generado automáticamente por el Sistema de Citas Sross Nutritions.<br>
-              Por favor no responda a este mensaje.
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>";
-
-$textBody = "Hola $nombrePaciente,\n\n"
-          . "Le informamos que su cita ha sido CANCELADA:\n"
-          . "Fecha: $fechaBonita\n"
-          . "Hora: $horaIni - $horaFin\n"
-          . "Tipo: $tipoConsulta\n"
-          . ($doctorNombre ? "Doctor: $doctorNombre\n" : "")
-          . "\nSi desea reagendar, comuníquese con nosotros.\nSross Nutritions";
+$langPaciente = patient_lang($conexion, (int)($info['IDPACIENTE'] ?? 0));
+$emailCita = build_cita_email('cancelada', $langPaciente, [
+    'nombre'       => $nombrePaciente,
+    'fecha'        => $info['FECHA_CITA'] ?? '',
+    'hora'         => $horaIni,
+    'horaFin'      => $horaFin,
+    'tipoConsulta' => $tipoConsulta,
+    'doctorNombre' => $doctorNombre,
+]);
+$htmlBody = $emailCita['html'];
+$textBody = $emailCita['text'];
 
 $mail = new PHPMailer(true);
 try {
@@ -197,12 +116,12 @@ try {
         'allow_self_signed' => true,
     ]];
 
-    $mail->setFrom('citamedica@srossnutritions.com', 'Sistema de Citas SROSS');
+    $mail->setFrom('citamedica@srossnutritions.com', $emailCita['fromName']);
     $mail->addAddress($correoPaciente, $nombrePaciente);
-    $mail->addReplyTo('citamedica@srossnutritions.com', 'Sross Nutritions');
+    $mail->addReplyTo('citamedica@srossnutritions.com', $emailCita['replyName']);
 
     $mail->isHTML(true);
-    $mail->Subject  = '=?UTF-8?B?' . base64_encode('Cita Cancelada - Sross Nutritions') . '?=';
+    $mail->Subject  = '=?UTF-8?B?' . base64_encode($emailCita['subject']) . '?=';
     $mail->Body     = $htmlBody;
     $mail->AltBody  = $textBody;
 
