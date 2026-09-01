@@ -32,7 +32,18 @@ $address = $conexion->real_escape_string($address);
 $notes = $conexion->real_escape_string($notes);
 $addNotes = $conexion->real_escape_string($addNotes);
 
-$sqlValida = "SELECT * FROM AG_PACIENTE WHERE TELEFONO = '".$telefono."' and ESTADO ='A'";                
+// Idioma preferido del paciente (para correos): 'es' | 'en', por defecto 'es'
+$idioma = strtolower(trim($_POST['idioma'] ?? 'es'));
+if ($idioma !== 'en' && $idioma !== 'es') $idioma = 'es';
+
+// ¿Existe la columna IDIOMA? (la agrega migrar_idioma_paciente.php)
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneIdioma = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='IDIOMA'"
+)->fetch_assoc()['c'] > 0;
+
+$sqlValida = "SELECT * FROM AG_PACIENTE WHERE TELEFONO = '".$telefono."' and ESTADO ='A'";
 $result = $conexion->query($sqlValida);
 if ($result->num_rows > 0) {     
     $row = $result->fetch_array(MYSQLI_ASSOC);
@@ -42,11 +53,10 @@ if ($result->num_rows > 0) {
 }  
 
 if ($existe) {
-    $sql = "INSERT INTO AG_PACIENTE (NOMBRES, APELLIDOS, EMAIL, FECHANACIMIENTO, TELEFONO, CEDULA, TITLE, SEX, GENDER, ESTADO, ADDRESS, NOTES, ADDNOTES) 
-            VALUES ('".$nombres."', '".$apellidos."', '".$email."', '".$feNac."', '".$telefono."', '".$cedula."', '".$title."', '".$sex."', '".$gender."', 'A','".$address."', '".$notes."', '".$addNotes."')";    
-
-    // Mostrar la consulta SQL antes de ejecutarla
-    echo "<script>alert('Consulta SQL: " . addslashes($sql) . "');</script>";
+    $colIdioma = $tieneIdioma ? ", IDIOMA" : "";
+    $valIdioma = $tieneIdioma ? ", '".$conexion->real_escape_string($idioma)."'" : "";
+    $sql = "INSERT INTO AG_PACIENTE (NOMBRES, APELLIDOS, EMAIL, FECHANACIMIENTO, TELEFONO, CEDULA, TITLE, SEX, GENDER, ESTADO, ADDRESS, NOTES, ADDNOTES".$colIdioma.")
+            VALUES ('".$nombres."', '".$apellidos."', '".$email."', '".$feNac."', '".$telefono."', '".$cedula."', '".$title."', '".$sex."', '".$gender."', 'A','".$address."', '".$notes."', '".$addNotes."'".$valIdioma.")";
 
     $consulta = $conexion->query($sql) or die("Problemas al insertar datos:<br>".mysqli_error($conexion));
     

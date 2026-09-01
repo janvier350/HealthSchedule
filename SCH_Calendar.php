@@ -719,9 +719,16 @@ while ($a = $resAgencias->fetch_assoc()) {
                             <label class="form-label small fw-semibold"><?php te('pf.gender'); ?></label>
                             <input type="text" id="epGender" name="gender" class="form-control">
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-8">
                             <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
                             <input type="text" id="epAddress" name="address" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold"><i class="bi bi-translate"></i> <?php te('pf.language'); ?></label>
+                            <select id="epIdioma" name="idioma" class="form-select">
+                                <option value="es"><?php te('lang.spanish'); ?></option>
+                                <option value="en"><?php te('lang.english'); ?></option>
+                            </select>
                         </div>
                     </div>
 
@@ -1078,6 +1085,7 @@ function editarPacienteDesdeCita() {
             document.getElementById('epSex').value       = p.SEX       || '';
             document.getElementById('epGender').value    = p.GENDER    || '';
             document.getElementById('epAddress').value   = p.ADDRESS   || '';
+            document.getElementById('epIdioma').value    = (p.IDIOMA === 'en') ? 'en' : 'es';
             document.getElementById('epAlerta').value    = p.ALERTA    || '';
             document.getElementById('epNotes').value     = p.NOTES     || '';
             document.getElementById('epAddNotes').value  = p.ADDNOTES  || '';

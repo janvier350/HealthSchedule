@@ -399,11 +399,20 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                                 Looks good!
                                                             </div>
                                                         </div>
-                                                       
+
                                                     </div>
-                                                    
-                                                     
-                                                    
+                                                    <div class="form-row">
+                                                        <div class="col-md-4 mb-4">
+                                                            <label for="idioma"><?php te('pf.language'); ?></label>
+                                                            <select name="idioma" id="idioma" class="form-control">
+                                                                <option value="es"><?php te('lang.spanish'); ?></option>
+                                                                <option value="en"><?php te('lang.english'); ?></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+
+
                                                     <button class="btn btn-primary" type="submit"><?php te('pcreate.save'); ?></button>
                                                 </form>
                                         
@@ -510,6 +519,7 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
         document.getElementById('title').value = paciente.TITLE;
         document.getElementById('sex').value = paciente.SEX;
         document.getElementById('gender').value = paciente.GENDER;
+        document.getElementById('epIdioma').value = (paciente.IDIOMA === 'en') ? 'en' : 'es';
     }
 
     function guardarEdicion() {
@@ -723,7 +733,13 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
                                                                 </select>
                     </div>
 
-                    
+                    <div class="mb-3">
+                        <label class="form-label"><?php te('pf.language'); ?></label>
+                        <select name="idioma" id="epIdioma" class="form-control">
+                            <option value="es"><?php te('lang.spanish'); ?></option>
+                            <option value="en"><?php te('lang.english'); ?></option>
+                        </select>
+                    </div>
 
                     <button type="button" class="btn btn-primary" onclick="guardarEdicion()"><?php te('common.saveChanges'); ?></button>
                 </form>
