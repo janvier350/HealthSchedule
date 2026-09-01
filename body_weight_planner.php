@@ -119,7 +119,7 @@ if ($resP) {
                     </div>
                 </div>
 
-                <div class="row">
+                <div class="row align-items-start">
                     <!-- ── Formulario ─────────────────────────────── -->
                     <div class="col-lg-5 mb-3">
                         <div class="card shadow-sm">
