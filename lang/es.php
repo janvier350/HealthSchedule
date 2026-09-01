@@ -378,6 +378,7 @@ return array(
     'pf.sex'                   => 'Sexo',
     'pf.gender'                => 'Género',
     'pf.address'               => 'Dirección',
+    'pf.language'              => 'Idioma preferido (para correos)',
     'pf.notes'                 => 'Notas',
     'pf.alert'                 => 'Alerta',
     'pf.importantNotes'        => 'Notas Importantes',

@@ -28,40 +28,38 @@ if (!$id || $nombres === '' || $apellidos === '') {
 // Fecha de nacimiento: vacía → NULL (evita '0000-00-00' en modo estricto)
 $fecNacParam = ($fecNac === '') ? null : $fecNac;
 
-// ¿Existe la columna ALERTA?
-$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
-$tieneAlerta = (int)$conexion->query(
-    "SELECT COUNT(*) c FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='ALERTA'"
-)->fetch_assoc()['c'] > 0;
+// Idioma preferido (solo se guarda si es válido)
+$idioma = strtolower(trim($_POST['idioma'] ?? ''));
+if ($idioma !== 'en' && $idioma !== 'es') $idioma = '';
 
-if ($tieneAlerta) {
-    $sql = "UPDATE AG_PACIENTE SET
-                NOMBRES = ?, APELLIDOS = ?, CEDULA = ?, TELEFONO = ?, EMAIL = ?,
-                FECHANACIMIENTO = ?, SEX = ?, GENDER = ?, ADDRESS = ?,
-                NOTES = ?, ADDNOTES = ?, ALERTA = ?
-            WHERE IDPACIENTE = ? AND ESTADO = 'A'";
-    $stmt = $conexion->prepare($sql);
-    $stmt->bind_param(
-        "ssssssssssssi",
-        $nombres, $apellidos, $cedula, $telefono, $email,
-        $fecNacParam, $sex, $gender, $address,
-        $notes, $addNotes, $alerta, $id
-    );
-} else {
-    $sql = "UPDATE AG_PACIENTE SET
-                NOMBRES = ?, APELLIDOS = ?, CEDULA = ?, TELEFONO = ?, EMAIL = ?,
-                FECHANACIMIENTO = ?, SEX = ?, GENDER = ?, ADDRESS = ?,
-                NOTES = ?, ADDNOTES = ?
-            WHERE IDPACIENTE = ? AND ESTADO = 'A'";
-    $stmt = $conexion->prepare($sql);
-    $stmt->bind_param(
-        "sssssssssssi",
-        $nombres, $apellidos, $cedula, $telefono, $email,
-        $fecNacParam, $sex, $gender, $address,
-        $notes, $addNotes, $id
-    );
-}
+// ¿Qué columnas opcionales existen? (ALERTA, IDIOMA)
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$colExiste = function ($col) use ($conexion, $dbName) {
+    return (int)$conexion->query(
+        "SELECT COUNT(*) c FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='$col'"
+    )->fetch_assoc()['c'] > 0;
+};
+$tieneAlerta = $colExiste('ALERTA');
+$tieneIdioma = $colExiste('IDIOMA');
+
+// Construir el UPDATE dinámicamente
+$campos = ["NOMBRES = ?", "APELLIDOS = ?", "CEDULA = ?", "TELEFONO = ?", "EMAIL = ?",
+           "FECHANACIMIENTO = ?", "SEX = ?", "GENDER = ?", "ADDRESS = ?",
+           "NOTES = ?", "ADDNOTES = ?"];
+$tipos  = "sssssssssss";
+$vals   = [$nombres, $apellidos, $cedula, $telefono, $email,
+           $fecNacParam, $sex, $gender, $address, $notes, $addNotes];
+
+if ($tieneAlerta) { $campos[] = "ALERTA = ?"; $tipos .= "s"; $vals[] = $alerta; }
+if ($tieneIdioma && $idioma !== '') { $campos[] = "IDIOMA = ?"; $tipos .= "s"; $vals[] = $idioma; }
+
+$sql = "UPDATE AG_PACIENTE SET " . implode(", ", $campos) . " WHERE IDPACIENTE = ? AND ESTADO = 'A'";
+$tipos .= "i";
+$vals[] = $id;
+
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param($tipos, ...$vals);
 
 if ($stmt->execute()) {
     echo $tieneAlerta ? 'OK' : 'OK_SIN_ALERTA';
