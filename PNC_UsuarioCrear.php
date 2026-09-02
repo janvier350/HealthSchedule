@@ -370,12 +370,13 @@ if ($queryRoles) {
             <th><?php te('ucreate.th.contact'); ?></th>
 
             <th><?php te('ucreate.role'); ?></th>
+            <th><?php te('ucreate.th.status'); ?></th>
             <th><?php te('pcreate.th.actions'); ?></th>
         </tr>
     </thead>
     <tbody>
         <?php
-        $sql = "SELECT A.IDADM_USUARIO, A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, A.IDAGENCIA, A.IMG, B.CARGO, A.IDADM_ROL FROM ADM_USUARIO A, ADM_ROL B WHERE A.IDADM_ROL= B.IDADM_ROL  AND A.ESTADO = 'A'";
+        $sql = "SELECT A.IDADM_USUARIO, A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, A.IDAGENCIA, A.IMG, A.ESTADO, B.CARGO, A.IDADM_ROL FROM ADM_USUARIO A, ADM_ROL B WHERE A.IDADM_ROL= B.IDADM_ROL ORDER BY A.ESTADO ASC, A.NOMBRES";
         $query = $conexion->query($sql);
 
         if (!$query) {
@@ -404,30 +405,47 @@ if ($queryRoles) {
             <td>
             <p class="fw-normal mb-1"><?php echo $valores['CARGO']; ?></p>
             </td>
-            
+
             <td>
-            
+            <?php if ($valores['ESTADO'] === 'A'): ?>
+                <span class="badge bg-success"><?php te('common.active'); ?></span>
+            <?php else: ?>
+                <span class="badge bg-secondary"><?php te('common.inactive'); ?></span>
+            <?php endif; ?>
+            </td>
+
+            <td>
+
                                                             <button class="btn btn-outline-success fa fa-key"
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#editModalClave" 
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#editModalClave"
                                                                 onclick="cargarDatosClave(<?php echo htmlspecialchars(json_encode($valores), ENT_QUOTES, 'UTF-8'); ?>)">
                                                             </button>
 
                                                             <button class="btn btn-outline-warning fa fa-edit"
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#editModal" 
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#editModal"
                                                                 onclick="cargarDatos(<?php echo htmlspecialchars(json_encode($valores), ENT_QUOTES, 'UTF-8'); ?>)">
                                                             </button>
-                                                            <!-- Botón para eliminar con confirmación -->
-                                                            <button class="btn-shadow btn btn-outline-danger fa fa-minus-circle" 
+                                                            <?php if ($valores['ESTADO'] === 'A'): ?>
+                                                            <!-- Desactivar con confirmación -->
+                                                            <button class="btn-shadow btn btn-outline-danger fa fa-minus-circle"
+                                                                title="<?php te('common.deactivate'); ?>"
                                                                 onclick="confirmarEliminacion(<?php echo $valores['IDADM_USUARIO']; ?>)">
                                                             </button>
+                                                            <?php else: ?>
+                                                            <!-- Reactivar con confirmación -->
+                                                            <button class="btn-shadow btn btn-outline-success fa fa-check-circle"
+                                                                title="<?php te('common.reactivate'); ?>"
+                                                                onclick="confirmarActivacion(<?php echo $valores['IDADM_USUARIO']; ?>)">
+                                                            </button>
+                                                            <?php endif; ?>
             </td>
         </tr>
-        <?php 
+        <?php
             }
         } else {
-            echo "<tr><td colspan='4' class='text-center'>No hay datos disponibles</td></tr>";
+            echo "<tr><td colspan='5' class='text-center'>No hay datos disponibles</td></tr>";
         }
         ?>
     </tbody>
@@ -463,6 +481,11 @@ if ($queryRoles) {
                                             function confirmarEliminacion(idUsuario) {
                                                 if (confirm(<?php echo json_encode(t('ucreate.js.confirmDeact')); ?>)) {
                                                     window.location.href = "class/Desactivar_UsuarioV2.php?idUsuario=" + idUsuario;
+                                                }
+                                            }
+                                            function confirmarActivacion(idUsuario) {
+                                                if (confirm(<?php echo json_encode(t('ucreate.js.confirmReact')); ?>)) {
+                                                    window.location.href = "class/Activar_UsuarioV2.php?idUsuario=" + idUsuario;
                                                 }
                                             }
                                         </script>
