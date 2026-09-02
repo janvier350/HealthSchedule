@@ -3,7 +3,9 @@ ob_start();
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
+if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
 if (!isset($_SESSION["rol"], $_SESSION["iduser"])) {
     header("Location: break.php");
@@ -23,7 +25,7 @@ if ($resP) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <!-- Favicon de la app -->
@@ -31,7 +33,7 @@ if ($resP) {
     <link rel="alternate icon" type="image/png" href="images/favicon.png">
     <link rel="apple-touch-icon" href="images/favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Planificador de Peso Corporal</title>
+    <title><?php te('bwp.pageTitle'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
@@ -92,10 +94,9 @@ if ($resP) {
                         <div class="page-title-heading">
                             <div class="page-title-icon"><i class="pe-7s-graph3 icon-gradient bg-tempting-azure"></i></div>
                             <div>
-                                Planificador de Peso Corporal
+                                <?php te('bwp.title'); ?>
                                 <div class="page-title-subheading">
-                                    Basado en el modelo dinámico del NIH (Hall et al., Lancet 2011): calcula las calorías
-                                    para alcanzar y mantener un peso meta.
+                                    <?php te('bwp.subtitle'); ?>
                                 </div>
                             </div>
                         </div>
@@ -105,11 +106,11 @@ if ($resP) {
                 <!-- Precarga desde paciente -->
                 <div class="card shadow-sm mb-3">
                     <div class="card-body py-3">
-                        <label class="field-label mb-1"><i class="bi bi-person-badge me-1"></i>Cargar datos de un paciente (opcional)</label>
+                        <label class="field-label mb-1"><i class="bi bi-person-badge me-1"></i><?php te('bwp.loadPatient'); ?></label>
                         <div class="row g-2 align-items-center">
                             <div class="col-md-8">
                                 <input list="listaPacientes" id="pacienteBuscar" class="form-control"
-                                       placeholder="Escribe el nombre del paciente y selecciónalo…">
+                                       placeholder="<?php te('bwp.patientPlaceholder'); ?>">
                                 <datalist id="listaPacientes">
                                     <?php foreach ($pacientes as $p): ?>
                                         <option value="<?php echo htmlspecialchars($p['APELLIDOS'].', '.$p['NOMBRES'].'  ·  #'.$p['IDPACIENTE']); ?>"></option>
@@ -128,7 +129,7 @@ if ($resP) {
                     <div class="col-lg-5 mb-3">
                         <div class="card shadow-sm">
                             <div class="card-header d-flex justify-content-between align-items-center py-2">
-                                <span><i class="bi bi-input-cursor-text me-1"></i>Información inicial</span>
+                                <span><i class="bi bi-input-cursor-text me-1"></i><?php te('bwp.initialInfo'); ?></span>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" id="btnUS" class="btn btn-outline-secondary bwp-unit-btn active" onclick="setUnidades('us')">U.S.</button>
                                     <button type="button" id="btnMetric" class="btn btn-outline-secondary bwp-unit-btn" onclick="setUnidades('metric')">Métrico</button>
@@ -136,26 +137,26 @@ if ($resP) {
                             </div>
                             <div class="card-body">
                                 <div class="mb-2">
-                                    <label class="field-label">Peso actual</label>
+                                    <label class="field-label"><?php te('bwp.currentWeight'); ?></label>
                                     <div class="input-group">
                                         <input type="number" step="0.1" id="peso" class="form-control">
                                         <span class="input-group-text" id="pesoUnit">lbs</span>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="field-label">Sexo</label>
+                                    <label class="field-label"><?php te('bwp.sex'); ?></label>
                                     <select id="sexo" class="form-select">
-                                        <option value="">Seleccionar…</option>
-                                        <option value="0">Hombre</option>
-                                        <option value="1">Mujer</option>
+                                        <option value=""><?php te('bwp.selectDots'); ?></option>
+                                        <option value="0"><?php te('bwp.male'); ?></option>
+                                        <option value="1"><?php te('bwp.female'); ?></option>
                                     </select>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="field-label">Edad (años)</label>
+                                    <label class="field-label"><?php te('bwp.age'); ?></label>
                                     <input type="number" id="edad" class="form-control">
                                 </div>
                                 <div class="mb-2">
-                                    <label class="field-label">Estatura</label>
+                                    <label class="field-label"><?php te('bwp.height'); ?></label>
                                     <!-- US: pies + pulgadas -->
                                     <div class="input-group" id="alturaUS">
                                         <input type="number" id="alturaFt" class="form-control" placeholder="0">
@@ -170,36 +171,34 @@ if ($resP) {
                                     </div>
                                 </div>
                                 <div class="mb-1">
-                                    <label class="field-label">Nivel de actividad física (PAL)</label>
+                                    <label class="field-label"><?php te('bwp.pal'); ?></label>
                                     <input type="number" step="0.05" id="pal" class="form-control" value="1.6">
                                     <div class="help-box mt-1">
-                                        Rango típico: 1.4 (sedentario) a 2.5 (muy activo). El valor por defecto 1.6
-                                        describe actividad muy ligera en el trabajo (mayormente sentado) y actividad
-                                        moderada (caminar/pedalear) al menos una vez por semana.
+                                        <?php te('bwp.palHelp'); ?>
                                     </div>
                                 </div>
 
                                 <hr>
-                                <h6 class="text-muted mb-2"><i class="bi bi-flag me-1"></i>Meta</h6>
+                                <h6 class="text-muted mb-2"><i class="bi bi-flag me-1"></i><?php te('bwp.goal'); ?></h6>
                                 <div class="mb-2">
-                                    <label class="field-label">Peso meta</label>
+                                    <label class="field-label"><?php te('bwp.goalWeight'); ?></label>
                                     <div class="input-group">
                                         <input type="number" step="0.1" id="pesoMeta" class="form-control">
                                         <span class="input-group-text" id="pesoMetaUnit">lbs</span>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="field-label">Fecha meta</label>
+                                    <label class="field-label"><?php te('bwp.goalDate'); ?></label>
                                     <input type="date" id="fechaMeta" class="form-control">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="field-label">Actividad física durante la meta (PAL)</label>
-                                    <input type="number" step="0.05" id="palMeta" class="form-control" placeholder="Igual que el actual">
-                                    <div class="help-box mt-1">Déjalo vacío para mantener el mismo nivel de actividad.</div>
+                                    <label class="field-label"><?php te('bwp.goalPal'); ?></label>
+                                    <input type="number" step="0.05" id="palMeta" class="form-control" placeholder="<?php te('bwp.sameAsCurrent'); ?>">
+                                    <div class="help-box mt-1"><?php te('bwp.goalPalHelp'); ?></div>
                                 </div>
 
                                 <button type="button" class="btn btn-primary w-100" onclick="calcularBWP()">
-                                    <i class="bi bi-calculator me-1"></i> Calcular
+                                    <i class="bi bi-calculator me-1"></i> <?php te('bwp.calculate'); ?>
                                 </button>
                             </div>
                         </div>
@@ -212,19 +211,19 @@ if ($resP) {
                                 <div class="col-md-4">
                                     <div class="result-card p-3" style="background:#546e7a;">
                                         <div class="result-num" id="resMantenerActual">—</div>
-                                        <div class="result-lbl">cal/día para mantener tu peso actual</div>
+                                        <div class="result-lbl"><?php te('bwp.resMaintainCurrent'); ?></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-card p-3" style="background:#1976d2;">
                                         <div class="result-num" id="resAlcanzar">—</div>
-                                        <div class="result-lbl">cal/día para alcanzar la meta en la fecha</div>
+                                        <div class="result-lbl"><?php te('bwp.resReach'); ?></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-card p-3" style="background:#2e7d32;">
                                         <div class="result-num" id="resMantenerMeta">—</div>
-                                        <div class="result-lbl">cal/día para mantener el peso meta</div>
+                                        <div class="result-lbl"><?php te('bwp.resMaintainGoal'); ?></div>
                                     </div>
                                 </div>
                             </div>
@@ -233,13 +232,13 @@ if ($resP) {
 
                             <div class="d-flex align-items-center gap-2 mb-3">
                                 <button type="button" class="btn btn-success btn-sm" id="btnGuardarPlan" onclick="guardarPlan()" disabled>
-                                    <i class="bi bi-save me-1"></i> Guardar en la ficha del paciente
+                                    <i class="bi bi-save me-1"></i> <?php te('bwp.saveToPatient'); ?>
                                 </button>
-                                <span id="guardarHint" class="small text-muted">Selecciona un paciente arriba para poder guardar el plan.</span>
+                                <span id="guardarHint" class="small text-muted"><?php te('bwp.saveHintSelect'); ?></span>
                             </div>
 
                             <div class="card shadow-sm">
-                                <div class="card-header py-2"><i class="bi bi-graph-down me-1"></i>Trayectoria estimada del peso</div>
+                                <div class="card-header py-2"><i class="bi bi-graph-down me-1"></i><?php te('bwp.trajectory'); ?></div>
                                 <div class="card-body">
                                     <div id="bwpChartWrap"><canvas id="bwpChart" height="300"></canvas></div>
                                     <div class="small text-muted mt-2" id="bwpResumen"></div>
@@ -250,7 +249,7 @@ if ($resP) {
                         <div id="bwpPlaceholder" class="card shadow-sm">
                             <div class="card-body text-center text-muted py-5">
                                 <i class="bi bi-clipboard-data" style="font-size:2.5rem;"></i>
-                                <p class="mt-2 mb-0">Completa la información y presiona <strong>Calcular</strong> para ver los resultados.</p>
+                                <p class="mt-2 mb-0"><?php te('bwp.placeholderPre'); ?> <strong><?php te('bwp.calculate'); ?></strong> <?php te('bwp.placeholderPost'); ?></p>
                             </div>
                         </div>
                     </div>
@@ -260,23 +259,20 @@ if ($resP) {
                 <div class="card shadow-sm mb-3" id="bwpPlanesCard">
                     <div class="card-header py-2 d-flex align-items-center">
                         <i class="bi bi-clock-history me-2"></i>
-                        <span>Planes guardados del paciente</span>
+                        <span><?php te('bwp.savedPlans'); ?></span>
                         <span id="bwpPlanesPaciente" class="text-muted small ms-2"></span>
                         <button type="button" class="btn btn-sm btn-outline-secondary ms-auto py-0 px-2"
-                                onclick="cargarPlanesPaciente()" title="Actualizar">
+                                onclick="cargarPlanesPaciente()" title="<?php te('bwp.refresh'); ?>">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
                     </div>
                     <div class="card-body py-2" id="bwpPlanesLista">
-                        <div class="text-muted small">Selecciona un paciente arriba para ver sus planes guardados.</div>
+                        <div class="text-muted small"><?php te('bwp.selectToSeePlans'); ?></div>
                     </div>
                 </div>
 
                 <div class="alert alert-light border small text-muted">
-                    <strong>Aviso:</strong> Esta herramienta es para adultos de 18 años o más, no para menores ni para
-                    mujeres embarazadas o en lactancia. No sustituye el consejo médico. El profesional de salud que ha
-                    examinado al paciente y conoce su historia clínica es quien mejor puede orientar el tratamiento.
-                    Modelo basado en Hall KD, et al., <em>The Lancet</em> 2011;378:826-37 (NIH Body Weight Planner).
+                    <strong><?php te('bwp.noticeLabel'); ?></strong> <?php te('bwp.noticePre'); ?> <em>The Lancet</em> <?php te('bwp.noticePost'); ?>
                 </div>
 
             </div>
@@ -288,6 +284,50 @@ if ($resP) {
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script src="js/bwplanner.js"></script>
 <script>
+// ── Textos traducibles (i18n) ────────────────────────────────────────
+var BWP = {
+    invalidWeight:     <?php echo json_encode(t('bwp.js.invalidWeight')); ?>,
+    selectSex:         <?php echo json_encode(t('bwp.js.selectSex')); ?>,
+    ageMin:            <?php echo json_encode(t('bwp.js.ageMin')); ?>,
+    invalidHeight:     <?php echo json_encode(t('bwp.js.invalidHeight')); ?>,
+    palRange:          <?php echo json_encode(t('bwp.js.palRange')); ?>,
+    invalidGoalWeight: <?php echo json_encode(t('bwp.js.invalidGoalWeight')); ?>,
+    selectGoalDate:    <?php echo json_encode(t('bwp.js.selectGoalDate')); ?>,
+    dateMin7:          <?php echo json_encode(t('bwp.js.dateMin7')); ?>,
+    aggressive:        <?php echo json_encode(t('bwp.js.aggressive')); ?>,
+    summaryChange:     <?php echo json_encode(t('bwp.js.summaryChange')); ?>,
+    summaryIn:         <?php echo json_encode(t('bwp.js.summaryIn')); ?>,
+    summaryDays:       <?php echo json_encode(t('bwp.js.summaryDays')); ?>,
+    summaryFrom:       <?php echo json_encode(t('bwp.js.summaryFrom')); ?>,
+    summaryTo:         <?php echo json_encode(t('bwp.js.summaryTo')); ?>,
+    summaryActivity:   <?php echo json_encode(t('bwp.js.summaryActivity')); ?>,
+    pressCalcFirst:    <?php echo json_encode(t('bwp.js.pressCalcFirst')); ?>,
+    willSaveTo:        <?php echo json_encode(t('bwp.js.willSaveTo')); ?>,
+    thePatient:        <?php echo json_encode(t('bwp.js.thePatient')); ?>,
+    selectPatientSave: <?php echo json_encode(t('bwp.js.selectPatientSave')); ?>,
+    calcFirst:         <?php echo json_encode(t('bwp.js.calcFirst')); ?>,
+    saved:             <?php echo json_encode(t('bwp.js.saved')); ?>,
+    noTable:           <?php echo json_encode(t('bwp.js.noTable')); ?>,
+    sessionExpired:    <?php echo json_encode(t('bwp.js.sessionExpired')); ?>,
+    saveError:         <?php echo json_encode(t('bwp.js.saveError')); ?>,
+    saveConnError:     <?php echo json_encode(t('bwp.js.saveConnError')); ?>,
+    loading:           <?php echo json_encode(t('bwp.js.loading')); ?>,
+    plansLoadError:    <?php echo json_encode(t('bwp.js.plansLoadError')); ?>,
+    confirmDeletePlan: <?php echo json_encode(t('bwp.js.confirmDeletePlan')); ?>,
+    deleteError:       <?php echo json_encode(t('bwp.js.deleteError')); ?>,
+    deleteConnError:   <?php echo json_encode(t('bwp.js.deleteConnError')); ?>,
+    loadError:         <?php echo json_encode(t('bwp.js.loadError')); ?>,
+    loadedFill:        <?php echo json_encode(t('bwp.js.loadedFill')); ?>,
+    fieldWeight:       <?php echo json_encode(t('bwp.js.fieldWeight')); ?>,
+    fieldHeight:       <?php echo json_encode(t('bwp.js.fieldHeight')); ?>,
+    fieldSex:          <?php echo json_encode(t('bwp.js.fieldSex')); ?>,
+    loadedFrom:        <?php echo json_encode(t('bwp.js.loadedFrom')); ?>,
+    patientWord:       <?php echo json_encode(t('bwp.js.patientWord')); ?>,
+    connError:         <?php echo json_encode(t('bwp.js.connError')); ?>,
+    dayAbbr:           <?php echo json_encode(t('bwp.js.dayAbbr')); ?>,
+    weightAxis:        <?php echo json_encode(t('bwp.js.weightAxis')); ?>
+};
+
 // ── Unidades ─────────────────────────────────────────────────────────
 var unidades = 'us';
 var LB_PER_KG = 2.2;   // se replica el factor del planificador del NIH
@@ -354,10 +394,10 @@ document.getElementById('pacienteBuscar').addEventListener('change', function ()
     var msg = document.getElementById('pacienteMsg');
     if (!m) { return; }
     var id = m[1];
-    msg.textContent = 'Cargando…';
+    msg.textContent = BWP.loading;
     $.getJSON('get_paciente_bwp.php', { id: id })
         .done(function (d) {
-            if (d.error) { msg.innerHTML = '<span class="text-danger">No se pudo cargar.</span>'; return; }
+            if (d.error) { msg.innerHTML = '<span class="text-danger">' + BWP.loadError + '</span>'; return; }
             pacienteSelId = id;
             pacienteSelNombre = d.nombre || '';
             actualizarBotonGuardar();
@@ -366,15 +406,15 @@ document.getElementById('pacienteBuscar').addEventListener('change', function ()
             if (d.pesoKg) document.getElementById('peso').value = round1(kgAPeso(d.pesoKg));
             if (d.tallaM) escribirAltura(d.tallaM);
             var faltan = [];
-            if (!d.pesoKg) faltan.push('peso');
-            if (!d.tallaM) faltan.push('estatura');
-            if (d.sex === null) faltan.push('sexo');
+            if (!d.pesoKg) faltan.push(BWP.fieldWeight);
+            if (!d.tallaM) faltan.push(BWP.fieldHeight);
+            if (d.sex === null) faltan.push(BWP.fieldSex);
             msg.innerHTML = faltan.length
-                ? '<span class="text-warning">Cargado. Completa manualmente: ' + faltan.join(', ') + '.</span>'
-                : '<span class="text-success">Datos cargados de ' + (d.nombre || 'paciente') + '.</span>';
+                ? '<span class="text-warning">' + BWP.loadedFill + ' ' + faltan.join(', ') + '.</span>'
+                : '<span class="text-success">' + BWP.loadedFrom + ' ' + (d.nombre || BWP.patientWord) + '.</span>';
             cargarPlanesPaciente();
         })
-        .fail(function () { msg.innerHTML = '<span class="text-danger">Error de conexión.</span>'; });
+        .fail(function () { msg.innerHTML = '<span class="text-danger">' + BWP.connError + '</span>'; });
 });
 
 // ── Cálculo ──────────────────────────────────────────────────────────
@@ -392,18 +432,18 @@ function calcularBWP() {
     var palMeta = palMetaRaw ? parseFloat(palMetaRaw) : pal;
 
     // Validaciones
-    if (isNaN(pesoKg) || pesoKg <= 0) { alert('Ingresa un peso actual válido.'); return; }
-    if (sexo !== '0' && sexo !== '1') { alert('Selecciona el sexo.'); return; }
-    if (isNaN(edad) || edad < 18)     { alert('La edad debe ser 18 años o más.'); return; }
-    if (!alturaM || alturaM <= 0)     { alert('Ingresa una estatura válida.'); return; }
-    if (isNaN(pal) || pal < 1.4 || pal > 2.5) { alert('El PAL debe estar entre 1.4 y 2.5.'); return; }
-    if (isNaN(metaKg) || metaKg <= 0) { alert('Ingresa un peso meta válido.'); return; }
-    if (!fechaMeta)                    { alert('Selecciona la fecha meta.'); return; }
+    if (isNaN(pesoKg) || pesoKg <= 0) { alert(BWP.invalidWeight); return; }
+    if (sexo !== '0' && sexo !== '1') { alert(BWP.selectSex); return; }
+    if (isNaN(edad) || edad < 18)     { alert(BWP.ageMin); return; }
+    if (!alturaM || alturaM <= 0)     { alert(BWP.invalidHeight); return; }
+    if (isNaN(pal) || pal < 1.4 || pal > 2.5) { alert(BWP.palRange); return; }
+    if (isNaN(metaKg) || metaKg <= 0) { alert(BWP.invalidGoalWeight); return; }
+    if (!fechaMeta)                    { alert(BWP.selectGoalDate); return; }
 
     var hoy = new Date(); hoy.setHours(0,0,0,0);
     var fm = new Date(fechaMeta + 'T00:00:00');
     var dias = Math.round((fm - hoy) / 86400000);
-    if (dias < 7) { alert('La fecha meta debe ser al menos 7 días en el futuro.'); return; }
+    if (dias < 7) { alert(BWP.dateMin7); return; }
 
     // Modelo
     var opts = { sex: parseInt(sexo,10), age: edad, height: alturaM, weightInitial: pesoKg, palInitial: pal };
@@ -436,8 +476,7 @@ function calcularBWP() {
     var aviso = document.getElementById('bwpAviso');
     if (alcanzar < 1000) {
         aviso.classList.remove('d-none');
-        aviso.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Para alcanzar la meta en esa fecha se '
-            + 'requerirían menos de 1000 cal/día, lo cual no suele ser seguro. Considera una fecha más lejana o una meta menos exigente.';
+        aviso.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>' + BWP.aggressive;
     } else {
         aviso.classList.add('d-none');
     }
@@ -447,9 +486,9 @@ function calcularBWP() {
     var cambio = kgAPeso(metaKg - pesoKg);
     var signo = cambio > 0 ? '+' : '';
     document.getElementById('bwpResumen').textContent =
-        'Cambio de ' + signo + round1(cambio) + ' ' + unidadPeso + ' en ' + dias + ' días '
-        + '(de ' + round1(kgAPeso(pesoKg)) + ' a ' + round1(kgAPeso(metaKg)) + ' ' + unidadPeso + '). '
-        + 'Actividad durante la meta: PAL ' + palMeta + '.';
+        BWP.summaryChange + ' ' + signo + round1(cambio) + ' ' + unidadPeso + ' ' + BWP.summaryIn + ' ' + dias + ' ' + BWP.summaryDays + ' '
+        + '(' + BWP.summaryFrom + ' ' + round1(kgAPeso(pesoKg)) + ' ' + BWP.summaryTo + ' ' + round1(kgAPeso(metaKg)) + ' ' + unidadPeso + '). '
+        + BWP.summaryActivity + ' ' + palMeta + '.';
 
     dibujarChart(tray, unidadPeso);
 
@@ -479,21 +518,21 @@ function actualizarBotonGuardar() {
     if (!btn) return;
     if (!ultimoCalculo) {
         btn.disabled = true;
-        hint.textContent = 'Primero presiona Calcular.';
+        hint.textContent = BWP.pressCalcFirst;
         return;
     }
     if (!pacienteSelId) {
         btn.disabled = true;
-        hint.textContent = 'Selecciona un paciente arriba para poder guardar el plan.';
+        hint.textContent = <?php echo json_encode(t('bwp.saveHintSelect')); ?>;
         return;
     }
     btn.disabled = false;
-    hint.textContent = 'Se guardará en la ficha de ' + (pacienteSelNombre || 'el paciente') + '.';
+    hint.textContent = BWP.willSaveTo + ' ' + (pacienteSelNombre || BWP.thePatient) + '.';
 }
 
 function guardarPlan() {
-    if (!pacienteSelId) { alert('Selecciona un paciente para guardar el plan.'); return; }
-    if (!ultimoCalculo) { alert('Primero calcula el plan.'); return; }
+    if (!pacienteSelId) { alert(BWP.selectPatientSave); return; }
+    if (!ultimoCalculo) { alert(BWP.calcFirst); return; }
 
     var btn = document.getElementById('btnGuardarPlan');
     btn.disabled = true;
@@ -502,19 +541,19 @@ function guardarPlan() {
     $.post('guardar_plan_peso.php', datos, function (res) {
         res = (res || '').trim();
         if (res === 'OK') {
-            alert('Plan guardado en la ficha del paciente.');
+            alert(BWP.saved);
             cargarPlanesPaciente();
         } else if (res === 'SIN_TABLA') {
-            alert('Falta crear la tabla de planes. Pide al administrador ejecutar migrar_plan_peso.php una vez.');
+            alert(BWP.noTable);
         } else if (res === 'SIN_SESION') {
-            alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+            alert(BWP.sessionExpired);
             window.location.href = 'index.php';
         } else {
-            alert('No se pudo guardar: ' + res);
+            alert(BWP.saveError + ' ' + res);
         }
         btn.disabled = false;
     }).fail(function () {
-        alert('Error de conexión al guardar.');
+        alert(BWP.saveConnError);
         btn.disabled = false;
     });
 }
@@ -526,29 +565,29 @@ function cargarPlanesPaciente() {
     if (!cont) return;
     if (!pacienteSelId) {
         etq.textContent = '';
-        cont.innerHTML = '<div class="text-muted small">Selecciona un paciente arriba para ver sus planes guardados.</div>';
+        cont.innerHTML = '<div class="text-muted small">' + <?php echo json_encode(t('bwp.selectToSeePlans')); ?> + '</div>';
         return;
     }
     etq.textContent = pacienteSelNombre ? '· ' + pacienteSelNombre : '';
-    cont.innerHTML = '<div class="text-muted small">Cargando…</div>';
+    cont.innerHTML = '<div class="text-muted small">' + BWP.loading + '</div>';
     $.get('plan_peso_listar.php', { id_paciente: pacienteSelId })
         .done(function (html) { cont.innerHTML = html; })
-        .fail(function () { cont.innerHTML = '<div class="text-danger small">No se pudieron cargar los planes.</div>'; });
+        .fail(function () { cont.innerHTML = '<div class="text-danger small">' + BWP.plansLoadError + '</div>'; });
 }
 
 function eliminarPlanPeso(idPlan) {
-    if (!confirm('¿Eliminar este plan guardado?')) return;
+    if (!confirm(BWP.confirmDeletePlan)) return;
     $.post('plan_peso_eliminar.php', { idPlan: idPlan }, function (res) {
         res = (res || '').trim();
         if (res === 'OK') {
             cargarPlanesPaciente();
         } else if (res === 'SIN_SESION') {
-            alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+            alert(BWP.sessionExpired);
             window.location.href = 'index.php';
         } else {
-            alert('No se pudo eliminar: ' + res);
+            alert(BWP.deleteError + ' ' + res);
         }
-    }).fail(function () { alert('Error de conexión al eliminar.'); });
+    }).fail(function () { alert(BWP.deleteConnError); });
 }
 
 // ── Gráfica en canvas (sin librerías externas) ───────────────────────
@@ -587,7 +626,7 @@ function dibujarChart(tray, unidadPeso) {
     // Etiquetas X (0, mitad, fin)
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     [0, Math.round(xMax / 2), Math.round(xMax)].forEach(function (d) {
-        ctx.fillText(d + ' d', X(d), H - padB + 6);
+        ctx.fillText(d + ' ' + BWP.dayAbbr, X(d), H - padB + 6);
     });
 
     // Línea de peso
@@ -607,7 +646,7 @@ function dibujarChart(tray, unidadPeso) {
     ctx.save();
     ctx.translate(14, padT + plotH / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = '#666'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('Peso (' + unidadPeso + ')', 0, 0);
+    ctx.fillText(BWP.weightAxis + ' (' + unidadPeso + ')', 0, 0);
     ctx.restore();
 }
 

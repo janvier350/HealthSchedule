@@ -6,17 +6,18 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
 if (!isset($_SESSION["rol"], $_SESSION["iduser"])) {
-    echo '<div class="text-danger small">Sesión expirada.</div>';
+    echo '<div class="text-danger small">' . htmlspecialchars(t('bwp.sessionExpiredShort')) . '</div>';
     exit;
 }
 
 $idPaciente = (int)($_GET['id_paciente'] ?? 0);
 if (!$idPaciente) {
-    echo '<div class="text-muted small">Selecciona un paciente para ver sus planes guardados.</div>';
+    echo '<div class="text-muted small">' . htmlspecialchars(t('bwp.selectPatientPlans')) . '</div>';
     exit;
 }
 
@@ -27,8 +28,7 @@ $tablaExiste = (int)$conexion->query(
      WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PLAN_PESO'"
 )->fetch_assoc()['c'] > 0;
 if (!$tablaExiste) {
-    echo '<div class="alert alert-warning py-2 small mb-0">Aún no se ha creado la tabla de planes. '
-       . 'Pide al administrador ejecutar <code>migrar_plan_peso.php</code> una vez.</div>';
+    echo '<div class="alert alert-warning py-2 small mb-0">' . htmlspecialchars(t('bwp.noTableAdmin')) . '</div>';
     exit;
 }
 
@@ -48,7 +48,7 @@ $stmt->execute();
 $res = $stmt->get_result();
 
 if (!$res || $res->num_rows === 0) {
-    echo '<div class="text-muted small">Este paciente no tiene planes guardados todavía.</div>';
+    echo '<div class="text-muted small">' . htmlspecialchars(t('bwp.noPlans')) . '</div>';
     exit;
 }
 
@@ -69,13 +69,13 @@ function fmtFecha($f) {
     <table class="table table-sm table-hover align-middle mb-0" style="font-size:.85rem;">
         <thead class="table-light">
             <tr>
-                <th>Registrado</th>
-                <th>Peso inicial → meta</th>
-                <th>Fecha meta</th>
-                <th class="text-end">Mantener actual</th>
-                <th class="text-end">Alcanzar meta</th>
-                <th class="text-end">Mantener meta</th>
-                <th>Registró</th>
+                <th><?php te('bwp.tbl.registered'); ?></th>
+                <th><?php te('bwp.tbl.initialToGoal'); ?></th>
+                <th><?php te('bwp.tbl.goalDate'); ?></th>
+                <th class="text-end"><?php te('bwp.tbl.maintainCurrent'); ?></th>
+                <th class="text-end"><?php te('bwp.tbl.reachGoal'); ?></th>
+                <th class="text-end"><?php te('bwp.tbl.maintainGoal'); ?></th>
+                <th><?php te('bwp.tbl.recordedBy'); ?></th>
                 <th></th>
             </tr>
         </thead>
@@ -99,7 +99,7 @@ function fmtFecha($f) {
                 <td><small><?php echo htmlspecialchars($registrador !== '' ? $registrador : '—'); ?></small></td>
                 <td class="text-end">
                     <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1"
-                            title="Eliminar plan"
+                            title="<?php te('bwp.tbl.deletePlan'); ?>"
                             onclick="eliminarPlanPeso(<?php echo (int)$p['IDPLAN']; ?>)">
                         <i class="bi bi-trash"></i>
                     </button>
