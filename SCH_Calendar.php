@@ -1150,6 +1150,8 @@ function validarFormulario() {
 // ── Datos compartidos (FullCalendar + Vista por Doctor) ───────────────
 const eventosAll      = <?php echo json_encode($eventos); ?>;
 const doctoresActivos = <?php echo json_encode($doctoresActivos); ?>;
+// Doctor con la sesión iniciada (si el usuario logueado es DOCTOR): su columna se muestra por defecto
+const loginDoctorId   = <?php echo json_encode((strtoupper($_SESSION['rol'] ?? '') === 'DOCTOR') ? (string)($_SESSION['iduser'] ?? '') : ''); ?>;
 
 // ── Modal de gestión de cita (usado por ambas vistas) ──────────────────
 const ESTADOS_CERRADOS = ['A', 'Cancelada', 'Cancelado', 'Cancelación Tardía', 'Cancelado por Profesional', 'No Asistió'];
@@ -1451,10 +1453,24 @@ function cvRangeLabel(weekStart) {
 
 function inicializarVistaPorDoctor() {
     const cont = document.getElementById('cvDoctorFiltros');
+
+    // Si quien inicia sesión es un doctor y está en la lista, se muestra
+    // solo su columna por defecto (las demás quedan ocultas).
+    const soloMiColumna = loginDoctorId &&
+        doctoresActivos.some(function (d) { return String(d.id) === String(loginDoctorId); });
+
     doctoresActivos.forEach(function (doc) {
         const id = 'cvDoc_' + doc.id;
+        const esMio = String(doc.id) === String(loginDoctorId);
+        const marcado = soloMiColumna ? esMio : true;
+        if (soloMiColumna && !esMio) cvDoctoresOcultos.add(doc.nombre);
+
         const label = document.createElement('label');
-        label.innerHTML = `<input type="checkbox" id="${id}" checked> ${doc.nombre}`;
+        label.innerHTML = `<input type="checkbox" id="${id}"${marcado ? ' checked' : ''}> ${doc.nombre}`;
+        if (esMio) {
+            label.classList.add('fw-semibold');
+            label.title = 'Doctor con la sesión iniciada';
+        }
         cont.appendChild(label);
         label.querySelector('input').addEventListener('change', function (e) {
             if (e.target.checked) cvDoctoresOcultos.delete(doc.nombre);
