@@ -4,7 +4,10 @@ session_start();
 
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
+if ($conexion) { $conexion->set_charset('utf8mb4'); }
+$snLang = (current_lang() === 'en') ? 'en-US' : 'es-ES';
 
 if(!isset($_SESSION["rol"])){
     header("Location: break.php");
@@ -17,7 +20,7 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
 }
 
 if(!isset($_GET['idCita']) || empty($_GET['idCita'])){
-    die("Error: No se recibió el ID de la cita.");
+    die(htmlspecialchars(t('att.errNoId')));
 }
 
 $idCita = $conexion->real_escape_string($_GET['idCita']);
@@ -41,7 +44,7 @@ $sql = "SELECT
 
 $res = $conexion->query($sql);
 if (!$res || $res->num_rows == 0) {
-    die("Error: No se encontró la cita especificada.");
+    die(htmlspecialchars(t('att.errNotFound')));
 }
 $d = $res->fetch_assoc();
 
@@ -53,11 +56,15 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
     : $docNombreCompleto;
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Atención - <?php echo htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS']); ?></title>
+    <!-- Favicon de la app -->
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="images/favicon.png">
+    <link rel="apple-touch-icon" href="images/favicon.png">
+    <title><?php te('att.title'); ?> - <?php echo htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS']); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
@@ -67,6 +74,22 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
         .unit-toggle .btn { padding: 2px 8px; font-size: 0.78rem; }
         .medicion-group { display: flex; gap: 6px; align-items: center; }
         .medicion-group input { max-width: 100px; }
+
+        /* ── Tarjetas de medición (acorde a la plantilla de la app) ── */
+        .att-metrics .att-tile {
+            background:#fff; border:1px solid #e6e9f0; border-radius:12px;
+            padding:12px 14px; height:100%; box-shadow:0 1px 2px rgba(16,31,85,.04);
+        }
+        .att-tile-label {
+            font-size:.72rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.04em; color:#5b6b8c; margin-bottom:6px; display:block;
+        }
+        #imc { font-size:1.15rem; }
+        #estado_imc { width:100%; }
+        .att-toolbar { background:#f6f8fc; border:1px solid #e6e9f0; border-radius:12px; }
+        /* Editor y cabecera de marca */
+        .note-editor.note-frame { border-radius:12px; border-color:#e6e9f0; }
+        .att-actionbar { border-top:1px solid #eef1f6; padding-top:16px; margin-top:4px; }
 
         /* ── Dictado por voz ── */
         @keyframes micPulse { 0%,100%{opacity:1} 50%{opacity:.25} }
@@ -119,7 +142,7 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
                                         <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="salir.php" class="dropdown-item">Cerrar Sesión</a>
+                                        <a href="salir.php" class="dropdown-item"><?php te('menu.logout'); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -139,23 +162,37 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
         <div class="app-main__outer">
             <div class="app-main__inner">
 
-<div class="container-fluid mt-1 mb-5">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-person-lines-fill me-2"></i>
-                Atención Nutricional: <?php echo htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS']); ?>
-            </h5>
-            <span class="badge bg-light text-primary fs-6">Cita #<?php echo $idCita; ?></span>
+<div class="app-page-title">
+    <div class="page-title-wrapper">
+        <div class="page-title-heading">
+            <div class="page-title-icon">
+                <i class="pe-7s-note2 icon-gradient bg-tempting-azure"></i>
+            </div>
+            <div>
+                <?php echo htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS']); ?>
+                <div class="page-title-subheading">
+                    <i class="bi bi-person-lines-fill me-1"></i>
+                    <?php te('att.title'); ?> &nbsp;·&nbsp; <?php te('att.appt'); ?> #<?php echo $idCita; ?>
+                </div>
+            </div>
         </div>
+        <div class="page-title-actions">
+            <span class="badge rounded-pill fs-6" style="background:linear-gradient(135deg,#0e1f55,#1a3a8c);color:#fff;padding:.55rem .9rem;">
+                <i class="bi bi-hash"></i><?php echo $idCita; ?>
+            </span>
+        </div>
+    </div>
+</div>
 
-        <div class="card-body">
+<div class="main-card mb-3 card">
+    <div class="card-body">
 
-            <!-- ── MEDICIONES ──────────────────────────────────────────── -->
-            <div class="row g-3 mb-4 bg-light p-3 border rounded align-items-end">
+        <!-- ── MEDICIONES ──────────────────────────────────────────── -->
+        <div class="row g-3 mb-4 att-metrics align-items-stretch">
 
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Peso</label>
+            <div class="col-6 col-md-3">
+                <div class="att-tile">
+                    <span class="att-tile-label"><i class="bi bi-speedometer2 me-1"></i><?php te('att.weight'); ?></span>
                     <div class="medicion-group">
                         <input type="number" id="peso" class="form-control" step="0.1"
                                placeholder="0.0" oninput="calcularIMC()">
@@ -167,9 +204,11 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Talla</label>
+            <div class="col-6 col-md-3">
+                <div class="att-tile">
+                    <span class="att-tile-label"><i class="bi bi-rulers me-1"></i><?php te('att.heightLbl'); ?></span>
                     <div class="medicion-group">
                         <input type="number" id="talla" class="form-control" step="0.1"
                                placeholder="0.0" oninput="calcularIMC()">
@@ -181,21 +220,27 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">IMC</label>
-                    <input type="text" id="imc" class="form-control bg-white fw-bold" readonly>
+            <div class="col-6 col-md-2">
+                <div class="att-tile">
+                    <span class="att-tile-label"><?php te('common.bmi'); ?></span>
+                    <input type="text" id="imc" class="form-control bg-white fw-bold border-0 px-0" readonly>
                 </div>
+            </div>
 
-                <div class="col-md-2">
-                    <label class="form-label">Estado</label>
+            <div class="col-6 col-md-2">
+                <div class="att-tile">
+                    <span class="att-tile-label"><?php te('att.status'); ?></span>
                     <div id="estado_imc" class="badge p-2 d-block fs-6">---</div>
                 </div>
+            </div>
 
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Plantilla de Informe</label>
+            <div class="col-12 col-md-2">
+                <div class="att-tile">
+                    <span class="att-tile-label"><?php te('att.reportTemplate'); ?></span>
                     <select id="selPlantilla" class="form-select" onchange="cargarPlantilla(this.value)">
-                        <option value="">-- Seleccione Tipo de Nota --</option>
+                        <option value=""><?php te('att.selectNoteType'); ?></option>
                         <?php
                         $plantillas = $conexion->query(
                             "SELECT id, nombre_plantilla FROM cat_plantillas_nutricion ORDER BY categoria, nombre_plantilla"
@@ -207,62 +252,61 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
                     </select>
                 </div>
             </div>
-
-            <!-- ── BARRA DE DICTADO ────────────────────────────────────── -->
-            <div class="d-flex align-items-center gap-3 mb-2 p-2 rounded"
-                 style="background:#f8f9fa;border:1px solid #e9ecef;">
-                <button type="button" id="btnMic"
-                        class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1"
-                        onclick="toggleDictado()">
-                    <i class="bi bi-mic-fill"></i> Iniciar dictado
-                </button>
-
-                <!-- Toggle idioma -->
-                <div class="d-flex align-items-center gap-1" title="Idioma del micrófono">
-                    <span id="langES" class="badge"
-                          style="cursor:pointer;background:#0264d6;font-size:.7rem;"
-                          onclick="setLang('es')">ES</span>
-                    <span id="langEN" class="badge bg-secondary"
-                          style="cursor:pointer;font-size:.7rem;"
-                          onclick="setLang('en')">EN</span>
-                </div>
-
-                <div id="micStatus" class="d-none d-flex align-items-center gap-2">
-                    <span class="badge bg-danger d-flex align-items-center gap-1">
-                        <span class="mic-pulse">●</span> Escuchando
-                    </span>
-                    <small id="interimText" class="text-muted fst-italic"></small>
-                </div>
-
-                <small class="text-muted ms-auto">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Chrome / Edge
-                </small>
-            </div>
-
-            <!-- ── EDITOR ──────────────────────────────────────────────── -->
-            <div class="mb-3">
-                <textarea id="editorInforme" name="informe"></textarea>
-            </div>
-
-            <!-- ── BOTONES ─────────────────────────────────────────────── -->
-            <div class="d-flex justify-content-between align-items-center">
-                <a href="SCH_Calendar.php" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Regresar
-                </a>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" onclick="imprimirInforme()">
-                        <i class="bi bi-printer"></i> Vista Previa e Impresión
-                    </button>
-                    <button class="btn btn-success px-4" onclick="guardarAtencion()">
-                        <i class="bi bi-file-earmark-check"></i> Guardar y Finalizar Atención
-                    </button>
-                </div>
-            </div>
-
         </div>
+
+        <!-- ── BARRA DE DICTADO ────────────────────────────────────── -->
+        <div class="d-flex align-items-center gap-3 mb-2 p-2 att-toolbar">
+            <button type="button" id="btnMic"
+                    class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1"
+                    onclick="toggleDictado()">
+                <i class="bi bi-mic-fill"></i> <?php te('att.startDictation'); ?>
+            </button>
+
+            <!-- Toggle idioma -->
+            <div class="d-flex align-items-center gap-1" title="<?php te('att.micLanguage'); ?>">
+                <span id="langES" class="badge"
+                      style="cursor:pointer;background:#0264d6;font-size:.7rem;"
+                      onclick="setLang('es')">ES</span>
+                <span id="langEN" class="badge bg-secondary"
+                      style="cursor:pointer;font-size:.7rem;"
+                      onclick="setLang('en')">EN</span>
+            </div>
+
+            <div id="micStatus" class="d-none d-flex align-items-center gap-2">
+                <span class="badge bg-danger d-flex align-items-center gap-1">
+                    <span class="mic-pulse">●</span> <?php te('att.listening'); ?>
+                </span>
+                <small id="interimText" class="text-muted fst-italic"></small>
+            </div>
+
+            <small class="text-muted ms-auto">
+                <i class="bi bi-info-circle me-1"></i>
+                Chrome / Edge
+            </small>
+        </div>
+
+        <!-- ── EDITOR ──────────────────────────────────────────────── -->
+        <div class="mb-3">
+            <textarea id="editorInforme" name="informe"></textarea>
+        </div>
+
+        <!-- ── BOTONES ─────────────────────────────────────────────── -->
+        <div class="d-flex justify-content-between align-items-center att-actionbar flex-wrap gap-2">
+            <a href="SCH_Calendar.php" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> <?php te('att.back'); ?>
+            </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-primary" onclick="imprimirInforme()">
+                    <i class="bi bi-printer"></i> <?php te('att.previewPrint'); ?>
+                </button>
+                <button class="btn btn-success px-4" onclick="guardarAtencion()">
+                    <i class="bi bi-file-earmark-check"></i> <?php te('att.saveFinish'); ?>
+                </button>
+            </div>
+        </div>
+
     </div>
-</div><!-- /container-fluid -->
+</div><!-- /main-card -->
 
             </div><!-- /app-main__inner -->
         </div><!-- /app-main__outer -->
@@ -289,6 +333,48 @@ const DATOS_CITA = {
     fechaCita:       "<?php echo $d['FECHA_CITA']; ?>",
     fechaHoy:        "<?php echo date('d/m/Y'); ?>"
 };
+
+// ── Textos traducibles (i18n) ────────────────────────────────────────
+const ATT = {
+    snLang:            <?php echo json_encode($snLang); ?>,
+    editorPlaceholder: <?php echo json_encode(t('att.js.editorPlaceholder')); ?>,
+    templateLoadError: <?php echo json_encode(t('att.js.templateLoadError')); ?>,
+    emptyReport:       <?php echo json_encode(t('att.js.emptyReport')); ?>,
+    confirmFinish:     <?php echo json_encode(t('att.js.confirmFinish')); ?>,
+    savedOk:           <?php echo json_encode(t('att.js.savedOk')); ?>,
+    saveError:         <?php echo json_encode(t('att.js.saveError')); ?>,
+    saveConnError:     <?php echo json_encode(t('att.js.saveConnError')); ?>,
+    reportTitle:       <?php echo json_encode(t('att.js.reportTitle')); ?>,
+    noSpeech:          <?php echo json_encode(t('att.js.noSpeech')); ?>,
+    micDenied:         <?php echo json_encode(t('att.js.micDenied')); ?>,
+    underweight:       <?php echo json_encode(t('att.js.underweight')); ?>,
+    normal:            <?php echo json_encode(t('att.js.normal')); ?>,
+    overweight:        <?php echo json_encode(t('att.js.overweight')); ?>,
+    obesity:           <?php echo json_encode(t('att.js.obesity')); ?>,
+    startDictation:    <?php echo json_encode(t('att.startDictation')); ?>,
+    stopDictation:     <?php echo json_encode(t('att.stopDictation')); ?>,
+    drTitle:           <?php echo json_encode(t('att.drTitle')); ?>,
+    ph: {
+        biochem:           <?php echo json_encode(t('att.ph.biochem')); ?>,
+        physical:          <?php echo json_encode(t('att.ph.physical')); ?>,
+        clientHistory:     <?php echo json_encode(t('att.ph.clientHistory')); ?>,
+        nutritionPlan:     <?php echo json_encode(t('att.ph.nutritionPlan')); ?>,
+        objectives:        <?php echo json_encode(t('att.ph.objectives')); ?>,
+        recommendations:   <?php echo json_encode(t('att.ph.recommendations')); ?>,
+        diagnosis:         <?php echo json_encode(t('att.ph.diagnosis')); ?>,
+        treatment:         <?php echo json_encode(t('att.ph.treatment')); ?>,
+        nutritionDiagnosis:<?php echo json_encode(t('att.ph.nutritionDiagnosis')); ?>,
+        intervention:      <?php echo json_encode(t('att.ph.intervention')); ?>,
+        monitoring:        <?php echo json_encode(t('att.ph.monitoring')); ?>,
+        nutritionHistory:  <?php echo json_encode(t('att.ph.nutritionHistory')); ?>,
+        pesDiagnosis:      <?php echo json_encode(t('att.ph.pesDiagnosis')); ?>,
+        prescription:      <?php echo json_encode(t('att.ph.prescription')); ?>,
+        actionPlan:        <?php echo json_encode(t('att.ph.actionPlan')); ?>,
+        indicator:         <?php echo json_encode(t('att.ph.indicator')); ?>,
+        goal:              <?php echo json_encode(t('att.ph.goal')); ?>,
+        progress:          <?php echo json_encode(t('att.ph.progress')); ?>
+    }
+};
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
@@ -298,10 +384,10 @@ const DATOS_CITA = {
 // ── INICIALIZAR EDITOR ───────────────────────────────────────────────
 $(document).ready(function(){
     $('#editorInforme').summernote({
-        placeholder: 'Cargue una plantilla o escriba / dicte la nota aquí...',
+        placeholder: ATT.editorPlaceholder,
         tabsize: 2,
         height: 520,
-        lang: 'es-ES',
+        lang: ATT.snLang,
         toolbar: [
             ['style',  ['style']],
             ['font',   ['bold','underline','clear']],
@@ -326,10 +412,10 @@ function calcularIMC(){
     const imc = (pesoKg / (tallaM * tallaM)).toFixed(2);
     $('#imc').val(imc);
     const est = $('#estado_imc');
-    if      (imc < 18.5) est.text('Bajo Peso') .attr('class','badge p-2 d-block fs-6 bg-info');
-    else if (imc < 25)   est.text('Normal')     .attr('class','badge p-2 d-block fs-6 bg-success');
-    else if (imc < 30)   est.text('Sobrepeso')  .attr('class','badge p-2 d-block fs-6 bg-warning text-dark');
-    else                 est.text('Obesidad')   .attr('class','badge p-2 d-block fs-6 bg-danger');
+    if      (imc < 18.5) est.text(ATT.underweight).attr('class','badge p-2 d-block fs-6 bg-info');
+    else if (imc < 25)   est.text(ATT.normal)     .attr('class','badge p-2 d-block fs-6 bg-success');
+    else if (imc < 30)   est.text(ATT.overweight) .attr('class','badge p-2 d-block fs-6 bg-warning text-dark');
+    else                 est.text(ATT.obesity)    .attr('class','badge p-2 d-block fs-6 bg-danger');
 }
 
 // ── CARGAR PLANTILLA ─────────────────────────────────────────────────
@@ -363,7 +449,7 @@ function cargarPlantilla(id){
                 '{{doctor_nombre}}': DATOS_CITA.docNombre,
                 '{{nombre_doctor}}': DATOS_CITA.docNombre,
                 '{{apellido_doctor}}': DATOS_CITA.docApellido,
-                '{{titulo_doctor}}': 'Dr./Dra.',
+                '{{titulo_doctor}}': ATT.drTitle,
                 '{{especialidad}}': DATOS_CITA.docEspecialidad,
                 '{{firma_nombre}}': DATOS_CITA.atiendNombre,
                 '{{firma_credenciales}}': DATOS_CITA.docEspecialidad,
@@ -379,26 +465,26 @@ function cargarPlantilla(id){
                 '{{peso}}': `${pesoVal} ${uPeso}`,
                 '{{talla}}': `${tallaVal} ${uTalla}`,
                 '{{imc}}': imcVal,
-                '{{antropometria}}': `Peso: ${pesoVal} ${uPeso}, Talla: ${tallaVal} ${uTalla}, IMC: ${imcVal}`,
-                '{{bioquimica}}': '[Ingresar datos bioquímicos]',
-                '{{hallazgos_fisicos}}': '[Ingresar hallazgos físicos]',
-                '{{historial_cliente}}': '[Ingresar historial del paciente]',
-                '{{plan_nutricional}}': '[Ingresar plan nutricional]',
-                '{{objetivos}}': '[Ingresar objetivos]',
-                '{{recomendaciones}}': '[Ingresar recomendaciones]',
-                '{{diagnostico}}': '[Ingresar diagnóstico]',
-                '{{tratamiento}}': '[Ingresar tratamiento]',
-                '{{diagnostico_nutricional}}': '[Ingresar diagnóstico nutricional]',
-                '{{intervencion}}': '[Ingresar intervención nutricional]',
-                '{{monitoreo}}': '[Ingresar monitoreo y evaluación]',
-                '{{historial_nutricional_seguimiento}}': '[Ingresar historial nutricional]',
-                '{{datos_seguimiento}}': `Peso: ${pesoVal} ${uPeso}, Talla: ${tallaVal} ${uTalla}, IMC: ${imcVal}`,
-                '{{diagnostico_pes_seguimiento}}': '[Ingresar diagnóstico PES]',
-                '{{prescripcion_nutricional}}': '[Ingresar prescripción nutricional]',
-                '{{plan_accion_seguimiento}}': '[Ingresar plan de acción]',
-                '{{monitoreo_indicador}}': '[Indicador]',
-                '{{monitoreo_meta}}': '[Meta]',
-                '{{monitoreo_progreso}}': '[Progreso]',
+                '{{antropometria}}': `<?php echo t('att.weight'); ?>: ${pesoVal} ${uPeso}, <?php echo t('att.heightLbl'); ?>: ${tallaVal} ${uTalla}, <?php echo t('common.bmi'); ?>: ${imcVal}`,
+                '{{bioquimica}}': ATT.ph.biochem,
+                '{{hallazgos_fisicos}}': ATT.ph.physical,
+                '{{historial_cliente}}': ATT.ph.clientHistory,
+                '{{plan_nutricional}}': ATT.ph.nutritionPlan,
+                '{{objetivos}}': ATT.ph.objectives,
+                '{{recomendaciones}}': ATT.ph.recommendations,
+                '{{diagnostico}}': ATT.ph.diagnosis,
+                '{{tratamiento}}': ATT.ph.treatment,
+                '{{diagnostico_nutricional}}': ATT.ph.nutritionDiagnosis,
+                '{{intervencion}}': ATT.ph.intervention,
+                '{{monitoreo}}': ATT.ph.monitoring,
+                '{{historial_nutricional_seguimiento}}': ATT.ph.nutritionHistory,
+                '{{datos_seguimiento}}': `<?php echo t('att.weight'); ?>: ${pesoVal} ${uPeso}, <?php echo t('att.heightLbl'); ?>: ${tallaVal} ${uTalla}, <?php echo t('common.bmi'); ?>: ${imcVal}`,
+                '{{diagnostico_pes_seguimiento}}': ATT.ph.pesDiagnosis,
+                '{{prescripcion_nutricional}}': ATT.ph.prescription,
+                '{{plan_accion_seguimiento}}': ATT.ph.actionPlan,
+                '{{monitoreo_indicador}}': ATT.ph.indicator,
+                '{{monitoreo_meta}}': ATT.ph.goal,
+                '{{monitoreo_progreso}}': ATT.ph.progress,
                 '{{req_energia}}': '---',
                 '{{ingesta_energia}}': '---',
                 '{{req_proteina}}': '---',
@@ -413,7 +499,7 @@ function cargarPlantilla(id){
             html += firmaHtml;
             $('#editorInforme').summernote('code', html);
         },
-        error: function(){ alert('Error al cargar la plantilla.'); }
+        error: function(){ alert(ATT.templateLoadError); }
     });
 }
 
@@ -421,7 +507,7 @@ function cargarPlantilla(id){
 function guardarAtencion(){
     const contenido = $('#editorInforme').summernote('code');
     if(contenido.replace(/<[^>]+>/g,'').trim().length < 10){
-        alert('El informe parece estar vacío. Complételo antes de guardar.');
+        alert(ATT.emptyReport);
         return;
     }
     const uPeso  = $('input[name="unidadPeso"]:checked').val()  || 'kg';
@@ -431,18 +517,18 @@ function guardarAtencion(){
     const pesoKg  = uPeso  === 'lbs' ? pesoVal  * 0.453592 : pesoVal;
     const tallaCm = uTalla === 'm'   ? tallaVal * 100       : tallaVal;
     const imcVal  = parseFloat($('#imc').val()) || 0;
-    if(!confirm('¿Desea finalizar la atención y guardar el historial?')) return;
+    if(!confirm(ATT.confirmFinish)) return;
     $.ajax({
         url: 'guardar_atencion.php', type: 'POST',
         data: { idCita: DATOS_CITA.idCita, informe: contenido,
                 peso: pesoKg.toFixed(2), talla: tallaCm.toFixed(1), imc: imcVal },
         success: function(res){
             if(res.trim() === 'OK'){
-                alert('Atención guardada con éxito.');
+                alert(ATT.savedOk);
                 window.location.href = 'SCH_Calendar.php';
-            } else { alert('Error al guardar: ' + res); }
+            } else { alert(ATT.saveError + ' ' + res); }
         },
-        error: function(){ alert('Error de conexión al guardar. Intente de nuevo.'); }
+        error: function(){ alert(ATT.saveConnError); }
     });
 }
 
@@ -451,7 +537,7 @@ function imprimirInforme(){
     const contenido = $('#editorInforme').summernote('code');
     const ventana = window.open('','_blank','height=800,width=900');
     ventana.document.write(`<html><head>
-        <title>Informe - ${DATOS_CITA.pacienteNombre}</title>
+        <title>${ATT.reportTitle} - ${DATOS_CITA.pacienteNombre}</title>
         <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}</style>
         </head><body>${contenido}</body></html>`);
     ventana.document.close();
@@ -493,7 +579,7 @@ function toggleDictado() {
 function iniciarDictado() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-        alert('Tu navegador no soporta dictado por voz.\nUsa Google Chrome o Microsoft Edge.');
+        alert(ATT.noSpeech);
         return;
     }
 
@@ -552,7 +638,7 @@ function iniciarDictado() {
         if (event.error === 'no-speech') return; // silencio temporal, ignorar
         detenerDictado();
         if (event.error === 'not-allowed') {
-            alert('Permiso de micrófono denegado.\nHabilita el acceso al micrófono en tu navegador.');
+            alert(ATT.micDenied);
         } else {
             console.warn('Error de reconocimiento:', event.error);
         }
@@ -568,7 +654,7 @@ function iniciarDictado() {
 
     // UI: estado activo
     document.getElementById('btnMic').innerHTML =
-        '<i class="bi bi-mic-mute-fill"></i> Detener dictado';
+        '<i class="bi bi-mic-mute-fill"></i> ' + ATT.stopDictation;
     document.getElementById('btnMic').className =
         'btn btn-danger btn-sm d-flex align-items-center gap-1';
     document.getElementById('micStatus').classList.remove('d-none');
@@ -580,7 +666,7 @@ function detenerDictado() {
 
     // UI: estado inactivo
     document.getElementById('btnMic').innerHTML =
-        '<i class="bi bi-mic-fill"></i> Iniciar dictado';
+        '<i class="bi bi-mic-fill"></i> ' + ATT.startDictation;
     document.getElementById('btnMic').className =
         'btn btn-outline-danger btn-sm d-flex align-items-center gap-1';
     document.getElementById('micStatus').classList.add('d-none');
