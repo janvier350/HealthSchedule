@@ -210,6 +210,8 @@ return array(
     'common.actions'           => 'Acciones',
     'common.active'            => 'Activo',
     'common.inactive'          => 'Inactivo',
+    'common.deactivate'        => 'Desactivar',
+    'common.reactivate'        => 'Reactivar',
     'common.new'               => 'Nuevo',
 
     // ── Tipos de consulta (gestionar) ──────────────────────────────────
@@ -471,7 +473,9 @@ return array(
     'ucreate.registerBtn'      => 'Registrar Usuario',
     'ucreate.th.name'          => 'Nombre',
     'ucreate.th.contact'       => 'Contacto',
+    'ucreate.th.status'        => 'Estado',
     'ucreate.js.confirmDeact'  => '¿Estás seguro de desactivar este usuario?',
+    'ucreate.js.confirmReact'  => '¿Reactivar este usuario?',
     'ucreate.editUserTitle'    => 'Editar Usuario',
     'ucreate.resetPassword'    => 'Restablecer Clave',
     'ucreate.resetPasswordLc'  => 'Restablecer clave',

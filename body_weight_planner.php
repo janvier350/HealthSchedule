@@ -34,7 +34,7 @@ if ($resP) {
     <script src="js/jquery.min.js"></script>
     <style>
         .bwp-unit-btn.active { background:#1a3a5c; color:#fff; }
-        .result-card { border:none; border-radius:10px; color:#fff; }
+        .result-card { border:none; border-radius:10px; color:#fff; display:flex; flex-direction:column; justify-content:center; min-height:96px; }
         .result-num { font-size:2rem; font-weight:700; line-height:1; }
         .result-lbl { font-size:.8rem; opacity:.9; }
         .field-label { font-size:.8rem; font-weight:600; color:#33475b; }
@@ -206,19 +206,19 @@ if ($resP) {
                         <div id="bwpResultados" class="d-none">
                             <div class="row g-2 mb-3">
                                 <div class="col-md-4">
-                                    <div class="result-card p-3 h-100" style="background:#546e7a;">
+                                    <div class="result-card p-3" style="background:#546e7a;">
                                         <div class="result-num" id="resMantenerActual">—</div>
                                         <div class="result-lbl">cal/día para mantener tu peso actual</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="result-card p-3 h-100" style="background:#1976d2;">
+                                    <div class="result-card p-3" style="background:#1976d2;">
                                         <div class="result-num" id="resAlcanzar">—</div>
                                         <div class="result-lbl">cal/día para alcanzar la meta en la fecha</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="result-card p-3 h-100" style="background:#2e7d32;">
+                                    <div class="result-card p-3" style="background:#2e7d32;">
                                         <div class="result-num" id="resMantenerMeta">—</div>
                                         <div class="result-lbl">cal/día para mantener el peso meta</div>
                                     </div>
@@ -249,6 +249,22 @@ if ($resP) {
                                 <p class="mt-2 mb-0">Completa la información y presiona <strong>Calcular</strong> para ver los resultados.</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ── Planes guardados del paciente ─────────────── -->
+                <div class="card shadow-sm mb-3" id="bwpPlanesCard">
+                    <div class="card-header py-2 d-flex align-items-center">
+                        <i class="bi bi-clock-history me-2"></i>
+                        <span>Planes guardados del paciente</span>
+                        <span id="bwpPlanesPaciente" class="text-muted small ms-2"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-auto py-0 px-2"
+                                onclick="cargarPlanesPaciente()" title="Actualizar">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <div class="card-body py-2" id="bwpPlanesLista">
+                        <div class="text-muted small">Selecciona un paciente arriba para ver sus planes guardados.</div>
                     </div>
                 </div>
 
@@ -352,6 +368,7 @@ document.getElementById('pacienteBuscar').addEventListener('change', function ()
             msg.innerHTML = faltan.length
                 ? '<span class="text-warning">Cargado. Completa manualmente: ' + faltan.join(', ') + '.</span>'
                 : '<span class="text-success">Datos cargados de ' + (d.nombre || 'paciente') + '.</span>';
+            cargarPlanesPaciente();
         })
         .fail(function () { msg.innerHTML = '<span class="text-danger">Error de conexión.</span>'; });
 });
@@ -482,6 +499,7 @@ function guardarPlan() {
         res = (res || '').trim();
         if (res === 'OK') {
             alert('Plan guardado en la ficha del paciente.');
+            cargarPlanesPaciente();
         } else if (res === 'SIN_TABLA') {
             alert('Falta crear la tabla de planes. Pide al administrador ejecutar migrar_plan_peso.php una vez.');
         } else if (res === 'SIN_SESION') {
@@ -495,6 +513,38 @@ function guardarPlan() {
         alert('Error de conexión al guardar.');
         btn.disabled = false;
     });
+}
+
+// ── Planes guardados del paciente ────────────────────────────────────
+function cargarPlanesPaciente() {
+    var cont = document.getElementById('bwpPlanesLista');
+    var etq  = document.getElementById('bwpPlanesPaciente');
+    if (!cont) return;
+    if (!pacienteSelId) {
+        etq.textContent = '';
+        cont.innerHTML = '<div class="text-muted small">Selecciona un paciente arriba para ver sus planes guardados.</div>';
+        return;
+    }
+    etq.textContent = pacienteSelNombre ? '· ' + pacienteSelNombre : '';
+    cont.innerHTML = '<div class="text-muted small">Cargando…</div>';
+    $.get('plan_peso_listar.php', { id_paciente: pacienteSelId })
+        .done(function (html) { cont.innerHTML = html; })
+        .fail(function () { cont.innerHTML = '<div class="text-danger small">No se pudieron cargar los planes.</div>'; });
+}
+
+function eliminarPlanPeso(idPlan) {
+    if (!confirm('¿Eliminar este plan guardado?')) return;
+    $.post('plan_peso_eliminar.php', { idPlan: idPlan }, function (res) {
+        res = (res || '').trim();
+        if (res === 'OK') {
+            cargarPlanesPaciente();
+        } else if (res === 'SIN_SESION') {
+            alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+            window.location.href = 'index.php';
+        } else {
+            alert('No se pudo eliminar: ' + res);
+        }
+    }).fail(function () { alert('Error de conexión al eliminar.'); });
 }
 
 // ── Gráfica en canvas (sin librerías externas) ───────────────────────
