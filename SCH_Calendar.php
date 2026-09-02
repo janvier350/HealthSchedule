@@ -125,6 +125,10 @@ while ($a = $resAgencias->fetch_assoc()) {
 <html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="utf-8">
+    <!-- Favicon de la app -->
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="images/favicon.png">
+    <link rel="apple-touch-icon" href="images/favicon.png">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
     <title><?php te('cal.pageTitle'); ?></title>
