@@ -89,6 +89,10 @@ function renderizar($html, $datos) {
 <html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
+    <!-- Favicon de la app -->
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="images/favicon.png">
+    <link rel="apple-touch-icon" href="images/favicon.png">
     <title><?php te('tpl.pageTitle'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>

@@ -12,6 +12,10 @@ $lang = current_lang();
 <html lang="<?php echo $lang; ?>">
 <head>
     <meta charset="UTF-8">
+    <!-- Favicon de la app -->
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="images/favicon.png">
+    <link rel="apple-touch-icon" href="images/favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php te('login.pageTitle'); ?></title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
