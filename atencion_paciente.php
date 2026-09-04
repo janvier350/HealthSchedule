@@ -279,10 +279,17 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
                 <small id="interimText" class="text-muted fst-italic"></small>
             </div>
 
-            <small class="text-muted ms-auto">
+            <small class="text-muted ms-auto d-none d-sm-inline">
                 <i class="bi bi-info-circle me-1"></i>
                 Chrome / Edge
             </small>
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+                    data-bs-toggle="modal" data-bs-target="#modalDictadoAyuda"
+                    title="<?php te('att.helpBtn'); ?>">
+                <i class="bi bi-question-circle"></i>
+                <span class="d-none d-md-inline"><?php te('att.helpBtn'); ?></span>
+            </button>
         </div>
 
         <!-- ── EDITOR ──────────────────────────────────────────────── -->
@@ -673,5 +680,78 @@ function detenerDictado() {
     document.getElementById('interimText').textContent = '';
 }
 </script>
+
+<!-- ── MODAL: Instrucciones de uso del dictado por voz ─────────── -->
+<div class="modal fade" id="modalDictadoAyuda" tabindex="-1" aria-labelledby="modalDictadoAyudaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#0e1f55,#1a3a8c);color:#fff;">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="modalDictadoAyudaLabel">
+                    <i class="bi bi-mic-fill"></i> <?php te('att.help.title'); ?>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Requisitos -->
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-check2-circle me-1"></i><?php te('att.help.req.title'); ?></h6>
+                <ul class="mb-3">
+                    <li><?php te('att.help.req.browser'); ?></li>
+                    <li><?php te('att.help.req.mic'); ?></li>
+                    <li><?php te('att.help.req.https'); ?></li>
+                </ul>
+
+                <!-- Pasos -->
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-list-ol me-1"></i><?php te('att.help.steps.title'); ?></h6>
+                <ol class="mb-3">
+                    <li><?php te('att.help.steps.s1'); ?></li>
+                    <li><?php te('att.help.steps.s2'); ?></li>
+                    <li><?php te('att.help.steps.s3'); ?></li>
+                    <li><?php te('att.help.steps.s4'); ?></li>
+                    <li><?php te('att.help.steps.s5'); ?></li>
+                </ol>
+
+                <!-- Sugerencias generales -->
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-lightbulb me-1"></i><?php te('att.help.tips.title'); ?></h6>
+                <ul class="mb-3">
+                    <li><?php te('att.help.tips.t1'); ?></li>
+                    <li><?php te('att.help.tips.t2'); ?></li>
+                    <li><?php te('att.help.tips.t3'); ?></li>
+                    <li><?php te('att.help.tips.t4'); ?></li>
+                    <li><?php te('att.help.tips.t5'); ?></li>
+                </ul>
+
+                <!-- Uso desde el celular -->
+                <div class="alert alert-info d-flex gap-2 align-items-start mb-3">
+                    <i class="bi bi-phone fs-4 flex-shrink-0"></i>
+                    <div>
+                        <div class="fw-bold mb-1"><?php te('att.help.mobile.title'); ?></div>
+                        <ul class="mb-0 ps-3">
+                            <li><?php te('att.help.mobile.m1'); ?></li>
+                            <li><?php te('att.help.mobile.m2'); ?></li>
+                            <li><?php te('att.help.mobile.m3'); ?></li>
+                            <li><?php te('att.help.mobile.m4'); ?></li>
+                            <li><?php te('att.help.mobile.m5'); ?></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Problemas comunes -->
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-exclamation-triangle me-1"></i><?php te('att.help.trouble.title'); ?></h6>
+                <ul class="mb-0">
+                    <li><strong><?php te('att.help.trouble.p1.title'); ?>:</strong> <?php te('att.help.trouble.p1.body'); ?></li>
+                    <li><strong><?php te('att.help.trouble.p2.title'); ?>:</strong> <?php te('att.help.trouble.p2.body'); ?></li>
+                    <li><strong><?php te('att.help.trouble.p3.title'); ?>:</strong> <?php te('att.help.trouble.p3.body'); ?></li>
+                    <li><strong><?php te('att.help.trouble.p4.title'); ?>:</strong> <?php te('att.help.trouble.p4.body'); ?></li>
+                </ul>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
