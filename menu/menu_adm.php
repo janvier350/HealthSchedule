@@ -132,13 +132,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> <?php te('menu.createPatient'); ?>
                         </a>
                     </li>
-                    <?php if ($esSistema || $esDoctor): ?>
-                    <li>
-                        <a href="visor_plantillas.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.templateList'); ?>
-                        </a>
-                    </li>
-                    <?php endif; ?>
                 </ul>
             </li>
             <?php if ($esSistema): ?>
