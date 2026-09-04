@@ -44,6 +44,7 @@ $result = $conexion->query($sql);
 <html lang="<?php echo current_lang(); ?>">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicon de la app -->
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="alternate icon" type="image/png" href="images/favicon.png">
