@@ -1,9 +1,14 @@
 <?php
+session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 $conexion=conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
+if (!isset($_SESSION["rol"])) {
+    header("Location: break.php");
+    exit();
+}
 ?>
 <!doctype html>
 <html lang="<?php echo current_lang(); ?>">

@@ -78,6 +78,8 @@ return array(
     'cal.appDate'              => 'Consultation Date',
     'cal.patient'              => 'Patient',
     'cal.searchPatient'        => 'Search patient...',
+    'cal.searchPatientTop'     => 'Search patient by name…',
+    'cal.searchNone'           => 'No patients found.',
     'cal.startTime'            => 'Start Time',
     'cal.selectTime'           => 'Select time...',
     'cal.consultType'          => 'Consultation Type',
@@ -160,6 +162,7 @@ return array(
     // ── Historial de atenciones (Atendidas) ────────────────────────────
     'hist.pageTitle'           => 'Care History',
     'hist.title'               => 'Care History',
+    'hist.subtitle'            => 'Search, view and print past consultations.',
     'hist.backCalendar'        => 'Calendar',
     'hist.searchLabel'         => 'Search patient or ID',
     'hist.searchPh'            => 'Name or ID...',

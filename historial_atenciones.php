@@ -15,8 +15,10 @@ if(!isset($_SESSION["rol"])){
 $busqueda  = isset($_GET['q'])      ? $conexion->real_escape_string(trim($_GET['q'])) : '';
 $fechaDesde = isset($_GET['desde']) ? $conexion->real_escape_string($_GET['desde'])   : '';
 $fechaHasta = isset($_GET['hasta']) ? $conexion->real_escape_string($_GET['hasta'])   : '';
+$idPaciente = isset($_GET['id'])    ? (int)$_GET['id'] : 0;
 
 $where = "WHERE H.ESTADO = 'A'";
+if($idPaciente) $where .= " AND P.IDPACIENTE = $idPaciente";
 if($busqueda)   $where .= " AND (P.NOMBRES LIKE '%$busqueda%' OR P.APELLIDOS LIKE '%$busqueda%' OR P.CEDULA LIKE '%$busqueda%')";
 if($fechaDesde) $where .= " AND C.FECHA_CITA >= '$fechaDesde'";
 if($fechaHasta) $where .= " AND C.FECHA_CITA <= '$fechaHasta'";
@@ -52,18 +54,69 @@ $result = $conexion->query($sql);
     <link href="main.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
 </head>
-<body class="bg-light">
+<body>
+<div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
 
-<div class="container-fluid mt-4 mb-5">
-    <div class="card shadow">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i><?php te('hist.title'); ?></h5>
-            <a href="SCH_Calendar.php" class="btn btn-light btn-sm">
-                <i class="bi bi-arrow-left"></i> <?php te('hist.backCalendar'); ?>
-            </a>
+    <!-- HEADER -->
+    <div class="app-header header-shadow">
+        <div class="app-header__logo">
+            <div class="logo-src"></div>
+            <div class="header__pane ml-auto">
+                <button type="button" class="hamburger close-sidebar-btn hamburger--elastic" data-class="closed-sidebar">
+                    <span class="hamburger-box"><span class="hamburger-inner"></span></span>
+                </button>
+            </div>
+        </div>
+        <div class="app-header__mobile-menu">
+            <button type="button" class="hamburger hamburger--elastic mobile-toggle-nav">
+                <span class="hamburger-box"><span class="hamburger-inner"></span></span>
+            </button>
+        </div>
+        <div class="app-header__content">
+            <div class="app-header-left"></div>
+            <div class="app-header-right">
+                <div class="header-btn-lg pr-0">
+                    <div class="widget-content p-0"><div class="widget-content-wrapper">
+                        <div class="widget-content-left ml-3 header-user-info">
+                            <div class="widget-heading"><?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?></div>
+                            <div class="widget-subheading"><?php echo htmlspecialchars($_SESSION['rol'] ?? ''); ?></div>
+                        </div>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-main">
+        <!-- SIDEBAR -->
+        <div class="app-sidebar sidebar-shadow">
+            <?php include("./menu/menu_adm.php"); ?>
         </div>
 
-        <div class="card-body">
+        <div class="app-main__outer">
+            <div class="app-main__inner">
+
+                <div class="app-page-title">
+                    <div class="page-title-wrapper">
+                        <div class="page-title-heading">
+                            <div class="page-title-icon">
+                                <i class="pe-7s-notebook icon-gradient bg-tempting-azure"></i>
+                            </div>
+                            <div>
+                                <?php te('hist.title'); ?>
+                                <div class="page-title-subheading"><?php te('hist.subtitle'); ?></div>
+                            </div>
+                        </div>
+                        <div class="page-title-actions">
+                            <a href="SCH_Calendar.php" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-left"></i> <?php te('hist.backCalendar'); ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-card mb-3 card">
+                    <div class="card-body">
 
             <!-- FILTROS -->
             <form method="GET" class="row g-2 mb-4 align-items-end">
@@ -182,9 +235,13 @@ $result = $conexion->query($sql);
             </div>
             <?php endif; ?>
 
-        </div><!-- card-body -->
-    </div><!-- card -->
-</div>
+                    </div><!-- card-body -->
+                </div><!-- main-card -->
+
+            </div><!-- app-main__inner -->
+        </div><!-- app-main__outer -->
+    </div><!-- app-main -->
+</div><!-- app-container -->
 
 <!-- MODAL VER INFORME -->
 <div class="modal fade" id="modalInforme" tabindex="-1">
@@ -208,6 +265,7 @@ $result = $conexion->query($sql);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
 const informesCache = {};
 
