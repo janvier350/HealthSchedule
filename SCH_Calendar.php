@@ -278,6 +278,22 @@ while ($a = $resAgencias->fetch_assoc()) {
             .cv-scroll { display: none; }
             .cv-list { display: block; }
         }
+
+        /* ── Buscador de pacientes (estilo Kalix) ── */
+        .cal-patient-search { min-width: 280px; }
+        @media (max-width: 575px){ .cal-patient-search { min-width: 100%; width: 100%; } }
+        .cal-search-results {
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 1055;
+            background: #fff; border: 1px solid #e6e9f0; border-radius: 10px;
+            max-height: 360px; overflow-y: auto; margin-top: 4px;
+        }
+        .cal-search-results .csr-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid #f1f3f8; }
+        .cal-search-results .csr-item:last-child { border-bottom: 0; }
+        .cal-search-results .csr-item:hover,
+        .cal-search-results .csr-item.active { background: #f0f4ff; }
+        .cal-search-results .csr-name { font-weight: 600; color: #23324d; }
+        .cal-search-results .csr-meta { font-size: .78rem; color: #6c757d; }
+        .cal-search-results .csr-empty { padding: 10px 12px; color: #6c757d; font-size: .85rem; }
     </style>
 </head>
 <body>
@@ -377,6 +393,19 @@ while ($a = $resAgencias->fetch_assoc()) {
                                     </button>
                                 </div>
                                 <div class="page-title-subheading"><?php te('cal.subheading'); ?></div>
+                            </div>
+                        </div>
+                        <div class="page-title-actions">
+                            <div class="cal-patient-search position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="calPacienteBuscar" class="form-control"
+                                           placeholder="<?php te('cal.searchPatientTop'); ?>" autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary d-none" id="calPacienteClear" title="<?php te('plist.clear'); ?>">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                <div id="calPacienteResultados" class="cal-search-results shadow d-none"></div>
                             </div>
                         </div>
                     </div>
@@ -1671,6 +1700,73 @@ $(document).ready(function () {
         });
     });
 });
+</script>
+
+<!-- ── Buscador de pacientes (estilo Kalix) → abre el Historial de atenciones ── -->
+<script>
+(function(){
+    const input = document.getElementById('calPacienteBuscar');
+    const box   = document.getElementById('calPacienteResultados');
+    const clear = document.getElementById('calPacienteClear');
+    if(!input) return;
+
+    const CAL_SEARCH_NONE = <?php echo json_encode(t('cal.searchNone')); ?>;
+    let timer = null, items = [], activeIdx = -1;
+
+    function hide(){ box.classList.add('d-none'); box.innerHTML=''; items=[]; activeIdx=-1; }
+    function irA(id){ window.location.href = 'historial_atenciones.php?id=' + encodeURIComponent(id); }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+    function render(data){
+        items = Array.isArray(data) ? data : [];
+        if(!items.length){
+            box.innerHTML = '<div class="csr-empty">' + escapeHtml(CAL_SEARCH_NONE) + '</div>';
+            box.classList.remove('d-none');
+            return;
+        }
+        box.innerHTML = items.map(function(p,i){
+            var meta = [p.cedula, p.telefono].filter(Boolean).join('  ·  ');
+            return '<div class="csr-item" data-id="'+p.id+'" data-i="'+i+'">'
+                 + '<div class="csr-name">' + escapeHtml(p.nombre) + '</div>'
+                 + (meta ? '<div class="csr-meta">' + escapeHtml(meta) + '</div>' : '')
+                 + '</div>';
+        }).join('');
+        box.classList.remove('d-none');
+        Array.prototype.forEach.call(box.querySelectorAll('.csr-item'), function(el){
+            el.addEventListener('mousedown', function(e){ e.preventDefault(); irA(el.getAttribute('data-id')); });
+        });
+        activeIdx = -1;
+    }
+
+    input.addEventListener('input', function(){
+        var q = input.value.trim();
+        clear.classList.toggle('d-none', q.length === 0);
+        if(timer) clearTimeout(timer);
+        if(q.length < 2){ hide(); return; }
+        timer = setTimeout(function(){
+            fetch('buscar_pacientes.php?q=' + encodeURIComponent(q))
+                .then(function(r){ return r.json(); })
+                .then(render)
+                .catch(hide);
+        }, 220);
+    });
+
+    input.addEventListener('keydown', function(e){
+        if(box.classList.contains('d-none')) return;
+        var els = box.querySelectorAll('.csr-item');
+        if(!els.length) return;
+        if(e.key === 'ArrowDown'){ e.preventDefault(); activeIdx = Math.min(activeIdx+1, els.length-1); }
+        else if(e.key === 'ArrowUp'){ e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); }
+        else if(e.key === 'Enter'){ if(activeIdx>=0 && items[activeIdx]){ e.preventDefault(); irA(items[activeIdx].id); } return; }
+        else if(e.key === 'Escape'){ hide(); return; }
+        else return;
+        Array.prototype.forEach.call(els, function(el,i){ el.classList.toggle('active', i===activeIdx); });
+        if(els[activeIdx]) els[activeIdx].scrollIntoView({block:'nearest'});
+    });
+
+    clear.addEventListener('click', function(){ input.value=''; clear.classList.add('d-none'); hide(); input.focus(); });
+    document.addEventListener('click', function(e){ if(!e.target.closest('.cal-patient-search')) hide(); });
+})();
 </script>
 
 </body>
