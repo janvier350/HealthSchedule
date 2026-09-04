@@ -6,43 +6,6 @@ $conexion=conectarse();
 ?>
 <!doctype html>
 <html lang="<?php echo current_lang(); ?>">
-
-<?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// Con estas:
-require __DIR__ . '/PHPMailer/src/Exception.php';
-require __DIR__ . '/PHPMailer/src/PHPMailer.php';
-require __DIR__ . '/PHPMailer/src/SMTP.php';
-
-$mail = new PHPMailer(true);
-
-try {
-    $mail->isSMTP();
-    $mail->Host = 'mail.srossnutritions.com'; // SMTP del hosting
-    $mail->SMTPAuth = true;
-    $mail->Username = 'citamedica@srossnutritions.com'; 
-    $mail->Password = 'QVseUdgYE7TAGRF6bUQf';
-    $mail->SMTPSecure = 'ssl'; 
-    $mail->Port = 465;
-
-    $mail->setFrom('jvaras@overclocking.com.ec', 'Javier Varas ');
-    $mail->addAddress('jvaras@overclocking.com.ec');
-    $mail->Subject = 'Cita programada SROSSNUTRITIONS';
-    $mail->Body = 'Estimado paciente, recuerde que tiene una cita programada para este dia!';
-
-    $mail->SMTPDebug = 3; // Activa el debugging
-    $mail->send();
-    echo 'Correo enviado!';
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
-}
-?>
 <head>
     <meta charset="utf-8">
     <!-- Favicon de la app -->
