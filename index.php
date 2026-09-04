@@ -2,7 +2,8 @@
 ob_start();
 session_start();
 if (isset($_SESSION["loggedin"])) {
-    header("Location: Home.php");
+    // OJO: en el servidor (Linux) las mayúsculas importan; el archivo real es home.php
+    header("Location: home.php");
     exit();
 }
 require_once(__DIR__ . '/lang/i18n.php');
