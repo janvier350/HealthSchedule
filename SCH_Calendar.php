@@ -1415,6 +1415,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         eventClick: function (info) {
             abrirModalCita(info.event.id, info.event.title, info.event.start, info.event.extendedProps);
+        },
+
+        // Clic en una fecha → abre "Agendar cita" con la fecha precargada
+        dateClick: function (info) {
+            var f = document.getElementById('fechafactura');
+            if (f) f.value = info.dateStr.substring(0, 10);
+            var m = document.getElementById('editModal');
+            if (m && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(m).show();
+            }
         }
     });
 
