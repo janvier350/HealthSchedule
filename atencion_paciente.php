@@ -330,9 +330,22 @@ $firmaLicense = trim($d['USR_LICENSE_ID'] ?? '') !== '' ? $d['USR_LICENSE_ID'] :
 
         <!-- ── BOTONES ─────────────────────────────────────────────── -->
         <div class="d-flex justify-content-between align-items-center att-actionbar flex-wrap gap-2">
-            <a href="SCH_Calendar.php" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> <?php te('att.back'); ?>
-            </a>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="SCH_Calendar.php" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> <?php te('att.back'); ?>
+                </a>
+                <span class="badge rounded-pill" id="attTimeRange"
+                      style="background:#eef1f6;color:#33475b;font-weight:600;font-size:.8rem;padding:.5rem .7rem;">
+                    <i class="bi bi-clock me-1"></i>
+                    <span id="attTimeText">—</span>
+                </span>
+                <button type="button" id="btnExtender"
+                        class="btn btn-outline-warning btn-sm d-flex align-items-center gap-1"
+                        onclick="extenderCita()" title="<?php te('att.extendTip'); ?>">
+                    <i class="bi bi-plus-circle"></i>
+                    <span><?php te('att.extendBtn'); ?></span>
+                </button>
+            </div>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline-primary" onclick="imprimirInforme()">
                     <i class="bi bi-printer"></i> <?php te('att.previewPrint'); ?>
@@ -360,6 +373,8 @@ const DATOS_CITA = {
     pacienteTel:     "<?php echo addslashes($d['TELEFONO']); ?>",
     pacienteCedula:  "<?php echo addslashes($d['CEDULA']); ?>",
     pacienteSexIdx:  <?php echo (int)$pacienteSexIdx; ?>,
+    horaInicio:      "<?php echo substr($d['HORA_INICIO'] ?? '', 0, 5); ?>",
+    horaFin:         "<?php echo substr($d['HORA_FIN']    ?? '', 0, 5); ?>",
     docNombre:       "<?php echo addslashes($docNombreCompleto); ?>",
     docApellido:     "<?php echo addslashes($d['DOC_APELLIDOS']); ?>",
     docEspecialidad: "",
@@ -392,6 +407,9 @@ const ATT = {
     normal:            <?php echo json_encode(t('att.js.normal')); ?>,
     overweight:        <?php echo json_encode(t('att.js.overweight')); ?>,
     obesity:           <?php echo json_encode(t('att.js.obesity')); ?>,
+    extendOk:          <?php echo json_encode(t('att.js.extendOk')); ?>,
+    extendOutOfRange:  <?php echo json_encode(t('att.js.extendOutOfRange')); ?>,
+    extendError:       <?php echo json_encode(t('att.js.extendError')); ?>,
     // Etiquetas pediátricas WHO (2-19)
     imc: {
         severeUnderweight: <?php echo json_encode(t('att.js.pedSevereUnderweight')); ?>,
@@ -623,6 +641,43 @@ function guardarAtencion(){
         error: function(){ alert(ATT.saveConnError); }
     });
 }
+
+// ── EXTENDER CITA (+30 MIN) ───────────────────────────────────────────
+function renderTimeRange(){
+    var span = document.getElementById('attTimeText');
+    if (!span) return;
+    var ini = DATOS_CITA.horaInicio || '';
+    var fin = DATOS_CITA.horaFin || '';
+    if (!ini) { span.textContent = '—'; return; }
+    span.textContent = fin ? (ini + '  →  ' + fin) : ini;
+}
+
+function extenderCita(){
+    if (!DATOS_CITA.idCita) return;
+    var btn = document.getElementById('btnExtender');
+    if (btn) btn.disabled = true;
+    $.post('extender_cita.php', { idCita: DATOS_CITA.idCita, minutos: 30 }, function(res){
+        if (btn) btn.disabled = false;
+        var d = null;
+        try { d = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e){}
+        if (d && d.ok) {
+            DATOS_CITA.horaFin = d.horaFin;
+            renderTimeRange();
+            alert(ATT.extendOk.replace('{min}', d.minutos).replace('{fin}', d.horaFin));
+        } else {
+            var err = (d && d.error) ? d.error : 'ERROR';
+            if (err === 'FUERA_DE_RANGO')      alert(ATT.extendOutOfRange);
+            else if (err === 'SIN_SESION')     { alert(ATT.saveConnError); window.location.href='index.php'; }
+            else                                 alert(ATT.extendError + ' ' + err);
+        }
+    }, 'json').fail(function(){
+        if (btn) btn.disabled = false;
+        alert(ATT.saveConnError);
+    });
+}
+
+// Renderizar rango al cargar la página
+$(document).ready(renderTimeRange);
 
 // ── IMPRIMIR ──────────────────────────────────────────────────────────
 function imprimirInforme(){

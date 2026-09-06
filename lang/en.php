@@ -675,6 +675,12 @@ return array(
     'att.drTitle'             => 'Dr.',
     // Dictation help modal
     'att.helpBtn'             => 'Dictation help',
+    // Extend appointment
+    'att.extendBtn'           => 'Extend +30 min',
+    'att.extendTip'           => 'Add 30 minutes to the end of the appointment.',
+    'att.js.extendOk'         => 'Appointment extended by {min} min. New end time: {fin}.',
+    'att.js.extendOutOfRange' => 'Cannot extend the appointment: exceeds the schedule.',
+    'att.js.extendError'      => 'Could not extend the appointment:',
     'att.help.title'          => 'How to use voice dictation',
     'att.help.req.title'      => 'Requirements',
     'att.help.req.browser'    => 'Google Chrome or Microsoft Edge browser (on mobile, use Chrome).',

@@ -675,6 +675,12 @@ return array(
     'att.drTitle'             => 'Dr./Dra.',
     // Modal de ayuda del dictado
     'att.helpBtn'             => 'Ayuda dictado',
+    // Extender cita
+    'att.extendBtn'           => 'Extender +30 min',
+    'att.extendTip'           => 'Suma 30 minutos al final de la cita.',
+    'att.js.extendOk'         => 'Cita extendida {min} min. Nueva hora fin: {fin}.',
+    'att.js.extendOutOfRange' => 'No se puede extender la cita: excede el horario de agenda.',
+    'att.js.extendError'      => 'No se pudo extender la cita:',
     'att.help.title'          => 'Cómo usar el dictado por voz',
     'att.help.req.title'      => 'Requisitos',
     'att.help.req.browser'    => 'Navegador Google Chrome o Microsoft Edge (en el celular, Chrome).',
