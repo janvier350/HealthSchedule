@@ -380,7 +380,17 @@ if ($queryRoles) {
     </thead>
     <tbody>
         <?php
-        $sql = "SELECT A.IDADM_USUARIO, A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, A.IDAGENCIA, A.IMG, A.ESTADO, B.CARGO, A.IDADM_ROL FROM ADM_USUARIO A, ADM_ROL B WHERE A.IDADM_ROL= B.IDADM_ROL ORDER BY A.ESTADO ASC, A.NOMBRES";
+        // Columnas opcionales: NPI y LICENSE_ID (las agrega migrar_credenciales_doctor.php)
+        $dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+        $colUsr = function($col) use ($conexion, $dbName) {
+            return (int)$conexion->query(
+                "SELECT COUNT(*) c FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='ADM_USUARIO' AND COLUMN_NAME='$col'"
+            )->fetch_assoc()['c'] > 0;
+        };
+        $selNpi     = $colUsr('NPI')        ? ', A.NPI'        : ", '' AS NPI";
+        $selLicense = $colUsr('LICENSE_ID') ? ', A.LICENSE_ID' : ", '' AS LICENSE_ID";
+        $sql = "SELECT A.IDADM_USUARIO, A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, A.IDAGENCIA, A.IMG, A.ESTADO, B.CARGO, A.IDADM_ROL $selNpi $selLicense FROM ADM_USUARIO A, ADM_ROL B WHERE A.IDADM_ROL= B.IDADM_ROL ORDER BY A.ESTADO ASC, A.NOMBRES";
         $query = $conexion->query($sql);
 
         if (!$query) {
@@ -503,7 +513,8 @@ if ($queryRoles) {
         document.getElementById('usuario').value = usuario.USUARIO;
         document.getElementById('idAgencia').value = usuario.IDAGENCIA;
          document.getElementById('idRol').value = usuario.IDADM_ROL;
-      
+        document.getElementById('npi').value       = usuario.NPI        || '';
+        document.getElementById('licenseId').value = usuario.LICENSE_ID || '';
 
     }
     function cargarDatosClave(u) {
@@ -609,6 +620,20 @@ if ($queryRoles) {
                                                                 </select>
 
                     </div>
+
+                    <hr>
+                    <h6 class="text-muted mb-2"><i class="bi bi-patch-check me-1"></i><?php te('ucreate.credentials'); ?></h6>
+                    <div class="row g-2">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><?php te('ucreate.npi'); ?></label>
+                            <input type="text" class="form-control" id="npi" name="npi" maxlength="20" placeholder="1114420973">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><?php te('ucreate.license'); ?></label>
+                            <input type="text" class="form-control" id="licenseId" name="license_id" maxlength="60" placeholder="008982-1ok">
+                        </div>
+                    </div>
+
                     <button type="button" class="btn btn-primary" onclick="guardarEdicion()"><?php te('common.saveChanges'); ?></button>
                 </form>
             </div>

@@ -25,12 +25,31 @@ if(!isset($_GET['idCita']) || empty($_GET['idCita'])){
 
 $idCita = $conexion->real_escape_string($_GET['idCita']);
 
+// ¿Existen las columnas NPI y LICENSE_ID en ADM_USUARIO? (las agrega migrar_credenciales_doctor.php)
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$colDocExiste = function ($col) use ($conexion, $dbName) {
+    return (int)$conexion->query(
+        "SELECT COUNT(*) c FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='ADM_USUARIO' AND COLUMN_NAME='$col'"
+    )->fetch_assoc()['c'] > 0;
+};
+$tieneNpi     = $colDocExiste('NPI');
+$tieneLicense = $colDocExiste('LICENSE_ID');
+$selDocCreds  = ($tieneNpi     ? ", D.NPI        AS DOC_NPI"        : ", '' AS DOC_NPI")
+              . ($tieneLicense ? ", D.LICENSE_ID AS DOC_LICENSE_ID" : ", '' AS DOC_LICENSE_ID");
+// Credenciales del usuario de sesión (para la firma cuando el que atiende es el logueado)
+$selUsrCreds  = ($tieneNpi     ? ", U.NPI        AS USR_NPI"        : ", '' AS USR_NPI")
+              . ($tieneLicense ? ", U.LICENSE_ID AS USR_LICENSE_ID" : ", '' AS USR_LICENSE_ID");
+$idUserSesion = (int)($_SESSION['iduser'] ?? 0);
+
 $sql = "SELECT
             P.IDPACIENTE, P.NOMBRES, P.APELLIDOS, P.FECHANACIMIENTO, P.SEX,
             P.EMAIL, P.TELEFONO, P.CEDULA, P.ADDRESS,
             A.FECHA_CITA, A.HORA_INICIO, A.IDDOCTOR, A.IDAGENCIA,
             D.NOMBRES  AS DOC_NOMBRES,
-            D.APELLIDOS AS DOC_APELLIDOS,
+            D.APELLIDOS AS DOC_APELLIDOS
+            $selDocCreds
+            $selUsrCreds,
             AG.DESCRIPCION AS AGENCIA_NOMBRE,
             AG.DIRECCION  AS AGENCIA_DIRECCION,
             AG.TELEFONO   AS AGENCIA_TEL,
@@ -38,6 +57,7 @@ $sql = "SELECT
         FROM AG_CITA A
         INNER JOIN AG_PACIENTE     P  ON A.IDPACIENTE      = P.IDPACIENTE
         LEFT  JOIN ADM_USUARIO     D  ON A.IDDOCTOR         = D.IDADM_USUARIO
+        LEFT  JOIN ADM_USUARIO     U  ON U.IDADM_USUARIO    = $idUserSesion
         LEFT  JOIN ADM_AGENCIA     AG ON AG.IDAGENCIA        = COALESCE(A.IDAGENCIA, 1)
         LEFT  JOIN AG_TIPOCONSULTA TC ON A.IDTIPOCONSULTA   = TC.IDTIPOCONSULTA
         WHERE A.IDCITA = '$idCita'";
@@ -54,6 +74,11 @@ $docNombreCompleto = trim($d['DOC_NOMBRES'] . ' ' . $d['DOC_APELLIDOS']);
 $doctorAtiende = ($sessionNombres || $sessionApellidos)
     ? trim($sessionNombres . ' ' . $sessionApellidos)
     : $docNombreCompleto;
+
+// Credenciales para la firma: si el usuario logueado tiene NPI/License, se usan
+// las suyas (él es quien firma); si no, se caen al doctor asignado a la cita.
+$firmaNpi     = trim($d['USR_NPI'] ?? '') !== '' ? $d['USR_NPI'] : ($d['DOC_NPI'] ?? '');
+$firmaLicense = trim($d['USR_LICENSE_ID'] ?? '') !== '' ? $d['USR_LICENSE_ID'] : ($d['DOC_LICENSE_ID'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo current_lang(); ?>">
@@ -338,7 +363,9 @@ const DATOS_CITA = {
     agenciaTel:      "<?php echo addslashes($d['AGENCIA_TEL']); ?>",
     tipoConsulta:    "<?php echo addslashes($d['TIPO_CONSULTA']); ?>",
     fechaCita:       "<?php echo $d['FECHA_CITA']; ?>",
-    fechaHoy:        "<?php echo date('d/m/Y'); ?>"
+    fechaHoy:        "<?php echo date('d/m/Y'); ?>",
+    firmaNpi:        "<?php echo addslashes($firmaNpi); ?>",
+    firmaLicense:    "<?php echo addslashes($firmaLicense); ?>"
 };
 
 // ── Textos traducibles (i18n) ────────────────────────────────────────
@@ -435,11 +462,17 @@ function cargarPlantilla(id){
     const imcVal   = $('#imc').val()   || '---';
     const fechaNacJS = new Date(DATOS_CITA.pacienteDOB + 'T00:00:00');
     const dobFormateada = fechaNacJS.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    // Firma: nombre del profesional + credenciales (NPI, License ID)
+    const credsLines = [];
+    if (DATOS_CITA.firmaNpi)     credsLines.push('NPI: '        + DATOS_CITA.firmaNpi);
+    if (DATOS_CITA.firmaLicense) credsLines.push('License ID: ' + DATOS_CITA.firmaLicense);
+    const credsHtml = credsLines.length
+        ? credsLines.map(function(l){ return '<span>' + l + '</span>'; }).join('<br>') + '<br>'
+        : '';
     const firmaHtml = `<br><br>
         <div style="margin-top:40px;border-top:1px solid #ccc;padding-top:10px;font-family:Arial,sans-serif;">
             <strong>${DATOS_CITA.atiendNombre}</strong><br>
-            <em>${DATOS_CITA.docEspecialidad}</em><br>
-            ${DATOS_CITA.agenciaNombre}<br>${DATOS_CITA.agenciaTel}
+            ${credsHtml}
         </div>`;
     $.ajax({
         url: 'get_plantilla_html.php', type: 'GET', data: { id: id },
@@ -459,7 +492,9 @@ function cargarPlantilla(id){
                 '{{titulo_doctor}}': ATT.drTitle,
                 '{{especialidad}}': DATOS_CITA.docEspecialidad,
                 '{{firma_nombre}}': DATOS_CITA.atiendNombre,
-                '{{firma_credenciales}}': DATOS_CITA.docEspecialidad,
+                '{{firma_credenciales}}': credsLines.join(' · '),
+                '{{firma_npi}}': DATOS_CITA.firmaNpi,
+                '{{firma_licencia}}': DATOS_CITA.firmaLicense,
                 '{{practica_nombre}}': DATOS_CITA.agenciaNombre,
                 '{{direccion_1}}': DATOS_CITA.agenciaDirec,
                 '{{direccion_2}}': '',
