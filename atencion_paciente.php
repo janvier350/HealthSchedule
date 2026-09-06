@@ -75,6 +75,12 @@ $doctorAtiende = ($sessionNombres || $sessionApellidos)
     ? trim($sessionNombres . ' ' . $sessionApellidos)
     : $docNombreCompleto;
 
+// Mapea el sexo del paciente a 0 (male) / 1 (female) para las tablas WHO/CDC.
+$sexoTexto = strtolower(trim($d['SEX'] ?? ''));
+if (in_array($sexoTexto, ['male','m','masculino','hombre'], true))       $pacienteSexIdx = 0;
+elseif (in_array($sexoTexto, ['female','fame','f','femenino','mujer'], true)) $pacienteSexIdx = 1;
+else                                                                          $pacienteSexIdx = -1;
+
 // Credenciales para la firma: si el usuario logueado tiene NPI/License, se usan
 // las suyas (él es quien firma); si no, se caen al doctor asignado a la cita.
 $firmaNpi     = trim($d['USR_NPI'] ?? '') !== '' ? $d['USR_NPI'] : ($d['DOC_NPI'] ?? '');
@@ -353,6 +359,7 @@ const DATOS_CITA = {
     pacienteEmail:   "<?php echo addslashes($d['EMAIL']); ?>",
     pacienteTel:     "<?php echo addslashes($d['TELEFONO']); ?>",
     pacienteCedula:  "<?php echo addslashes($d['CEDULA']); ?>",
+    pacienteSexIdx:  <?php echo (int)$pacienteSexIdx; ?>,
     docNombre:       "<?php echo addslashes($docNombreCompleto); ?>",
     docApellido:     "<?php echo addslashes($d['DOC_APELLIDOS']); ?>",
     docEspecialidad: "",
@@ -385,6 +392,15 @@ const ATT = {
     normal:            <?php echo json_encode(t('att.js.normal')); ?>,
     overweight:        <?php echo json_encode(t('att.js.overweight')); ?>,
     obesity:           <?php echo json_encode(t('att.js.obesity')); ?>,
+    // Etiquetas pediátricas WHO (2-19)
+    imc: {
+        severeUnderweight: <?php echo json_encode(t('att.js.pedSevereUnderweight')); ?>,
+        underweight:       <?php echo json_encode(t('att.js.pedUnderweight')); ?>,
+        healthyWeight:     <?php echo json_encode(t('att.js.pedHealthy')); ?>,
+        overweight:        <?php echo json_encode(t('att.js.pedOverweight')); ?>,
+        obesity:           <?php echo json_encode(t('att.js.pedObesity')); ?>,
+        severeObesity:     <?php echo json_encode(t('att.js.pedSevereObesity')); ?>
+    },
     startDictation:    <?php echo json_encode(t('att.startDictation')); ?>,
     stopDictation:     <?php echo json_encode(t('att.stopDictation')); ?>,
     drTitle:           <?php echo json_encode(t('att.drTitle')); ?>,
@@ -413,6 +429,7 @@ const ATT = {
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/who_bmi.js"></script>
 <script>
 
 // ── INICIALIZAR EDITOR ───────────────────────────────────────────────
@@ -435,6 +452,18 @@ $(document).ready(function(){
 });
 
 // ── CALCULAR IMC ─────────────────────────────────────────────────────
+// Edad del paciente en meses (a partir del DOB); null si no hay fecha válida.
+function edadPacienteMeses(){
+    var dobStr = DATOS_CITA.pacienteDOB || '';
+    if (!/^\d{4}-\d{2}-\d{2}/.test(dobStr)) return null;
+    var dob = new Date(dobStr + 'T00:00:00');
+    if (isNaN(dob)) return null;
+    var hoy = new Date();
+    var meses = (hoy.getFullYear() - dob.getFullYear()) * 12 + (hoy.getMonth() - dob.getMonth());
+    if (hoy.getDate() < dob.getDate()) meses -= 1;
+    return meses;
+}
+
 function calcularIMC(){
     const pesoInput  = parseFloat($('#peso').val());
     const tallaInput = parseFloat($('#talla').val());
@@ -443,13 +472,34 @@ function calcularIMC(){
     if(!pesoInput || !tallaInput) return;
     const pesoKg = uPeso  === 'lbs' ? pesoInput  * 0.453592 : pesoInput;
     const tallaM = uTalla === 'cm'  ? tallaInput / 100       : tallaInput;
-    const imc = (pesoKg / (tallaM * tallaM)).toFixed(2);
+    const imcNum = pesoKg / (tallaM * tallaM);
+    const imc    = imcNum.toFixed(2);
     $('#imc').val(imc);
     const est = $('#estado_imc');
-    if      (imc < 18.5) est.text(ATT.underweight).attr('class','badge p-2 d-block fs-6 bg-info');
-    else if (imc < 25)   est.text(ATT.normal)     .attr('class','badge p-2 d-block fs-6 bg-success');
-    else if (imc < 30)   est.text(ATT.overweight) .attr('class','badge p-2 d-block fs-6 bg-warning text-dark');
-    else                 est.text(ATT.obesity)    .attr('class','badge p-2 d-block fs-6 bg-danger');
+
+    // Pediátrico (2-19 años): usa WHO BMI-for-age (LMS → Z → categoría).
+    var meses = edadPacienteMeses();
+    var sexIdx = (typeof DATOS_CITA.pacienteSexIdx === 'number') ? DATOS_CITA.pacienteSexIdx : -1;
+    if (window.WHO_BMI && meses !== null && meses >= 24 && meses <= 228 && (sexIdx === 0 || sexIdx === 1)) {
+        var r = WHO_BMI.classify(sexIdx, meses, imcNum);
+        if (r) {
+            // Regla adicional (AAP/CDC): IMC >= 35 kg/m² siempre es obesidad severa.
+            if (imcNum >= 35 && r.key !== 'severeObesity') {
+                r.key = 'severeObesity'; r.label = 'Severe obesity'; r.badgeClass = 'bg-dark';
+            }
+            var label = ATT.imc[r.key] || r.label;
+            est.text(label).attr('class', 'badge p-2 d-block fs-6 ' + r.badgeClass)
+               .attr('title', 'z=' + r.z.toFixed(2) + '  ·  P' + r.percentile.toFixed(1) + '  ·  WHO 2-19');
+            return;
+        }
+    }
+
+    // Adulto (>= 20 años) o pediátrico sin datos suficientes: clasificación adulto (OMS).
+    est.removeAttr('title');
+    if      (imcNum < 18.5) est.text(ATT.underweight).attr('class','badge p-2 d-block fs-6 bg-info');
+    else if (imcNum < 25)   est.text(ATT.normal)     .attr('class','badge p-2 d-block fs-6 bg-success');
+    else if (imcNum < 30)   est.text(ATT.overweight) .attr('class','badge p-2 d-block fs-6 bg-warning text-dark');
+    else                    est.text(ATT.obesity)    .attr('class','badge p-2 d-block fs-6 bg-danger');
 }
 
 // ── CARGAR PLANTILLA ─────────────────────────────────────────────────

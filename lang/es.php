@@ -723,6 +723,13 @@ return array(
     'att.js.normal'           => 'Normal',
     'att.js.overweight'       => 'Sobrepeso',
     'att.js.obesity'          => 'Obesidad',
+    // IMC pediátrico (2-19 años, WHO)
+    'att.js.pedSevereUnderweight' => 'Bajo peso severo',
+    'att.js.pedUnderweight'   => 'Bajo peso',
+    'att.js.pedHealthy'       => 'Peso saludable',
+    'att.js.pedOverweight'    => 'Sobrepeso',
+    'att.js.pedObesity'       => 'Obesidad',
+    'att.js.pedSevereObesity' => 'Obesidad severa',
     'att.ph.biochem'          => '[Ingresar datos bioquímicos]',
     'att.ph.physical'         => '[Ingresar hallazgos físicos]',
     'att.ph.clientHistory'    => '[Ingresar historial del paciente]',
