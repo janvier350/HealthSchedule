@@ -19,6 +19,13 @@ $timeIni      = $conexion->real_escape_string($_POST['timeIni']      ?? '');
 $Idconsulta   = (int)($_POST['Idconsulta'] ?? 0);
 $IdDoctor     = (int)($_POST['IdDoctor']   ?? 0);
 
+// Recurrencia (opcional)
+$recurrencia   = strtolower(trim($_POST['recurrencia']   ?? 'none'));
+$recurEvery    = (int)($_POST['recurEvery']              ?? 1);
+$recurEndMode  = strtolower(trim($_POST['recurEndMode']  ?? 'count'));
+$recurCount    = (int)($_POST['recurCount']              ?? 1);
+$recurEndDate  = trim($_POST['recurEndDate']             ?? '');
+
 if (!$fechafactura || !$IdPaciente || !$timeIni || !$Idconsulta || !$IdDoctor) {
     echo "<script>alert('Datos incompletos. Por favor complete todos los campos.'); history.back();</script>";
     exit;
@@ -27,41 +34,126 @@ if (!$fechafactura || !$IdPaciente || !$timeIni || !$Idconsulta || !$IdDoctor) {
 // Calcular hora final (+30 min)
 $timeFin = date("H:i", strtotime($timeIni) + 30 * 60);
 
-// Verificar si el horario ya está ocupado (excluye canceladas)
+/**
+ * Genera todas las fechas de la serie (incluida la primera).
+ * Cap de seguridad: hasta 52 ocurrencias.
+ */
+function generarFechasSerie($primera, $patron, $intervaloCustom, $modo, $cuenta, $fechaFin) {
+    $fechas   = [];
+    $baseDT   = DateTime::createFromFormat('Y-m-d', $primera);
+    if (!$baseDT) return [$primera];
+    $limite   = 52;
+    $endDT    = $fechaFin ? DateTime::createFromFormat('Y-m-d', $fechaFin) : null;
+    if ($modo === 'count') {
+        $cuenta = max(1, min($cuenta, $limite));
+    } else {
+        $cuenta = $limite; // hasta la fecha (con cap)
+    }
+    $step = null;
+    switch ($patron) {
+        case 'weekly':   $step = new DateInterval('P7D');  break;
+        case 'biweekly': $step = new DateInterval('P14D'); break;
+        case 'monthly':  $step = new DateInterval('P1M');  break;
+        case 'daily':    $step = new DateInterval('P1D');  break;
+        case 'custom':
+            $n = max(1, min((int)$intervaloCustom, 90));
+            $step = new DateInterval('P' . $n . 'D');
+            break;
+        default:
+            return [$primera];
+    }
+    $cur = clone $baseDT;
+    for ($i = 0; $i < $cuenta; $i++) {
+        if ($endDT && $cur > $endDT) break;
+        $fechas[] = $cur->format('Y-m-d');
+        $cur->add($step);
+    }
+    return $fechas;
+}
+
+if ($recurrencia === 'none' || $recurrencia === '') {
+    $fechasSerie = [$fechafactura];
+} else {
+    $fechasSerie = generarFechasSerie($fechafactura, $recurrencia, $recurEvery, $recurEndMode, $recurCount, $recurEndDate);
+}
+
+// Inserta cada fecha; salta las que choquen con otra cita activa.
+$idUsuario   = $_SESSION['iduser'] ?? 0;
 $stmt_valida = $conexion->prepare(
     "SELECT IDCITA FROM AG_CITA
      WHERE FECHA_CITA = ? AND HORA_INICIO = ? AND ESTADO = 'A'
      AND ESTADO_CITA NOT IN ('Cancelada','Cancelado')"
 );
-$stmt_valida->bind_param("ss", $fechafactura, $timeIni);
-$stmt_valida->execute();
-$stmt_valida->store_result();
-
-if ($stmt_valida->num_rows > 0) {
-    $stmt_valida->close();
-    echo "<script>alert('¡Ya existe una cita en ese horario!'); window.location.href = '../SCH_Calendar.php';</script>";
-    exit;
-}
-$stmt_valida->close();
-
-// Insertar la cita
-$idUsuario = $_SESSION['iduser'] ?? 0;
 $stmt_insert = $conexion->prepare(
     "INSERT INTO AG_CITA (IDPACIENTE, IDTIPOCONSULTA, IDDOCTOR, IDUSUARIO,
                           FECHA_CITA, HORA_INICIO, HORA_FIN, ESTADO_CITA, ESTADO, COMENTARIO)
      VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente', 'A', '')"
 );
-$stmt_insert->bind_param("iiiisss",
-    $IdPaciente, $Idconsulta, $IdDoctor, $idUsuario,
-    $fechafactura, $timeIni, $timeFin
-);
 
-if (!$stmt_insert->execute()) {
-    echo "<script>alert('Error al crear la cita: " . addslashes($stmt_insert->error) . "'); history.back();</script>";
-    $stmt_insert->close();
+$primeraIdCita     = 0;
+$primeraFechaOK    = '';
+$creadas           = 0;
+$saltadasPorChoque = [];
+
+foreach ($fechasSerie as $f) {
+    // ¿ya hay cita en ese día y hora?
+    $stmt_valida->bind_param("ss", $f, $timeIni);
+    $stmt_valida->execute();
+    $stmt_valida->store_result();
+    if ($stmt_valida->num_rows > 0) {
+        $saltadasPorChoque[] = $f;
+        $stmt_valida->free_result();
+        continue;
+    }
+    $stmt_valida->free_result();
+
+    $stmt_insert->bind_param("iiiisss",
+        $IdPaciente, $Idconsulta, $IdDoctor, $idUsuario,
+        $f, $timeIni, $timeFin
+    );
+    if (!$stmt_insert->execute()) {
+        continue;
+    }
+    $creadas++;
+    if ($primeraIdCita === 0) {
+        $primeraIdCita  = $conexion->insert_id;
+        $primeraFechaOK = $f;
+    }
+}
+$stmt_valida->close();
+$stmt_insert->close();
+
+if ($creadas === 0) {
+    echo "<script>alert('No se pudo crear ninguna cita: todas chocan con horarios ya ocupados.'); window.location.href = '../SCH_Calendar.php';</script>";
     exit;
 }
-$stmt_insert->close();
+
+// Si fue una serie con más de una cita creada, marca todas con IDSERIE = primeraIdCita.
+$tieneSerie = false;
+$dbNameQ = $conexion->query("SELECT DATABASE() AS db");
+$dbName  = $dbNameQ ? $dbNameQ->fetch_assoc()['db'] : '';
+if ($dbName) {
+    $colExiste = (int)$conexion->query(
+        "SELECT COUNT(*) c FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='IDSERIE'"
+    )->fetch_assoc()['c'] > 0;
+    if ($colExiste && $creadas > 1) {
+        // Los últimos $creadas IDs son secuenciales desde $primeraIdCita
+        $ultimoIdCita = $primeraIdCita + $creadas - 1;
+        $stmtSerie = $conexion->prepare(
+            "UPDATE AG_CITA SET IDSERIE = ?
+             WHERE IDCITA BETWEEN ? AND ?
+               AND IDPACIENTE = ? AND HORA_INICIO = ?"
+        );
+        $stmtSerie->bind_param("iiiis", $primeraIdCita, $primeraIdCita, $ultimoIdCita, $IdPaciente, $timeIni);
+        $stmtSerie->execute();
+        $stmtSerie->close();
+        $tieneSerie = true;
+    }
+}
+
+// El correo se enviará solo por la PRIMERA cita creada.
+$fechafactura = $primeraFechaOK;
 
 // Obtener datos del paciente (nombre + correo) y tipo de consulta
 $stmt_info = $conexion->prepare(
@@ -93,10 +185,19 @@ $fechaBonita = $diasES[(int)$fechaObj->format('w')] . ', ' .
                $mesesES[(int)$fechaObj->format('n')] . ' de ' .
                $fechaObj->format('Y');
 
+// Resumen de la serie (si aplica)
+$resumen = '';
+if ($creadas > 1) {
+    $resumen = "\\nSerie recurrente: {$creadas} citas creadas.";
+}
+if (!empty($saltadasPorChoque)) {
+    $resumen .= "\\nSaltadas por conflicto de horario: " . count($saltadasPorChoque);
+}
+
 // ── Enviar correo ───────────────────────────────────────────────────
 if (!$correoPaciente) {
     // Sin correo registrado: redirigir sin enviar
-    echo "<script>alert('Cita creada. El paciente no tiene correo registrado.'); window.location.href = '../SCH_Calendar.php';</script>";
+    echo "<script>alert('Cita creada. El paciente no tiene correo registrado.$resumen'); window.location.href = '../SCH_Calendar.php';</script>";
     exit;
 }
 
@@ -143,7 +244,7 @@ try {
     $mail->send();
 
     echo "<script>
-        alert('Cita creada y notificación enviada a $correoPaciente');
+        alert('Cita creada y notificación enviada a $correoPaciente$resumen');
         window.location.href = '../SCH_Calendar.php';
     </script>";
 
@@ -151,7 +252,7 @@ try {
     // La cita YA fue guardada; solo el correo falló
     error_log("PHPMailer error para $correoPaciente: " . $e->getMessage());
     echo "<script>
-        alert('Cita creada correctamente.\\nNota: no se pudo enviar el correo de confirmación.');
+        alert('Cita creada correctamente.\\nNota: no se pudo enviar el correo de confirmación.$resumen');
         window.location.href = '../SCH_Calendar.php';
     </script>";
 }

@@ -20,12 +20,21 @@ if(isset($_SESSION['expire']) && $now > $_SESSION['expire']){
 
 $colorTipoDefault = '#3788d8';
 
+// ¿Existe la columna IDSERIE? (la agrega migrar_serie_cita.php)
+$dbNameCita = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneSerieCita = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbNameCita' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='IDSERIE'"
+)->fetch_assoc()['c'] > 0;
+$selIdSerie = $tieneSerieCita ? ', A.IDSERIE' : ", NULL AS IDSERIE";
+
 $query = "SELECT
             A.IDCITA,
             A.IDPACIENTE,
             A.IDTIPOCONSULTA,
             A.IDDOCTOR,
-            A.IDAGENCIA,
+            A.IDAGENCIA
+            $selIdSerie,
             CONCAT(B.NOMBRES, ' ', B.APELLIDOS) AS PACIENTE,
             B.TELEFONO,
             C.NOMBRES AS TIPO_CONSULTA,
@@ -83,6 +92,7 @@ while ($row = $resultado->fetch_assoc()) {
             'idtipoconsulta' => $row['IDTIPOCONSULTA'],
             'iddoctor'       => $row['IDDOCTOR'],
             'idagencia'      => $row['IDAGENCIA'],
+            'idserie'        => $row['IDSERIE'] ?? null,
         )
     );
 }
@@ -561,6 +571,49 @@ while ($a = $resAgencias->fetch_assoc()) {
                             <?php endwhile; ?>
                         </select>
                     </div>
+                    <!-- ── Recurrencia (opcional) ─────────────────────────────── -->
+                    <div class="mb-2">
+                        <label class="form-label mb-1"><i class="bi bi-arrow-repeat me-1"></i><?php te('cal.recur.title'); ?></label>
+                        <select class="form-select" name="recurrencia" id="recurrenciaSel"
+                                onchange="toggleRecurrenciaUI()">
+                            <option value="none"><?php te('cal.recur.none'); ?></option>
+                            <option value="daily"><?php te('cal.recur.daily'); ?></option>
+                            <option value="weekly"><?php te('cal.recur.weekly'); ?></option>
+                            <option value="biweekly"><?php te('cal.recur.biweekly'); ?></option>
+                            <option value="monthly"><?php te('cal.recur.monthly'); ?></option>
+                            <option value="custom"><?php te('cal.recur.custom'); ?></option>
+                        </select>
+                    </div>
+                    <div id="recurCustomWrap" class="mb-2 d-none">
+                        <label class="form-label mb-1"><?php te('cal.recur.everyN'); ?></label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="recurEvery" id="recurEvery" min="1" max="90" value="10">
+                            <span class="input-group-text"><?php te('cal.recur.days'); ?></span>
+                        </div>
+                    </div>
+                    <div id="recurEndWrap" class="mb-3 d-none">
+                        <label class="form-label mb-1"><?php te('cal.recur.endMode'); ?></label>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <select class="form-select" name="recurEndMode" id="recurEndMode"
+                                        onchange="toggleRecurrenciaUI()">
+                                    <option value="count"><?php te('cal.recur.byCount'); ?></option>
+                                    <option value="date"><?php te('cal.recur.byDate'); ?></option>
+                                </select>
+                            </div>
+                            <div class="col-md-7" id="recurCountWrap">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="recurCount" id="recurCount" min="1" max="52" value="4">
+                                    <span class="input-group-text"><?php te('cal.recur.sessions'); ?></span>
+                                </div>
+                            </div>
+                            <div class="col-md-7 d-none" id="recurEndDateWrap">
+                                <input type="date" class="form-control" name="recurEndDate" id="recurEndDate">
+                            </div>
+                        </div>
+                        <div class="form-text mt-1" id="recurPreview"></div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-calendar-check"></i> <?php te('cal.scheduleBtn'); ?>
                     </button>
@@ -894,6 +947,9 @@ const TC = <?php echo json_encode(array(
     'apptGone'        => t('cal.js.apptGone'),
     'slotTaken'       => t('cal.js.slotTaken'),
     'apptGonePrev'    => t('cal.js.apptGonePrev'),
+    'reschedule'      => t('cal.reschedule'),
+    'editAppt'        => t('cal.editAppt'),
+    'deleteLabel'     => t('cal.delete'),
     'connError'       => t('common.js.connError'),
     'loadError'       => t('plist.js.loadError'),
     'loadHttp'        => t('plist.js.loadHttp'),
@@ -962,7 +1018,7 @@ function cerrarReagendar() {
     document.getElementById('reagendarSection').classList.add('d-none');
 }
 
-function guardarReagenda() {
+async function guardarReagenda() {
     const id    = document.getElementById('idCita').value;
     const fecha = document.getElementById('nuevaFecha').value;
     const hora  = document.getElementById('nuevaHora').value;
@@ -976,7 +1032,14 @@ function guardarReagenda() {
     const [y, mo, d] = fecha.split('-');
     if (!confirm(`${TC.confirmReschedPre} ${d}/${mo}/${y} ${TC.at} ${hora}?`)) return;
 
-    $.post('reagendar_cita.php', { idCita: id, fecha: fecha, hora: hora }, function(res) {
+    // Si es serie, preguntar alcance
+    let alcance = 'solo';
+    if (citaActual && citaActual.idserie) {
+        alcance = await askSerieScope(TC.reschedule);
+        if (!alcance) return;
+    }
+
+    $.post('reagendar_cita.php', { idCita: id, fecha: fecha, hora: hora, alcance: alcance }, function(res) {
         res = res.trim();
         if (res === 'OK') {
             alert(TC.reschedOk);
@@ -1014,7 +1077,7 @@ function cerrarEditar() {
     document.getElementById('editarSection').classList.add('d-none');
 }
 
-function guardarEdicion() {
+async function guardarEdicion() {
     const id      = document.getElementById('idCita').value;
     const fecha   = document.getElementById('editFecha').value;
     const hora    = document.getElementById('editHora').value;
@@ -1035,13 +1098,21 @@ function guardarEdicion() {
     const [y, mo, d] = fecha.split('-');
     if (!confirm(`${TC.confirmSavePre} ${d}/${mo}/${y} ${TC.at} ${hora}.`)) return;
 
+    // Si es serie, preguntar alcance
+    let alcance = 'solo';
+    if (citaActual && citaActual.idserie) {
+        alcance = await askSerieScope(TC.editAppt);
+        if (!alcance) return;
+    }
+
     $.post('editar_cita.php', {
         idCita: id,
         fecha: fecha,
         hora: hora,
         idTipoConsulta: tipo,
         idDoctor: doctor,
-        idAgencia: agencia
+        idAgencia: agencia,
+        alcance: alcance
     }, function(res) {
         res = res.trim();
         if (res === 'OK') {
@@ -1069,13 +1140,20 @@ function guardarEdicion() {
 }
 
 // ── Eliminar cita (borra del calendario y notifica al paciente) ──────
-function eliminarCita() {
+async function eliminarCita() {
     const id = document.getElementById('idCita').value;
     if (!id) return;
 
     if (!confirm(TC.confirmDelete)) return;
 
-    $.post('eliminar_cita.php', { idCita: id }, function(res) {
+    // Si es serie, preguntar alcance
+    let alcance = 'solo';
+    if (citaActual && citaActual.idserie) {
+        alcance = await askSerieScope(TC.deleteLabel);
+        if (!alcance) return;
+    }
+
+    $.post('eliminar_cita.php', { idCita: id, alcance: alcance }, function(res) {
         res = res.trim();
         if (res === 'OK') {
             alert(TC.deletedOk);
@@ -1244,7 +1322,8 @@ function abrirModalCita(id, title, startDate, p) {
         idtipoconsulta: p.idtipoconsulta,
         iddoctor: p.iddoctor,
         idagencia: p.idagencia,
-        idpaciente: p.idpaciente
+        idpaciente: p.idpaciente,
+        idserie: p.idserie || null
     };
 
     const btnAtender     = document.getElementById('btnAtender');
@@ -1710,6 +1789,21 @@ $(document).ready(function () {
         });
     });
 });
+
+// ── Recurrencia (mostrar/ocultar controles) ──────────────────────────
+function toggleRecurrenciaUI() {
+    var sel  = document.getElementById('recurrenciaSel');
+    var wrap = document.getElementById('recurEndWrap');
+    var custom = document.getElementById('recurCustomWrap');
+    if (!sel || !wrap) return;
+    var isRecur = sel.value !== 'none';
+    wrap.classList.toggle('d-none', !isRecur);
+    custom.classList.toggle('d-none', sel.value !== 'custom');
+    var mode = document.getElementById('recurEndMode').value;
+    document.getElementById('recurCountWrap').classList.toggle('d-none', mode !== 'count');
+    document.getElementById('recurEndDateWrap').classList.toggle('d-none', mode !== 'date');
+}
+document.addEventListener('DOMContentLoaded', toggleRecurrenciaUI);
 </script>
 
 <!-- ── Buscador de pacientes (estilo Kalix) → abre el Historial de atenciones ── -->
@@ -1777,6 +1871,57 @@ $(document).ready(function () {
     clear.addEventListener('click', function(){ input.value=''; clear.classList.add('d-none'); hide(); input.focus(); });
     document.addEventListener('click', function(e){ if(!e.target.closest('.cal-patient-search')) hide(); });
 })();
+</script>
+
+<!-- ── MODAL: Alcance de la acción para series recurrentes ────── -->
+<div class="modal fade" id="serieScopeModal" tabindex="-1" aria-labelledby="serieScopeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="serieScopeLabel"><i class="bi bi-arrow-repeat me-2"></i><span id="serieScopeTitle"><?php te('cal.serie.title'); ?></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2"><?php te('cal.serie.body1'); ?></p>
+                <p class="text-muted small mb-0"><?php te('cal.serie.body2'); ?></p>
+            </div>
+            <div class="modal-footer justify-content-between flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary" id="btnScopeSolo"><?php te('cal.serie.onlyThis'); ?></button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
+                    <button type="button" class="btn btn-warning" id="btnScopeTodas"><?php te('cal.serie.allFuture'); ?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Diálogo de alcance para series recurrentes ─────────────────────
+// Uso: askSerieScope(actionLabel).then(scope => 'solo' | 'todas' | null)
+function askSerieScope(actionLabel) {
+    return new Promise(function(resolve) {
+        var m = document.getElementById('serieScopeModal');
+        var titleSpan = document.getElementById('serieScopeTitle');
+        if (actionLabel) titleSpan.textContent = actionLabel;
+        var modal = bootstrap.Modal.getOrCreateInstance(m);
+        var solo  = document.getElementById('btnScopeSolo');
+        var todas = document.getElementById('btnScopeTodas');
+        var done = false;
+        function cleanup() {
+            solo.removeEventListener('click', onSolo);
+            todas.removeEventListener('click', onTodas);
+            m.removeEventListener('hidden.bs.modal', onHide);
+        }
+        function onSolo()  { done = true; modal.hide(); cleanup(); resolve('solo'); }
+        function onTodas() { done = true; modal.hide(); cleanup(); resolve('todas'); }
+        function onHide()  { if (!done) { cleanup(); resolve(null); } }
+        solo.addEventListener('click', onSolo);
+        todas.addEventListener('click', onTodas);
+        m.addEventListener('hidden.bs.modal', onHide);
+        modal.show();
+    });
+}
 </script>
 
 </body>
