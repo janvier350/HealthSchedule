@@ -17,19 +17,30 @@ if (!isset($_SESSION["rol"])) {
     exit;
 }
 
-$idCita = isset($_POST['idCita']) ? (int)$_POST['idCita'] : 0;
+$idCita  = isset($_POST['idCita'])  ? (int)$_POST['idCita']  : 0;
+$alcance = isset($_POST['alcance']) ? trim($_POST['alcance']) : 'solo';
+if ($alcance !== 'todas') $alcance = 'solo';
 
 if (!$idCita) {
     echo 'DATOS_INCOMPLETOS';
     exit;
 }
 
+// ¿Existe la columna IDSERIE?
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneSerie = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='IDSERIE'"
+)->fetch_assoc()['c'] > 0;
+
 // Obtener los datos de la cita ANTES de eliminarla (para el correo de cancelación)
+$colSerie = $tieneSerie ? ', A.IDSERIE' : '';
 $stmt_info = $conexion->prepare(
     "SELECT P.IDPACIENTE, P.NOMBRES, P.APELLIDOS, P.EMAIL,
             A.FECHA_CITA, A.HORA_INICIO, A.HORA_FIN,
             TC.NOMBRES AS TIPO_CONSULTA,
             CONCAT(D.NOMBRES,' ',D.APELLIDOS) AS DOCTOR
+            $colSerie
      FROM AG_CITA A
      INNER JOIN AG_PACIENTE P      ON A.IDPACIENTE     = P.IDPACIENTE
      LEFT  JOIN AG_TIPOCONSULTA TC ON A.IDTIPOCONSULTA = TC.IDTIPOCONSULTA
@@ -46,19 +57,40 @@ if (!$info) {
     exit;
 }
 
-// Eliminar la cita (borrado lógico: sale del calendario)
-$stmt = $conexion->prepare(
-    "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'
-     WHERE IDCITA = ? AND ESTADO = 'A'"
-);
-$stmt->bind_param("i", $idCita);
+$idSerie      = $tieneSerie ? (int)($info['IDSERIE'] ?? 0) : 0;
+$fechaOrig    = $info['FECHA_CITA'];
+$canceladasEx = 0;
 
-if (!$stmt->execute()) {
-    echo 'ERROR: ' . $stmt->error;
+if ($alcance === 'todas' && $idSerie > 0) {
+    // Cancelar esta + todas las futuras de la serie (borrado lógico).
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'
+         WHERE (IDSERIE = ? OR IDCITA = ?)
+           AND ESTADO = 'A'
+           AND FECHA_CITA >= ?"
+    );
+    $stmt->bind_param("iis", $idSerie, $idCita, $fechaOrig);
+    if (!$stmt->execute()) {
+        echo 'ERROR: ' . $stmt->error;
+        $stmt->close();
+        exit;
+    }
+    $canceladasEx = max(0, $stmt->affected_rows - 1);
     $stmt->close();
-    exit;
+} else {
+    // Cancelar solo esta cita (borrado lógico).
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'
+         WHERE IDCITA = ? AND ESTADO = 'A'"
+    );
+    $stmt->bind_param("i", $idCita);
+    if (!$stmt->execute()) {
+        echo 'ERROR: ' . $stmt->error;
+        $stmt->close();
+        exit;
+    }
+    $stmt->close();
 }
-$stmt->close();
 
 // ── Preparar y enviar correo de cancelación ─────────────────────────
 $nombrePaciente = trim(($info['NOMBRES'] ?? '') . ' ' . ($info['APELLIDOS'] ?? ''));

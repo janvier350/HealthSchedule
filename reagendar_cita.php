@@ -17,9 +17,11 @@ if (!isset($_SESSION["rol"])) {
     exit;
 }
 
-$idCita = isset($_POST['idCita']) ? (int)$_POST['idCita'] : 0;
-$fecha  = isset($_POST['fecha'])  ? trim($_POST['fecha'])  : '';
-$hora   = isset($_POST['hora'])   ? trim($_POST['hora'])   : '';
+$idCita  = isset($_POST['idCita'])  ? (int)$_POST['idCita']  : 0;
+$fecha   = isset($_POST['fecha'])   ? trim($_POST['fecha'])  : '';
+$hora    = isset($_POST['hora'])    ? trim($_POST['hora'])   : '';
+$alcance = isset($_POST['alcance']) ? trim($_POST['alcance']) : 'solo';
+if ($alcance !== 'todas') $alcance = 'solo';
 
 if (!$idCita || !$fecha || !$hora) {
     echo 'DATOS_INCOMPLETOS';
@@ -35,9 +37,17 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) || !preg_match('/^\d{2}:\d{2}$/
 // Hora fin = 30 minutos después
 $horaFin = date('H:i', strtotime($hora) + 30 * 60);
 
+// ¿Existe la columna IDSERIE? (para saber si podemos aplicar a toda la serie futura)
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneSerie = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='IDSERIE'"
+)->fetch_assoc()['c'] > 0;
+
 // Leer la fecha/hora actuales ANTES de reagendar, para incluir la anterior en el correo
+$colSerie = $tieneSerie ? ', IDSERIE' : '';
 $stmt_old = $conexion->prepare(
-    "SELECT FECHA_CITA, HORA_INICIO FROM AG_CITA WHERE IDCITA = ? AND ESTADO = 'A'"
+    "SELECT FECHA_CITA, HORA_INICIO $colSerie FROM AG_CITA WHERE IDCITA = ? AND ESTADO = 'A'"
 );
 $stmt_old->bind_param("i", $idCita);
 $stmt_old->execute();
@@ -51,17 +61,33 @@ if (!$citaVieja) {
 
 $fechaAnterior = $citaVieja['FECHA_CITA'];
 $horaAnterior  = substr($citaVieja['HORA_INICIO'] ?? '', 0, 5);
+$idSerie       = $tieneSerie ? (int)($citaVieja['IDSERIE'] ?? 0) : 0;
 
-// Reagendar: nueva fecha/hora y estado vuelve a Pendiente
-$stmt = $conexion->prepare(
-    "UPDATE AG_CITA
-     SET FECHA_CITA  = ?,
-         HORA_INICIO = ?,
-         HORA_FIN    = ?,
-         ESTADO_CITA = 'Pendiente'
-     WHERE IDCITA = ? AND ESTADO = 'A'"
-);
-$stmt->bind_param("sssi", $fecha, $hora, $horaFin, $idCita);
+if ($alcance === 'todas' && $idSerie > 0) {
+    // Aplicar la nueva hora (no la fecha) a esta cita y a todas las FUTURAS de la serie.
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA
+         SET FECHA_CITA  = CASE WHEN IDCITA = ? THEN ? ELSE FECHA_CITA END,
+             HORA_INICIO = ?,
+             HORA_FIN    = ?,
+             ESTADO_CITA = 'Pendiente'
+         WHERE (IDSERIE = ? OR IDCITA = ?)
+           AND ESTADO = 'A'
+           AND FECHA_CITA >= ?"
+    );
+    $stmt->bind_param("isssiis", $idCita, $fecha, $hora, $horaFin, $idSerie, $idCita, $fechaAnterior);
+} else {
+    // Reagendar solo esta cita
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA
+         SET FECHA_CITA  = ?,
+             HORA_INICIO = ?,
+             HORA_FIN    = ?,
+             ESTADO_CITA = 'Pendiente'
+         WHERE IDCITA = ? AND ESTADO = 'A'"
+    );
+    $stmt->bind_param("sssi", $fecha, $hora, $horaFin, $idCita);
+}
 
 if (!$stmt->execute()) {
     echo 'ERROR: ' . $stmt->error;

@@ -23,6 +23,8 @@ $hora           = isset($_POST['hora'])           ? trim($_POST['hora'])        
 $idTipoConsulta = isset($_POST['idTipoConsulta']) ? (int)$_POST['idTipoConsulta'] : 0;
 $idDoctor       = isset($_POST['idDoctor'])       ? (int)$_POST['idDoctor']       : 0;
 $idAgencia      = isset($_POST['idAgencia'])      ? (int)$_POST['idAgencia']      : 0;
+$alcance        = isset($_POST['alcance'])        ? trim($_POST['alcance'])        : 'solo';
+if ($alcance !== 'todas') $alcance = 'solo';
 
 if (!$idCita || !$fecha || !$hora || !$idTipoConsulta || !$idDoctor) {
     echo 'DATOS_INCOMPLETOS';
@@ -66,10 +68,17 @@ if ($stmt_valida->num_rows > 0) {
 }
 $stmt_valida->close();
 
-// Leer la fecha/hora actuales ANTES de actualizar, para saber si cambian
-// (solo se notifica al paciente cuando cambia la fecha o la hora).
+// ¿Existe la columna IDSERIE?
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneSerie = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='IDSERIE'"
+)->fetch_assoc()['c'] > 0;
+
+// Leer la fecha/hora/serie actuales ANTES de actualizar
+$colSerie = $tieneSerie ? ', IDSERIE' : '';
 $stmt_old = $conexion->prepare(
-    "SELECT FECHA_CITA, HORA_INICIO FROM AG_CITA WHERE IDCITA = ? AND ESTADO = 'A'"
+    "SELECT FECHA_CITA, HORA_INICIO $colSerie FROM AG_CITA WHERE IDCITA = ? AND ESTADO = 'A'"
 );
 $stmt_old->bind_param("i", $idCita);
 $stmt_old->execute();
@@ -83,21 +92,41 @@ if (!$citaVieja) {
 
 $fechaAnterior = $citaVieja['FECHA_CITA'];
 $horaAnterior  = substr($citaVieja['HORA_INICIO'] ?? '', 0, 5);
+$idSerie       = $tieneSerie ? (int)($citaVieja['IDSERIE'] ?? 0) : 0;
 $cambioFechaHora = ($fechaAnterior !== $fecha) || ($horaAnterior !== $hora);
 
-// Editar = corregir datos de la cita; a diferencia de reagendar,
-// el ESTADO_CITA se mantiene tal como está.
-$stmt = $conexion->prepare(
-    "UPDATE AG_CITA
-     SET FECHA_CITA     = ?,
-         HORA_INICIO    = ?,
-         HORA_FIN       = ?,
-         IDTIPOCONSULTA = ?,
-         IDDOCTOR       = ?,
-         IDAGENCIA      = NULLIF(?, 0)
-     WHERE IDCITA = ? AND ESTADO = 'A'"
-);
-$stmt->bind_param("sssiiii", $fecha, $hora, $horaFin, $idTipoConsulta, $idDoctor, $idAgencia, $idCita);
+if ($alcance === 'todas' && $idSerie > 0) {
+    // Aplicar la hora + doctor + tipo + agencia a esta cita y a todas las FUTURAS de la serie.
+    // La fecha solo cambia en la cita actual (no tocamos las fechas de las demás para no romper el patrón).
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA
+         SET FECHA_CITA     = CASE WHEN IDCITA = ? THEN ? ELSE FECHA_CITA END,
+             HORA_INICIO    = ?,
+             HORA_FIN       = ?,
+             IDTIPOCONSULTA = ?,
+             IDDOCTOR       = ?,
+             IDAGENCIA      = NULLIF(?, 0)
+         WHERE (IDSERIE = ? OR IDCITA = ?)
+           AND ESTADO = 'A'
+           AND FECHA_CITA >= ?"
+    );
+    $stmt->bind_param("isssiiiiis",
+        $idCita, $fecha, $hora, $horaFin, $idTipoConsulta, $idDoctor, $idAgencia,
+        $idSerie, $idCita, $fechaAnterior);
+} else {
+    // Editar solo esta cita
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA
+         SET FECHA_CITA     = ?,
+             HORA_INICIO    = ?,
+             HORA_FIN       = ?,
+             IDTIPOCONSULTA = ?,
+             IDDOCTOR       = ?,
+             IDAGENCIA      = NULLIF(?, 0)
+         WHERE IDCITA = ? AND ESTADO = 'A'"
+    );
+    $stmt->bind_param("sssiiii", $fecha, $hora, $horaFin, $idTipoConsulta, $idDoctor, $idAgencia, $idCita);
+}
 
 if (!$stmt->execute()) {
     echo 'ERROR: ' . $stmt->error;
