@@ -723,6 +723,13 @@ return array(
     'att.js.normal'           => 'Normal',
     'att.js.overweight'       => 'Overweight',
     'att.js.obesity'          => 'Obesity',
+    // Pediatric BMI (2-19 years, WHO)
+    'att.js.pedSevereUnderweight' => 'Severe underweight',
+    'att.js.pedUnderweight'   => 'Underweight',
+    'att.js.pedHealthy'       => 'Healthy weight',
+    'att.js.pedOverweight'    => 'Overweight',
+    'att.js.pedObesity'       => 'Obesity',
+    'att.js.pedSevereObesity' => 'Severe obesity',
     'att.ph.biochem'          => '[Enter biochemical data]',
     'att.ph.physical'         => '[Enter physical findings]',
     'att.ph.clientHistory'    => '[Enter patient history]',
