@@ -18,14 +18,22 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
 
 $idUsuario = (int)$_SESSION['iduser'];
 
-// ¿Existe la columna CORREO?
+// ¿Existen las columnas opcionales?
 $dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
-$tieneCorreo = (int)$conexion->query(
-    "SELECT COUNT(*) c FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='ADM_USUARIO' AND COLUMN_NAME='CORREO'"
-)->fetch_assoc()['c'] > 0;
+$colExiste = function($col) use ($conexion, $dbName) {
+    return (int)$conexion->query(
+        "SELECT COUNT(*) c FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='ADM_USUARIO' AND COLUMN_NAME='$col'"
+    )->fetch_assoc()['c'] > 0;
+};
+$tieneCorreo  = $colExiste('CORREO');
+$tieneNpi     = $colExiste('NPI');
+$tieneLicense = $colExiste('LICENSE_ID');
 
-$cols = "A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, B.CARGO" . ($tieneCorreo ? ", A.CORREO" : "");
+$cols = "A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, B.CARGO"
+      . ($tieneCorreo  ? ", A.CORREO"     : "")
+      . ($tieneNpi     ? ", A.NPI"        : "")
+      . ($tieneLicense ? ", A.LICENSE_ID" : "");
 $stmt = $conexion->prepare(
     "SELECT $cols FROM ADM_USUARIO A
      INNER JOIN ADM_ROL B ON A.IDADM_ROL = B.IDADM_ROL
@@ -131,30 +139,64 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                 </div>
 
                 <div class="row">
-                    <!-- Datos del usuario -->
+                    <!-- Datos del usuario (editables, excepto username) -->
                     <div class="col-md-5 mb-3">
                         <div class="card shadow-sm h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center gap-3 mb-3">
                                     <div class="avatar-lg"><?php echo htmlspecialchars($iniciales); ?></div>
                                     <div>
-                                        <div class="fw-bold" style="font-size:1.1rem;"><?php echo htmlspecialchars($nombreCompleto); ?></div>
+                                        <div class="fw-bold" id="perfilNombreLbl" style="font-size:1.1rem;"><?php echo htmlspecialchars($nombreCompleto); ?></div>
                                         <span class="badge bg-primary"><?php echo htmlspecialchars($u['CARGO'] ?? ($_SESSION['rol'] ?? '')); ?></span>
                                     </div>
                                 </div>
                                 <hr>
-                                <div class="mb-2">
-                                    <div class="info-label"><?php te('profile.username'); ?></div>
-                                    <div><?php echo htmlspecialchars($u['USUARIO'] ?? ($_SESSION['username'] ?? '')); ?></div>
-                                </div>
-                                <div class="mb-2">
-                                    <div class="info-label"><?php te('profile.phone'); ?></div>
-                                    <div><?php echo htmlspecialchars($u['TELEFONO'] ?? '—') ?: '—'; ?></div>
-                                </div>
-                                <div class="mb-0">
-                                    <div class="info-label"><?php te('profile.email'); ?></div>
-                                    <div><?php echo htmlspecialchars(($tieneCorreo ? ($u['CORREO'] ?? '') : '') ?: '—'); ?></div>
-                                </div>
+                                <form id="formPerfil" onsubmit="return false;">
+                                    <div class="mb-2">
+                                        <div class="info-label"><?php te('profile.username'); ?></div>
+                                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($u['USUARIO'] ?? ($_SESSION['username'] ?? '')); ?>" disabled>
+                                        <small class="text-muted"><?php te('profile.usernameLocked'); ?></small>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6 mb-2">
+                                            <div class="info-label"><?php te('pf.firstName'); ?></div>
+                                            <input type="text" id="perfNombres" class="form-control" value="<?php echo htmlspecialchars($u['NOMBRES'] ?? ''); ?>">
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <div class="info-label"><?php te('pf.lastName'); ?></div>
+                                            <input type="text" id="perfApellidos" class="form-control" value="<?php echo htmlspecialchars($u['APELLIDOS'] ?? ''); ?>">
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="info-label"><?php te('profile.phone'); ?></div>
+                                        <input type="text" id="perfTelefono" class="form-control" value="<?php echo htmlspecialchars($u['TELEFONO'] ?? ''); ?>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="info-label"><?php te('profile.email'); ?></div>
+                                        <input type="email" id="perfCorreo" class="form-control" value="<?php echo htmlspecialchars($tieneCorreo ? ($u['CORREO'] ?? '') : ''); ?>"<?php echo $tieneCorreo ? '' : ' disabled placeholder="—"'; ?>>
+                                    </div>
+                                    <?php if ($tieneNpi || $tieneLicense): ?>
+                                    <hr>
+                                    <div class="fw-semibold small mb-2" style="color:#5b6b8c;text-transform:uppercase;letter-spacing:.04em;">
+                                        <i class="bi bi-patch-check me-1"></i><?php te('ucreate.credentials'); ?>
+                                    </div>
+                                    <?php if ($tieneNpi): ?>
+                                    <div class="mb-2">
+                                        <div class="info-label"><?php te('ucreate.npi'); ?></div>
+                                        <input type="text" id="perfNpi" class="form-control" maxlength="20" value="<?php echo htmlspecialchars($u['NPI'] ?? ''); ?>" placeholder="1114420973">
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php if ($tieneLicense): ?>
+                                    <div class="mb-2">
+                                        <div class="info-label"><?php te('ucreate.license'); ?></div>
+                                        <input type="text" id="perfLicense" class="form-control" maxlength="60" value="<?php echo htmlspecialchars($u['LICENSE_ID'] ?? ''); ?>" placeholder="008982-1ok">
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php endif; ?>
+                                    <button type="button" class="btn btn-primary mt-2" id="btnGuardarPerfil" onclick="guardarPerfil()">
+                                        <i class="bi bi-check-lg"></i> <?php te('common.saveChanges'); ?>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -205,8 +247,41 @@ var T = {
     currentWrong:   <?php echo json_encode(t('profile.js.currentWrong')); ?>,
     sessionExpired: <?php echo json_encode(t('profile.js.sessionExpired')); ?>,
     updateError:    <?php echo json_encode(t('profile.js.updateError')); ?>,
-    connError:      <?php echo json_encode(t('common.js.connError')); ?>
+    connError:      <?php echo json_encode(t('common.js.connError')); ?>,
+    profileSaved:   <?php echo json_encode(t('profile.js.profileSaved')); ?>,
+    profileNameReq: <?php echo json_encode(t('profile.js.nameRequired')); ?>
 };
+
+function guardarPerfil() {
+    const nombres    = document.getElementById('perfNombres').value.trim();
+    const apellidos  = document.getElementById('perfApellidos').value.trim();
+    const telefono   = document.getElementById('perfTelefono').value.trim();
+    const correoEl   = document.getElementById('perfCorreo');
+    const correo     = correoEl && !correoEl.disabled ? correoEl.value.trim() : '';
+    const npiEl      = document.getElementById('perfNpi');
+    const licenseEl  = document.getElementById('perfLicense');
+    const npi        = npiEl ? npiEl.value.trim() : '';
+    const license    = licenseEl ? licenseEl.value.trim() : '';
+
+    if (!nombres || !apellidos) { alert(T.profileNameReq); return; }
+    const btn = document.getElementById('btnGuardarPerfil');
+    btn.disabled = true;
+    $.post('guardar_perfil.php', {
+        nombres: nombres, apellidos: apellidos, telefono: telefono,
+        correo: correo, npi: npi, license_id: license
+    }, function(res) {
+        res = (res || '').trim();
+        if (res === 'OK') {
+            alert(T.profileSaved);
+            document.getElementById('perfilNombreLbl').textContent = (nombres + ' ' + apellidos).trim();
+        } else if (res === 'SIN_SESION') {
+            alert(T.sessionExpired); window.location.href = 'index.php';
+        } else {
+            alert(T.updateError + res);
+        }
+        btn.disabled = false;
+    }).fail(function() { alert(T.connError); btn.disabled = false; });
+}
 
 function guardarClave() {
     const actual     = document.getElementById('claveActual').value;
