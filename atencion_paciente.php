@@ -35,11 +35,14 @@ $colDocExiste = function ($col) use ($conexion, $dbName) {
 };
 $tieneNpi     = $colDocExiste('NPI');
 $tieneLicense = $colDocExiste('LICENSE_ID');
+$tieneFirma   = $colDocExiste('FIRMA_IMG');
 $selDocCreds  = ($tieneNpi     ? ", D.NPI        AS DOC_NPI"        : ", '' AS DOC_NPI")
-              . ($tieneLicense ? ", D.LICENSE_ID AS DOC_LICENSE_ID" : ", '' AS DOC_LICENSE_ID");
+              . ($tieneLicense ? ", D.LICENSE_ID AS DOC_LICENSE_ID" : ", '' AS DOC_LICENSE_ID")
+              . ($tieneFirma   ? ", D.FIRMA_IMG  AS DOC_FIRMA_IMG"  : ", '' AS DOC_FIRMA_IMG");
 // Credenciales del usuario de sesión (para la firma cuando el que atiende es el logueado)
 $selUsrCreds  = ($tieneNpi     ? ", U.NPI        AS USR_NPI"        : ", '' AS USR_NPI")
-              . ($tieneLicense ? ", U.LICENSE_ID AS USR_LICENSE_ID" : ", '' AS USR_LICENSE_ID");
+              . ($tieneLicense ? ", U.LICENSE_ID AS USR_LICENSE_ID" : ", '' AS USR_LICENSE_ID")
+              . ($tieneFirma   ? ", U.FIRMA_IMG  AS USR_FIRMA_IMG"  : ", '' AS USR_FIRMA_IMG");
 $idUserSesion = (int)($_SESSION['iduser'] ?? 0);
 
 $sql = "SELECT
@@ -85,6 +88,7 @@ else                                                                          $p
 // las suyas (él es quien firma); si no, se caen al doctor asignado a la cita.
 $firmaNpi     = trim($d['USR_NPI'] ?? '') !== '' ? $d['USR_NPI'] : ($d['DOC_NPI'] ?? '');
 $firmaLicense = trim($d['USR_LICENSE_ID'] ?? '') !== '' ? $d['USR_LICENSE_ID'] : ($d['DOC_LICENSE_ID'] ?? '');
+$firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : ($d['DOC_FIRMA_IMG'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo current_lang(); ?>">
@@ -408,7 +412,8 @@ const DATOS_CITA = {
     fechaCita:       "<?php echo $d['FECHA_CITA']; ?>",
     fechaHoy:        "<?php echo date('d/m/Y'); ?>",
     firmaNpi:        "<?php echo addslashes($firmaNpi); ?>",
-    firmaLicense:    "<?php echo addslashes($firmaLicense); ?>"
+    firmaLicense:    "<?php echo addslashes($firmaLicense); ?>",
+    firmaImg:        <?php echo json_encode($firmaImg ?: ''); ?>
 };
 
 // ── Textos traducibles (i18n) ────────────────────────────────────────
@@ -597,9 +602,12 @@ function cargarPlantilla(id){
     const credsHtml = credsLines.length
         ? credsLines.map(function(l){ return '<span>' + l + '</span>'; }).join('<br>') + '<br>'
         : '';
+    const firmaImgHtml = DATOS_CITA.firmaImg
+        ? '<img src="' + DATOS_CITA.firmaImg + '" alt="firma" style="max-height:80px;max-width:260px;margin-bottom:4px;"><br>'
+        : '';
     const firmaHtml = `<br><br>
         <div style="margin-top:40px;border-top:1px solid #ccc;padding-top:10px;font-family:Arial,sans-serif;">
-            <strong>${DATOS_CITA.atiendNombre}</strong><br>
+            ${firmaImgHtml}<strong>${DATOS_CITA.atiendNombre}</strong><br>
             ${credsHtml}
         </div>`;
     // Edad y sexo del paciente para plantillas
@@ -637,6 +645,7 @@ function cargarPlantilla(id){
                 '{{firma_credenciales}}': credsLines.join(' · '),
                 '{{firma_npi}}': DATOS_CITA.firmaNpi,
                 '{{firma_licencia}}': DATOS_CITA.firmaLicense,
+                '{{firma_imagen}}': firmaImgHtml,
                 '{{practica_nombre}}': DATOS_CITA.agenciaNombre,
                 '{{direccion_1}}': DATOS_CITA.agenciaDirec,
                 '{{direccion_2}}': '',
