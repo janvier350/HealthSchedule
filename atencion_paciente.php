@@ -602,6 +602,16 @@ function cargarPlantilla(id){
             <strong>${DATOS_CITA.atiendNombre}</strong><br>
             ${credsHtml}
         </div>`;
+    // Edad y sexo del paciente para plantillas
+    var _meses = edadPacienteMeses();
+    var edadStr = '';
+    if (_meses !== null && _meses >= 0) {
+        var _y = Math.floor(_meses / 12);
+        var _m = _meses % 12;
+        edadStr = _y + ' año' + (_y === 1 ? '' : 's') + ' y ' + _m + ' mes' + (_m === 1 ? '' : 'es');
+    }
+    var sexoStr = (DATOS_CITA.pacienteSexIdx === 1) ? 'Femenino' : (DATOS_CITA.pacienteSexIdx === 0 ? 'Masculino' : '');
+
     $.ajax({
         url: 'get_plantilla_html.php', type: 'GET', data: { id: id },
         success: function(html){
@@ -609,6 +619,10 @@ function cargarPlantilla(id){
                 '{{fecha_actual}}': DATOS_CITA.fechaHoy,
                 '{{fecha_evaluacion}}': DATOS_CITA.fechaHoy,
                 '{{fecha_cita}}': DATOS_CITA.fechaCita,
+                '{{hora_inicio}}': DATOS_CITA.horaInicio || '',
+                '{{hora_fin}}': DATOS_CITA.horaFin || '',
+                '{{edad_paciente}}': edadStr,
+                '{{sexo_paciente}}': sexoStr,
                 '{{paciente_nombre}}': DATOS_CITA.pacienteNombre,
                 '{{paciente_dob}}': dobFormateada,
                 '{{paciente_email}}': DATOS_CITA.pacienteEmail,
