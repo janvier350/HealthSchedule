@@ -29,11 +29,13 @@ $colExiste = function($col) use ($conexion, $dbName) {
 $tieneCorreo  = $colExiste('CORREO');
 $tieneNpi     = $colExiste('NPI');
 $tieneLicense = $colExiste('LICENSE_ID');
+$tieneFirma   = $colExiste('FIRMA_IMG');
 
 $cols = "A.NOMBRES, A.APELLIDOS, A.TELEFONO, A.USUARIO, B.CARGO"
       . ($tieneCorreo  ? ", A.CORREO"     : "")
       . ($tieneNpi     ? ", A.NPI"        : "")
-      . ($tieneLicense ? ", A.LICENSE_ID" : "");
+      . ($tieneLicense ? ", A.LICENSE_ID" : "")
+      . ($tieneFirma   ? ", A.FIRMA_IMG"  : "");
 $stmt = $conexion->prepare(
     "SELECT $cols FROM ADM_USUARIO A
      INNER JOIN ADM_ROL B ON A.IDADM_ROL = B.IDADM_ROL
@@ -201,9 +203,9 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                         </div>
                     </div>
 
-                    <!-- Cambiar contraseña -->
+                    <!-- Cambiar contraseña + Firma para informes -->
                     <div class="col-md-7 mb-3">
-                        <div class="card shadow-sm h-100">
+                        <div class="card shadow-sm mb-3">
                             <div class="card-header py-2">
                                 <i class="bi bi-shield-lock me-1"></i> <?php te('profile.changePassword'); ?>
                             </div>
@@ -228,6 +230,65 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                                 </form>
                             </div>
                         </div>
+
+                        <!-- Firma para informes -->
+                        <div class="card shadow-sm">
+                            <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                                <span><i class="bi bi-pen me-1"></i> <?php te('profile.signature'); ?></span>
+                                <?php if ($tieneFirma && !empty($u['FIRMA_IMG'])): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarFirma()">
+                                        <i class="bi bi-trash"></i> <?php te('profile.signatureDelete'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3"><?php te('profile.signatureHelp'); ?></p>
+
+                                <div class="mb-3">
+                                    <div class="info-label"><?php te('profile.signatureCurrent'); ?></div>
+                                    <div id="firmaPreviewWrap" style="border:1px dashed #ccc;border-radius:6px;padding:8px;background:#fafafa;min-height:110px;display:flex;align-items:center;justify-content:center;">
+                                        <?php if ($tieneFirma && !empty($u['FIRMA_IMG'])): ?>
+                                            <img id="firmaPreview" src="<?php echo htmlspecialchars($u['FIRMA_IMG']); ?>" alt="firma" style="max-height:120px;max-width:100%;">
+                                        <?php else: ?>
+                                            <span id="firmaVacia" class="text-muted small"><?php te('profile.signatureNone'); ?></span>
+                                            <img id="firmaPreview" alt="firma" style="display:none;max-height:120px;max-width:100%;">
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <ul class="nav nav-pills mb-2" id="firmaTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="tab-firma-up-btn" data-bs-toggle="pill" data-bs-target="#tab-firma-up" type="button" role="tab">
+                                            <i class="bi bi-upload"></i> <?php te('profile.signatureTabUp'); ?>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="tab-firma-dr-btn" data-bs-toggle="pill" data-bs-target="#tab-firma-dr" type="button" role="tab">
+                                            <i class="bi bi-brush"></i> <?php te('profile.signatureTabDraw'); ?>
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content border rounded p-3">
+                                    <div class="tab-pane fade show active" id="tab-firma-up" role="tabpanel">
+                                        <label class="form-label small"><?php te('profile.signatureUpload'); ?></label>
+                                        <input type="file" id="firmaFile" class="form-control" accept="image/png,image/jpeg">
+                                    </div>
+                                    <div class="tab-pane fade" id="tab-firma-dr" role="tabpanel">
+                                        <canvas id="firmaCanvas" style="border:1px dashed #aaa;border-radius:6px;width:100%;height:150px;touch-action:none;background:#fff;"></canvas>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarCanvasFirma()">
+                                                <i class="bi bi-eraser"></i> <?php te('profile.signatureClear'); ?>
+                                            </button>
+                                            <small class="text-muted"><?php te('profile.signatureDraw'); ?></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-primary mt-3" id="btnGuardarFirma" onclick="guardarFirma()">
+                                    <i class="bi bi-check-lg"></i> <?php te('profile.signatureSave'); ?>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -249,7 +310,15 @@ var T = {
     updateError:    <?php echo json_encode(t('profile.js.updateError')); ?>,
     connError:      <?php echo json_encode(t('common.js.connError')); ?>,
     profileSaved:   <?php echo json_encode(t('profile.js.profileSaved')); ?>,
-    profileNameReq: <?php echo json_encode(t('profile.js.nameRequired')); ?>
+    profileNameReq: <?php echo json_encode(t('profile.js.nameRequired')); ?>,
+    sigSaved:       <?php echo json_encode(t('profile.js.sigSaved')); ?>,
+    sigDeleted:     <?php echo json_encode(t('profile.js.sigDeleted')); ?>,
+    sigConfirmDel:  <?php echo json_encode(t('profile.js.sigConfirmDel')); ?>,
+    sigInvalid:     <?php echo json_encode(t('profile.js.sigInvalid')); ?>,
+    sigTooLarge:    <?php echo json_encode(t('profile.js.sigTooLarge')); ?>,
+    sigEmpty:       <?php echo json_encode(t('profile.js.sigEmpty')); ?>,
+    sigMigration:   <?php echo json_encode(t('profile.js.sigMigration')); ?>,
+    sigNone:        <?php echo json_encode(t('profile.signatureNone')); ?>
 };
 
 function guardarPerfil() {
@@ -324,6 +393,107 @@ function guardarClave() {
         alert(T.connError);
         btn.disabled = false;
     });
+}
+
+// ─── Firma para informes ─────────────────────────────────────────────
+(function(){
+    var canvas = document.getElementById('firmaCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var dibujando = false, hayFirma = false;
+    function ajustar(){
+        var ratio = window.devicePixelRatio || 1;
+        canvas.width  = canvas.offsetWidth  * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        ctx.scale(ratio, ratio);
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#222';
+    }
+    function pos(e){
+        var r = canvas.getBoundingClientRect();
+        var p = e.touches ? e.touches[0] : e;
+        return { x: p.clientX - r.left, y: p.clientY - r.top };
+    }
+    function start(e){ dibujando = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); }
+    function move(e){ if(!dibujando) return; var p = pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); hayFirma = true; e.preventDefault(); }
+    function end(){ dibujando = false; }
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start);
+    canvas.addEventListener('touchmove', move);
+    canvas.addEventListener('touchend', end);
+
+    var pillDraw = document.getElementById('tab-firma-dr-btn');
+    if (pillDraw) pillDraw.addEventListener('shown.bs.tab', ajustar);
+
+    window.limpiarCanvasFirma = function(){ ctx.clearRect(0,0,canvas.width,canvas.height); hayFirma = false; };
+    window._firmaHay       = function(){ return hayFirma; };
+    window._firmaDataURL   = function(){ return canvas.toDataURL('image/png'); };
+    window._firmaTabActiva = function(){
+        var el = document.getElementById('tab-firma-dr-btn');
+        return el && el.classList.contains('active');
+    };
+})();
+
+function _actualizarPreviewFirma(dataURL){
+    var img = document.getElementById('firmaPreview');
+    var vacio = document.getElementById('firmaVacia');
+    if (dataURL) {
+        if (img)   { img.src = dataURL; img.style.display = 'inline-block'; }
+        if (vacio) { vacio.style.display = 'none'; }
+    } else {
+        if (img)   { img.removeAttribute('src'); img.style.display = 'none'; }
+        if (vacio) { vacio.style.display = 'inline'; vacio.textContent = T.sigNone; }
+    }
+}
+
+function _postFirma(dataURL) {
+    var btn = document.getElementById('btnGuardarFirma');
+    btn.disabled = true;
+    $.post('guardar_firma.php', { accion: 'guardar', firma: dataURL }, function(res){
+        res = (res || '').trim();
+        if (res === 'OK') {
+            _actualizarPreviewFirma(dataURL);
+            alert(T.sigSaved);
+            if (!document.querySelector('button[onclick="eliminarFirma()"]')) {
+                window.location.reload();
+            }
+        } else if (res === 'SIN_SESION')         { alert(T.sessionExpired); window.location.href='index.php'; }
+          else if (res === 'FALTA_MIGRACION')    { alert(T.sigMigration); }
+          else if (res === 'FORMATO_INVALIDO')   { alert(T.sigInvalid); }
+          else if (res === 'ARCHIVO_MUY_GRANDE') { alert(T.sigTooLarge); }
+          else                                   { alert(T.updateError + res); }
+        btn.disabled = false;
+    }).fail(function(){ alert(T.connError); btn.disabled = false; });
+}
+
+function guardarFirma() {
+    if (window._firmaTabActiva && window._firmaTabActiva()) {
+        if (!window._firmaHay || !window._firmaHay()) { alert(T.sigEmpty); return; }
+        _postFirma(window._firmaDataURL());
+        return;
+    }
+    var f = document.getElementById('firmaFile');
+    if (!f || !f.files || !f.files[0]) { alert(T.sigInvalid); return; }
+    var file = f.files[0];
+    if (!/^image\/(png|jpe?g)$/i.test(file.type)) { alert(T.sigInvalid); return; }
+    if (file.size > 1024 * 1024) { alert(T.sigTooLarge); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){ _postFirma(e.target.result); };
+    reader.readAsDataURL(file);
+}
+
+function eliminarFirma() {
+    if (!confirm(T.sigConfirmDel)) return;
+    $.post('guardar_firma.php', { accion: 'eliminar' }, function(res){
+        res = (res || '').trim();
+        if (res === 'OK') {
+            _actualizarPreviewFirma(null);
+            alert(T.sigDeleted);
+            window.location.reload();
+        } else if (res === 'SIN_SESION') { alert(T.sessionExpired); window.location.href='index.php'; }
+        else                              { alert(T.updateError + res); }
+    }).fail(function(){ alert(T.connError); });
 }
 </script>
 </body>
