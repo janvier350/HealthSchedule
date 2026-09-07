@@ -439,6 +439,22 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
     };
 })();
 
+// Mueve los modales del sidebar al <body> para escapar del stacking
+// context del sidebar (evita que el backdrop de Bootstrap tape el modal).
+(function(){
+    function mover(id){
+        var el = document.getElementById(id);
+        if (el && el.parentNode !== document.body) document.body.appendChild(el);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function(){
+            mover('mnuModalHistorial'); mover('mnuModalInforme');
+        });
+    } else {
+        mover('mnuModalHistorial'); mover('mnuModalInforme');
+    }
+})();
+
 // Abre el modal de detalle del paciente (agenda, informes, documentos).
 window.mnuVerHistorialPaciente = function (idPaciente, nombre) {
     var body = document.getElementById('mnuModalHistorialBody');
