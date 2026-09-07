@@ -701,6 +701,10 @@ return array(
     'att.js.extendOk'         => 'Cita extendida {min} min. Nueva hora fin: {fin}.',
     'att.js.extendOutOfRange' => 'No se puede extender la cita: excede el horario de agenda.',
     'att.js.extendError'      => 'No se pudo extender la cita:',
+    // Valoración pediátrica automática
+    'att.ped.title'           => 'Valoración pediátrica (WHO 2-19 años)',
+    'att.ped.insertIntoReport'=> 'Insertar en el informe',
+    'att.js.pedInserted'      => 'Tabla pediátrica insertada en el informe.',
     'att.help.title'          => 'Cómo usar el dictado por voz',
     'att.help.req.title'      => 'Requisitos',
     'att.help.req.browser'    => 'Navegador Google Chrome o Microsoft Edge (en el celular, Chrome).',
