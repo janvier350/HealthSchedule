@@ -43,6 +43,24 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
     }
     .sidebar-lang a:hover { background:rgba(13,110,253,.08); }
     .sidebar-lang a.active { background:#0d6efd; color:#fff; }
+
+    /* ── Buscador de pacientes en el sidebar (estilo Kalix) ── */
+    .sb-search { padding: 12px 12px 6px; border-bottom: 1px solid rgba(0,0,0,.06); position: relative; }
+    .sb-search .input-group-text { background:#fff; border-right:0; padding-right:0; }
+    .sb-search .form-control { border-left:0; padding-left:6px; }
+    .sb-search .form-control:focus { box-shadow: none; border-color: #dee2e6; }
+    .sb-search-results {
+        position:absolute; top:100%; left:12px; right:12px; z-index:1055;
+        background:#fff; border:1px solid #e6e9f0; border-radius:10px;
+        max-height:340px; overflow-y:auto; margin-top:4px;
+        box-shadow: 0 6px 18px rgba(16,31,85,.08);
+    }
+    .sb-search-results .sbs-item { padding:8px 10px; cursor:pointer; border-bottom:1px solid #f1f3f8; }
+    .sb-search-results .sbs-item:last-child { border-bottom:0; }
+    .sb-search-results .sbs-item:hover, .sb-search-results .sbs-item.active { background:#f0f4ff; }
+    .sb-search-results .sbs-name { font-weight:600; color:#23324d; font-size:.86rem; }
+    .sb-search-results .sbs-meta { font-size:.72rem; color:#6c757d; }
+    .sb-search-results .sbs-empty { padding:10px; color:#6c757d; font-size:.82rem; }
 </style>
 
 <div class="app-header__logo">
@@ -62,6 +80,15 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
     <button type="button" class="btn-icon btn-icon-only btn btn-primary btn-sm mobile-toggle-header-nav">
         <span class="btn-icon-wrapper"><i class="fa fa-ellipsis-v fa-w-6"></i></span>
     </button>
+</div>
+
+<!-- ── Buscador rápido de pacientes ─────────────────────────────── -->
+<div class="sb-search">
+    <div class="input-group input-group-sm">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" id="sbPacienteBuscar" class="form-control" placeholder="<?php te('cal.searchPatientTop'); ?>" autocomplete="off">
+    </div>
+    <div id="sbPacienteResultados" class="sb-search-results d-none"></div>
 </div>
 
 <div class="scrollbar-sidebar">
@@ -88,11 +115,13 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-calendar3"></i> <?php te('menu.calendar'); ?>
                 </a>
             </li>
+            <?php if ($esSistema || $esUsuario): ?>
             <li>
                 <a href="Agenda_Pendientes.php" class="<?php echo menuActivo('Agenda_Pendientes.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-calendar-check"></i> <?php te('menu.pending'); ?>
                 </a>
             </li>
+            <?php endif; ?>
             <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="historial_atenciones.php" class="<?php echo menuActivo('historial_atenciones.php', $paginaActual); ?>">
@@ -105,7 +134,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
             </li>
             <?php endif; ?>
-            <?php if ($esSistema || $esDoctor): ?>
+            <?php if ($esSistema): ?>
             <li>
                 <a href="Enviar_Notificacion.php" class="<?php echo menuActivo('Enviar_Notificacion.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-envelope"></i> <?php te('menu.sendNotification'); ?>
@@ -140,6 +169,8 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> <?php te('menu.documents'); ?>
                 </a>
             </li>
+            <?php endif; ?>
+            <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="documentos_enviados.php" class="<?php echo menuActivo('documentos_enviados.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-send-check"></i> <?php te('menu.sentDocuments'); ?>
@@ -147,7 +178,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
-            <!-- ══ SÓLO SISTEMA ════════════════════════════════════════ -->
+            <!-- ══ SÓLO SISTEMA (Doctor management) ══════════════════════ -->
             <?php if ($esSistema): ?>
             <li>
                 <a href="#">
@@ -163,6 +194,8 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     </li>
                 </ul>
             </li>
+            <?php endif; ?>
+            <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="#">
                     <i class="metismenu-icon bi bi-file-earmark-text"></i>
@@ -177,9 +210,18 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     </li>
                 </ul>
             </li>
+            <?php endif; ?>
+            <?php if ($esSistema): ?>
             <li>
                 <a href="gestionar_tipos_consulta.php" class="<?php echo menuActivo('gestionar_tipos_consulta.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-palette"></i> <?php te('menu.consultTypes'); ?>
+                </a>
+            </li>
+            <?php endif; ?>
+            <?php if ($esDoctor): ?>
+            <li>
+                <a href="gestionar_tipos_seguro.php" class="<?php echo menuActivo('gestionar_tipos_seguro.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-bookmark-star"></i> <?php te('menu.insuranceTypes'); ?>
                 </a>
             </li>
             <?php endif; ?>
@@ -272,3 +314,58 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
         <i class="metismenu-icon bi bi-power"></i> <?php te('menu.logout'); ?>
     </a>
 </div>
+
+<script>
+// ── Buscador de pacientes del sidebar → historial del paciente ──
+(function(){
+    var input = document.getElementById('sbPacienteBuscar');
+    var box   = document.getElementById('sbPacienteResultados');
+    if (!input || !box) return;
+    var CAL_SEARCH_NONE = <?php echo json_encode(t('cal.searchNone')); ?>;
+    var timer = null, items = [], activeIdx = -1;
+    function hide(){ box.classList.add('d-none'); box.innerHTML=''; items=[]; activeIdx=-1; }
+    function irA(id){ window.location.href = 'historial_atenciones.php?id=' + encodeURIComponent(id); }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function render(data){
+        items = Array.isArray(data) ? data : [];
+        if (!items.length) {
+            box.innerHTML = '<div class="sbs-empty">' + escapeHtml(CAL_SEARCH_NONE) + '</div>';
+            box.classList.remove('d-none'); return;
+        }
+        box.innerHTML = items.map(function(p){
+            var meta = [p.cedula, p.telefono].filter(Boolean).join('  ·  ');
+            return '<div class="sbs-item" data-id="' + p.id + '">'
+                 + '<div class="sbs-name">' + escapeHtml(p.nombre) + '</div>'
+                 + (meta ? '<div class="sbs-meta">' + escapeHtml(meta) + '</div>' : '')
+                 + '</div>';
+        }).join('');
+        box.classList.remove('d-none');
+        Array.prototype.forEach.call(box.querySelectorAll('.sbs-item'), function(el){
+            el.addEventListener('mousedown', function(e){ e.preventDefault(); irA(el.getAttribute('data-id')); });
+        });
+        activeIdx = -1;
+    }
+    input.addEventListener('input', function(){
+        var q = input.value.trim();
+        if (timer) clearTimeout(timer);
+        if (q.length < 2) { hide(); return; }
+        timer = setTimeout(function(){
+            fetch('buscar_pacientes.php?q=' + encodeURIComponent(q))
+                .then(function(r){ return r.json(); }).then(render).catch(hide);
+        }, 220);
+    });
+    input.addEventListener('keydown', function(e){
+        if (box.classList.contains('d-none')) return;
+        var els = box.querySelectorAll('.sbs-item');
+        if (!els.length) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx+1, els.length-1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); }
+        else if (e.key === 'Enter') { if (activeIdx >= 0 && items[activeIdx]) { e.preventDefault(); irA(items[activeIdx].id); } return; }
+        else if (e.key === 'Escape') { hide(); return; }
+        else return;
+        Array.prototype.forEach.call(els, function(el,i){ el.classList.toggle('active', i===activeIdx); });
+        if (els[activeIdx]) els[activeIdx].scrollIntoView({block:'nearest'});
+    });
+    document.addEventListener('click', function(e){ if (!e.target.closest('.sb-search')) hide(); });
+})();
+</script>
