@@ -285,6 +285,27 @@ $firmaLicense = trim($d['USR_LICENSE_ID'] ?? '') !== '' ? $d['USR_LICENSE_ID'] :
             </div>
         </div>
 
+        <!-- ── VALORACIÓN PEDIÁTRICA (auto, WHO 2-19 años) ───────── -->
+        <div id="pedAssess" class="mb-3 d-none">
+            <div class="card border-0" style="background:#e8f4f4;">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <div class="fw-bold text-uppercase small" style="color:#0e2c3a;letter-spacing:.05em;">
+                            <i class="bi bi-clipboard2-pulse me-1"></i>
+                            <?php te('att.ped.title'); ?>
+                        </div>
+                        <button type="button" id="btnInsertPed"
+                                class="btn btn-sm btn-outline-primary"
+                                onclick="insertarTablaPediatrica()">
+                            <i class="bi bi-file-earmark-plus me-1"></i>
+                            <?php te('att.ped.insertIntoReport'); ?>
+                        </button>
+                    </div>
+                    <div id="pedTableWrap"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- ── BARRA DE DICTADO ────────────────────────────────────── -->
         <div class="d-flex align-items-center gap-3 mb-2 p-2 att-toolbar">
             <button type="button" id="btnMic"
@@ -410,6 +431,9 @@ const ATT = {
     extendOk:          <?php echo json_encode(t('att.js.extendOk')); ?>,
     extendOutOfRange:  <?php echo json_encode(t('att.js.extendOutOfRange')); ?>,
     extendError:       <?php echo json_encode(t('att.js.extendError')); ?>,
+    ped: {
+        inserted:      <?php echo json_encode(t('att.js.pedInserted')); ?>
+    },
     // Etiquetas pediátricas WHO (2-19)
     imc: {
         severeUnderweight: <?php echo json_encode(t('att.js.pedSevereUnderweight')); ?>,
@@ -447,7 +471,8 @@ const ATT = {
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/who_bmi.js"></script>
+<script type="text/javascript" src="./assets/scripts/main.js"></script>
+<script src="js/who_growth.js"></script>
 <script>
 
 // ── INICIALIZAR EDITOR ───────────────────────────────────────────────
@@ -482,23 +507,56 @@ function edadPacienteMeses(){
     return meses;
 }
 
+// Última tabla pediátrica generada (para poder insertarla en el informe).
+var _pedTablaHtml = null;
+
+function renderPediatricAssessment(sexIdx, meses, pesoKg, tallaCm) {
+    var wrap = document.getElementById('pedAssess');
+    var body = document.getElementById('pedTableWrap');
+    if (!wrap || !body) return;
+    if (!window.WHO_GROWTH || meses == null || meses < 24 || meses > 228 || !(sexIdx === 0 || sexIdx === 1) || !(pesoKg > 0) || !(tallaCm > 0)) {
+        wrap.classList.add('d-none');
+        _pedTablaHtml = null;
+        return;
+    }
+    var lang = (document.documentElement.lang || 'es').toLowerCase().slice(0, 2);
+    var r = WHO_GROWTH.buildTable(sexIdx, meses, pesoKg, tallaCm, lang);
+    if (!r || !r.html) { wrap.classList.add('d-none'); _pedTablaHtml = null; return; }
+    body.innerHTML = r.html;
+    _pedTablaHtml = r.html;
+    wrap.classList.remove('d-none');
+}
+
+function insertarTablaPediatrica() {
+    if (!_pedTablaHtml) return;
+    var $ed = $('#editorInforme');
+    if ($ed.length && $ed.summernote) {
+        $ed.summernote('pasteHTML', '<div>' + _pedTablaHtml + '<br></div>');
+        alert(ATT.ped.inserted);
+    }
+}
+
 function calcularIMC(){
     const pesoInput  = parseFloat($('#peso').val());
     const tallaInput = parseFloat($('#talla').val());
     const uPeso  = $('input[name="unidadPeso"]:checked').val();
     const uTalla = $('input[name="unidadTalla"]:checked').val();
-    if(!pesoInput || !tallaInput) return;
-    const pesoKg = uPeso  === 'lbs' ? pesoInput  * 0.453592 : pesoInput;
-    const tallaM = uTalla === 'cm'  ? tallaInput / 100       : tallaInput;
-    const imcNum = pesoKg / (tallaM * tallaM);
-    const imc    = imcNum.toFixed(2);
+
+    var meses = edadPacienteMeses();
+    var sexIdx = (typeof DATOS_CITA.pacienteSexIdx === 'number') ? DATOS_CITA.pacienteSexIdx : -1;
+
+    if(!pesoInput || !tallaInput) { renderPediatricAssessment(sexIdx, meses, 0, 0); return; }
+    const pesoKg  = uPeso  === 'lbs' ? pesoInput  * 0.453592 : pesoInput;
+    const tallaM  = uTalla === 'cm'  ? tallaInput / 100       : tallaInput;
+    const tallaCm = tallaM * 100;
+    const imcNum  = pesoKg / (tallaM * tallaM);
+    const imc     = imcNum.toFixed(2);
     $('#imc').val(imc);
     const est = $('#estado_imc');
 
-    // Pediátrico (2-19 años): usa WHO BMI-for-age (LMS → Z → categoría).
-    var meses = edadPacienteMeses();
-    var sexIdx = (typeof DATOS_CITA.pacienteSexIdx === 'number') ? DATOS_CITA.pacienteSexIdx : -1;
-    if (window.WHO_BMI && meses !== null && meses >= 24 && meses <= 228 && (sexIdx === 0 || sexIdx === 1)) {
+    // Pediátrico (2-19 años): actualiza tarjeta con tabla PediTools-style + insignia.
+    if (window.WHO_GROWTH && meses !== null && meses >= 24 && meses <= 228 && (sexIdx === 0 || sexIdx === 1)) {
+        renderPediatricAssessment(sexIdx, meses, pesoKg, tallaCm);
         var r = WHO_BMI.classify(sexIdx, meses, imcNum);
         if (r) {
             // Regla adicional (AAP/CDC): IMC >= 35 kg/m² siempre es obesidad severa.
@@ -511,6 +569,8 @@ function calcularIMC(){
             return;
         }
     }
+    // Adulto: oculta la tarjeta pediátrica
+    renderPediatricAssessment(sexIdx, meses, 0, 0);
 
     // Adulto (>= 20 años) o pediátrico sin datos suficientes: clasificación adulto (OMS).
     est.removeAttr('title');

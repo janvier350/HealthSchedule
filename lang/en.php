@@ -701,6 +701,10 @@ return array(
     'att.js.extendOk'         => 'Appointment extended by {min} min. New end time: {fin}.',
     'att.js.extendOutOfRange' => 'Cannot extend the appointment: exceeds the schedule.',
     'att.js.extendError'      => 'Could not extend the appointment:',
+    // Automatic pediatric assessment
+    'att.ped.title'           => 'Pediatric assessment (WHO 2-19 years)',
+    'att.ped.insertIntoReport'=> 'Insert into report',
+    'att.js.pedInserted'      => 'Pediatric table inserted into the report.',
     'att.help.title'          => 'How to use voice dictation',
     'att.help.req.title'      => 'Requirements',
     'att.help.req.browser'    => 'Google Chrome or Microsoft Edge browser (on mobile, use Chrome).',
