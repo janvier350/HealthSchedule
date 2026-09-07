@@ -398,3 +398,50 @@ function imcColor($imc) {
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
+
+<!-- ══ SEGUROS DEL PACIENTE ════════════════════════════════════════════ -->
+<?php
+$segurosDisponibles = [];
+$resSeg = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
+if ($resSeg) { while ($s = $resSeg->fetch_assoc()) $segurosDisponibles[] = $s; }
+?>
+<div class="p-3 border-top" id="hpSegurosWrap" data-id-paciente="<?php echo (int)$idPaciente; ?>">
+    <h6 class="text-muted mb-2"><i class="bi bi-shield-check"></i> <?php te('pcreate.insurance'); ?></h6>
+
+    <div class="row g-2 align-items-end mb-2">
+        <div class="col-12 col-md-5">
+            <label class="form-label small mb-1"><?php te('pcreate.insurer'); ?></label>
+            <select id="hpSeguro" class="form-select form-select-sm">
+                <option value=""><?php te('pcreate.selectDash'); ?></option>
+                <?php foreach ($segurosDisponibles as $sp): ?>
+                <option value="<?php echo (int)$sp['Id_seguro']; ?>"><?php echo htmlspecialchars($sp['Empresa_seguro']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small mb-1"><?php te('pcreate.policyNo'); ?></label>
+            <input type="text" id="hpPoliza" class="form-control form-control-sm" maxlength="60">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1"><?php te('pcreate.priority'); ?></label>
+            <select id="hpPrioridad" class="form-select form-select-sm">
+                <option value="Primario"><?php te('pcreate.priorityPrimary'); ?></option>
+                <option value="Secundario"><?php te('pcreate.prioritySecondary'); ?></option>
+                <option value="Terciario"><?php te('pcreate.priorityTertiary'); ?></option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
+            <button type="button" class="btn btn-sm btn-success w-100" onclick="mnuAgregarSeguroPaciente(<?php echo (int)$idPaciente; ?>)"><?php te('pcreate.addBtn'); ?></button>
+        </div>
+    </div>
+
+    <div id="hpLista"><div class="text-muted small">—</div></div>
+</div>
+<script>
+    // Cargar seguros al abrir; las funciones globales están en menu_adm.php
+    (function(){
+        if (typeof window.mnuCargarSegurosPaciente === 'function') {
+            window.mnuCargarSegurosPaciente(<?php echo (int)$idPaciente; ?>);
+        }
+    })();
+</script>
