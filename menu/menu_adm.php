@@ -476,6 +476,87 @@ window.mnuVerHistorialPaciente = function (idPaciente, nombre) {
     }
 };
 
+// ── Seguros del paciente (globales, para usarlos desde el modal del sidebar) ──
+window.mnuCargarSegurosPaciente = function (idPaciente) {
+    var cont = document.getElementById('hpLista');
+    if (!cont) return;
+    cont.innerHTML = '<div class="text-muted small">' + MNU_TXT.loading + '</div>';
+    fetch('seguro_paciente_listar.php?id_paciente=' + encodeURIComponent(idPaciente))
+        .then(function(r){ return r.text(); })
+        .then(function(html){ cont.innerHTML = html; })
+        .catch(function(){ cont.innerHTML = '<div class="text-danger small">' + MNU_TXT.loadError + '</div>'; });
+};
+window.mnuAgregarSeguroPaciente = function (idPaciente) {
+    var idSeguro  = (document.getElementById('hpSeguro')    || {}).value || '';
+    var poliza    = (document.getElementById('hpPoliza')    || {}).value || '';
+    var prioridad = (document.getElementById('hpPrioridad') || {}).value || 'Primario';
+    if (!idPaciente || !idSeguro) return;
+    fetch('seguro_paciente_guardar.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id_paciente: idPaciente, id_seguro: idSeguro, num_poliza: poliza, prioridad: prioridad })
+    }).then(function(r){ return r.text(); }).then(function(res){
+        res = (res || '').trim();
+        if (res === 'OK') {
+            var s = document.getElementById('hpSeguro');    if (s) s.value = '';
+            var p = document.getElementById('hpPoliza');    if (p) p.value = '';
+            var pr = document.getElementById('hpPrioridad'); if (pr) pr.value = 'Primario';
+            window.mnuCargarSegurosPaciente(idPaciente);
+        } else if (res === 'DUP') {
+            alert('Este seguro ya está registrado para el paciente.');
+        } else {
+            alert('No se pudo agregar el seguro: ' + res);
+        }
+    }).catch(function(){ alert(MNU_TXT.loadError); });
+};
+window.mnuEliminarSeguroPaciente = function (id, idPaciente) {
+    if (!confirm('¿Quitar este seguro?')) return;
+    fetch('seguro_paciente_eliminar.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id: id })
+    }).then(function(r){ return r.text(); }).then(function(res){
+        if ((res || '').trim() === 'OK') window.mnuCargarSegurosPaciente(idPaciente);
+        else alert('No se pudo eliminar: ' + res);
+    }).catch(function(){ alert(MNU_TXT.loadError); });
+};
+window.mnuSubirImagenSeguro = function (input, id, lado, idPaciente) {
+    if (!input.files || !input.files[0]) return;
+    var fd = new FormData();
+    fd.append('id_paciente_seguro', id);
+    fd.append('lado', lado);
+    fd.append('imagen', input.files[0]);
+    fetch('seguro_paciente_subir_imagen.php', { method: 'POST', body: fd })
+        .then(function(r){ return r.text(); })
+        .then(function(res){
+            if ((res || '').trim().startsWith('OK')) window.mnuCargarSegurosPaciente(idPaciente);
+            else alert('No se pudo subir la imagen: ' + res);
+        }).catch(function(){ alert(MNU_TXT.loadError); });
+};
+
+// Compat: el HTML de seguro_paciente_listar.php usa las funciones globales
+// eliminarSeguroPaciente(id) y subirImagenSeguro(input,id,lado). Cuando abrimos
+// el modal desde el sidebar, redirigimos a las versiones -mnu- pasando el id
+// del paciente activo (leído del wrapper del modal).
+(function(){
+    function pacIdActivo() {
+        var w = document.getElementById('hpSegurosWrap');
+        return w ? parseInt(w.getAttribute('data-id-paciente') || '0', 10) : 0;
+    }
+    if (typeof window.eliminarSeguroPaciente !== 'function') {
+        window.eliminarSeguroPaciente = function(id){
+            var p = pacIdActivo(); if (!p) return;
+            window.mnuEliminarSeguroPaciente(id, p);
+        };
+    }
+    if (typeof window.subirImagenSeguro !== 'function') {
+        window.subirImagenSeguro = function(input, id, lado){
+            var p = pacIdActivo(); if (!p) return;
+            window.mnuSubirImagenSeguro(input, id, lado, p);
+        };
+    }
+})();
+
 // verInforme(id): abre el modal del informe (fallback global).
 if (typeof window.verInforme !== 'function') {
     window.verInforme = function (idHistorial) {
