@@ -324,7 +324,14 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
     var CAL_SEARCH_NONE = <?php echo json_encode(t('cal.searchNone')); ?>;
     var timer = null, items = [], activeIdx = -1;
     function hide(){ box.classList.add('d-none'); box.innerHTML=''; items=[]; activeIdx=-1; }
-    function irA(id){ window.location.href = 'historial_atenciones.php?id=' + encodeURIComponent(id); }
+    function irA(id, nombre){
+        // Si hay modal de detalle del paciente disponible, abrirlo; si no, navegar.
+        if (typeof window.mnuVerHistorialPaciente === 'function') {
+            window.mnuVerHistorialPaciente(id, nombre || '');
+        } else {
+            window.location.href = 'historial_atenciones.php?id=' + encodeURIComponent(id);
+        }
+    }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function render(data){
         items = Array.isArray(data) ? data : [];
@@ -334,14 +341,19 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
         }
         box.innerHTML = items.map(function(p){
             var meta = [p.cedula, p.telefono].filter(Boolean).join('  ·  ');
-            return '<div class="sbs-item" data-id="' + p.id + '">'
+            return '<div class="sbs-item" data-id="' + p.id + '" data-name="' + escapeHtml(p.nombre) + '">'
                  + '<div class="sbs-name">' + escapeHtml(p.nombre) + '</div>'
                  + (meta ? '<div class="sbs-meta">' + escapeHtml(meta) + '</div>' : '')
                  + '</div>';
         }).join('');
         box.classList.remove('d-none');
         Array.prototype.forEach.call(box.querySelectorAll('.sbs-item'), function(el){
-            el.addEventListener('mousedown', function(e){ e.preventDefault(); irA(el.getAttribute('data-id')); });
+            el.addEventListener('mousedown', function(e){
+                e.preventDefault();
+                irA(el.getAttribute('data-id'), el.getAttribute('data-name'));
+                hide();
+                input.blur();
+            });
         });
         activeIdx = -1;
     }
@@ -360,7 +372,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
         if (!els.length) return;
         if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx+1, els.length-1); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); }
-        else if (e.key === 'Enter') { if (activeIdx >= 0 && items[activeIdx]) { e.preventDefault(); irA(items[activeIdx].id); } return; }
+        else if (e.key === 'Enter') { if (activeIdx >= 0 && items[activeIdx]) { e.preventDefault(); irA(items[activeIdx].id, items[activeIdx].nombre); hide(); input.blur(); } return; }
         else if (e.key === 'Escape') { hide(); return; }
         else return;
         Array.prototype.forEach.call(els, function(el,i){ el.classList.toggle('active', i===activeIdx); });
@@ -368,4 +380,100 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
     });
     document.addEventListener('click', function(e){ if (!e.target.closest('.sb-search')) hide(); });
 })();
+</script>
+
+<!-- ══ MODAL HISTORIAL (compartido, abierto por el buscador del sidebar) ══ -->
+<div class="modal fade" id="mnuModalHistorial" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2" style="background:#1a1a2e;">
+                <h6 class="modal-title text-white mb-0">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    <span id="mnuModalPacienteNombre"></span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="<?php te('common.close'); ?>"></button>
+            </div>
+            <div class="modal-body p-0" id="mnuModalHistorialBody">
+                <div class="text-center py-5 text-muted">
+                    <div class="spinner-border spinner-border-sm me-2"></div> <?php te('common.loading'); ?>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL INFORME (compartido) ══════════════════════════════════════ -->
+<div class="modal fade" id="mnuModalInforme" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i><?php te('plist.reportTitle'); ?></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="mnuCuerpoInforme">
+                <div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>
+            </div>
+            <div class="modal-footer py-2">
+                <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-printer"></i> <?php te('common.print'); ?>
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Textos i18n para los modales compartidos del sidebar
+(function(){
+    if (window.MNU_TXT) return;
+    window.MNU_TXT = {
+        loading:       <?php echo json_encode(t('common.loading')); ?>,
+        loadError:     <?php echo json_encode(t('plist.js.loadError')); ?>,
+        loadHttp:      <?php echo json_encode(t('plist.js.loadHttp')); ?>,
+        historyErrPre: <?php echo json_encode(t('plist.js.historyErrPre')); ?>,
+        historyErrTail:<?php echo json_encode(t('plist.js.historyErrTail')); ?>
+    };
+})();
+
+// Abre el modal de detalle del paciente (agenda, informes, documentos).
+window.mnuVerHistorialPaciente = function (idPaciente, nombre) {
+    var body = document.getElementById('mnuModalHistorialBody');
+    document.getElementById('mnuModalPacienteNombre').textContent = nombre || '';
+    if (body) {
+        body.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>' + MNU_TXT.loading + '</div>';
+    }
+    var m = new bootstrap.Modal(document.getElementById('mnuModalHistorial'));
+    m.show();
+    if (window.jQuery) {
+        jQuery.get('get_historial_paciente.php', { id: idPaciente })
+            .done(function(html){ body.innerHTML = html; })
+            .fail(function(xhr){ body.innerHTML = '<div class="alert alert-danger m-3">' + MNU_TXT.historyErrPre + xhr.status + MNU_TXT.historyErrTail + '</div>'; });
+    } else {
+        fetch('get_historial_paciente.php?id=' + encodeURIComponent(idPaciente))
+            .then(function(r){ return r.text(); })
+            .then(function(html){ body.innerHTML = html; })
+            .catch(function(){ body.innerHTML = '<div class="alert alert-danger m-3">' + MNU_TXT.historyErrPre + '?' + MNU_TXT.historyErrTail + '</div>'; });
+    }
+};
+
+// verInforme(id): abre el modal del informe (fallback global).
+if (typeof window.verInforme !== 'function') {
+    window.verInforme = function (idHistorial) {
+        var body = document.getElementById('mnuCuerpoInforme');
+        if (body) body.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>';
+        new bootstrap.Modal(document.getElementById('mnuModalInforme')).show();
+        var done = function(html){ body.innerHTML = html; };
+        var fail = function(){ body.innerHTML = '<div class="alert alert-danger m-3">' + MNU_TXT.loadError + '</div>'; };
+        if (window.jQuery) {
+            jQuery.get('get_informe_html.php', { id: idHistorial }).done(done).fail(fail);
+        } else {
+            fetch('get_informe_html.php?id=' + encodeURIComponent(idHistorial))
+                .then(function(r){ return r.text(); }).then(done).catch(fail);
+        }
+    };
+}
 </script>
