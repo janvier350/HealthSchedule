@@ -364,12 +364,35 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
                     <i class="bi bi-clock me-1"></i>
                     <span id="attTimeText">—</span>
                 </span>
-                <button type="button" id="btnExtender"
-                        class="btn btn-outline-warning btn-sm d-flex align-items-center gap-1"
-                        onclick="extenderCita()" title="<?php te('att.extendTip'); ?>">
-                    <i class="bi bi-plus-circle"></i>
-                    <span><?php te('att.extendBtn'); ?></span>
-                </button>
+                <div class="dropdown">
+                    <button type="button" id="btnAjustarHora"
+                            class="btn btn-outline-warning btn-sm d-flex align-items-center gap-1"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                            aria-expanded="false" title="<?php te('att.adjustTip'); ?>">
+                        <i class="bi bi-clock-history"></i>
+                        <span><?php te('att.adjustBtn'); ?></span>
+                    </button>
+                    <div class="dropdown-menu p-3 shadow" style="min-width:260px;">
+                        <label class="form-label small fw-semibold mb-1" for="inpHoraFin">
+                            <?php te('att.adjustEndLabel'); ?>
+                        </label>
+                        <input type="time" id="inpHoraFin" class="form-control form-control-sm mb-2">
+                        <div class="small text-muted mb-1"><?php te('att.adjustQuick'); ?></div>
+                        <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="extenderCita(15)">+15</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="extenderCita(30)">+30</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="extenderCita(60)">+60</button>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm flex-grow-1" onclick="ajustarHoraFin()">
+                                <i class="bi bi-check-lg"></i> <?php te('att.adjustSave'); ?>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="bootstrap.Dropdown.getInstance(document.getElementById('btnAjustarHora'))?.hide()">
+                                <?php te('att.adjustCancel'); ?>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline-primary" onclick="imprimirInforme()">
@@ -436,6 +459,9 @@ const ATT = {
     extendOk:          <?php echo json_encode(t('att.js.extendOk')); ?>,
     extendOutOfRange:  <?php echo json_encode(t('att.js.extendOutOfRange')); ?>,
     extendError:       <?php echo json_encode(t('att.js.extendError')); ?>,
+    adjustOk:          <?php echo json_encode(t('att.js.adjustOk')); ?>,
+    endBeforeStart:    <?php echo json_encode(t('att.js.endBeforeStart')); ?>,
+    invalidTime:       <?php echo json_encode(t('att.js.invalidTime')); ?>,
     ped: {
         inserted:      <?php echo json_encode(t('att.js.pedInserted')); ?>
     },
@@ -725,7 +751,7 @@ function guardarAtencion(){
     });
 }
 
-// ── EXTENDER CITA (+30 MIN) ───────────────────────────────────────────
+// ── AJUSTAR HORA FIN DE LA CITA ───────────────────────────────────────
 function renderTimeRange(){
     var span = document.getElementById('attTimeText');
     if (!span) return;
@@ -735,29 +761,57 @@ function renderTimeRange(){
     span.textContent = fin ? (ini + '  →  ' + fin) : ini;
 }
 
-function extenderCita(){
+function _postAjuste(payload, feedbackOk){
     if (!DATOS_CITA.idCita) return;
-    var btn = document.getElementById('btnExtender');
+    var btn = document.getElementById('btnAjustarHora');
     if (btn) btn.disabled = true;
-    $.post('extender_cita.php', { idCita: DATOS_CITA.idCita, minutos: 30 }, function(res){
+    payload.idCita = DATOS_CITA.idCita;
+    $.post('extender_cita.php', payload, function(res){
         if (btn) btn.disabled = false;
         var d = null;
         try { d = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e){}
         if (d && d.ok) {
             DATOS_CITA.horaFin = d.horaFin;
             renderTimeRange();
-            alert(ATT.extendOk.replace('{min}', d.minutos).replace('{fin}', d.horaFin));
+            var inp = document.getElementById('inpHoraFin');
+            if (inp) inp.value = d.horaFin;
+            alert(feedbackOk.replace('{min}', d.minutos).replace('{fin}', d.horaFin));
+            var dd = bootstrap.Dropdown.getInstance(btn);
+            if (dd) dd.hide();
         } else {
             var err = (d && d.error) ? d.error : 'ERROR';
-            if (err === 'FUERA_DE_RANGO')      alert(ATT.extendOutOfRange);
-            else if (err === 'SIN_SESION')     { alert(ATT.saveConnError); window.location.href='index.php'; }
-            else                                 alert(ATT.extendError + ' ' + err);
+            if      (err === 'FUERA_DE_RANGO')   alert(ATT.extendOutOfRange);
+            else if (err === 'FIN_ANTES_INICIO') alert(ATT.endBeforeStart);
+            else if (err === 'HORA_INVALIDA')    alert(ATT.invalidTime);
+            else if (err === 'SIN_SESION')       { alert(ATT.saveConnError); window.location.href='index.php'; }
+            else                                   alert(ATT.extendError + ' ' + err);
         }
     }, 'json').fail(function(){
         if (btn) btn.disabled = false;
         alert(ATT.saveConnError);
     });
 }
+
+// Chips rápidos (+15 / +30 / +60) — mantiene el contrato antiguo
+function extenderCita(min){
+    _postAjuste({ minutos: (min || 30) }, ATT.extendOk);
+}
+
+// Hora fin exacta desde el input
+function ajustarHoraFin(){
+    var inp = document.getElementById('inpHoraFin');
+    var val = inp ? inp.value : '';
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(val || '')) { alert(ATT.invalidTime); return; }
+    _postAjuste({ horaFin: val }, ATT.adjustOk);
+}
+
+// Al abrir el dropdown, precargar el input con la hora fin actual
+$(document).on('shown.bs.dropdown', function(ev){
+    if (ev.target && ev.target.id === 'btnAjustarHora') {
+        var inp = document.getElementById('inpHoraFin');
+        if (inp && !inp.value) inp.value = DATOS_CITA.horaFin || '';
+    }
+});
 
 // Renderizar rango al cargar la página
 $(document).ready(renderTimeRange);
