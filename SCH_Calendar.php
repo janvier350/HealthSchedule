@@ -864,6 +864,15 @@ while ($a = $resAgencias->fetch_assoc()) {
                 <div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>
             </div>
             <div class="modal-footer py-2">
+                <button id="btnEditarInforme" type="button" class="btn btn-outline-warning btn-sm" onclick="editarInforme()">
+                    <i class="bi bi-pencil-square"></i> <?php te('common.edit'); ?>
+                </button>
+                <button id="btnGuardarInforme" type="button" class="btn btn-success btn-sm d-none" onclick="guardarInformeEditado()">
+                    <i class="bi bi-check-lg"></i> <?php te('common.saveChanges'); ?>
+                </button>
+                <button id="btnCancelarInforme" type="button" class="btn btn-outline-secondary btn-sm d-none" onclick="cancelarEdicionInforme()">
+                    <?php te('plist.reportCancel'); ?>
+                </button>
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-printer"></i> <?php te('common.print'); ?>
                 </button>
@@ -1432,19 +1441,79 @@ function cargarInfoPacienteCita(idPaciente) {
 }
 
 // Ver informe de una atención (mismo endpoint que el listado de pacientes)
+var informeIdActual = null;
+var informeHtmlOriginal = '';
+
+function _resetBotonesInforme(){
+    document.getElementById('btnEditarInforme').classList.remove('d-none');
+    document.getElementById('btnGuardarInforme').classList.add('d-none');
+    document.getElementById('btnCancelarInforme').classList.add('d-none');
+    var body = document.getElementById('cuerpoInforme');
+    body.contentEditable = 'false';
+    body.style.outline = '';
+    body.style.background = '';
+}
+
 function verInforme(idHistorial) {
+    informeIdActual = idHistorial;
+    informeHtmlOriginal = '';
+    _resetBotonesInforme();
     document.getElementById('cuerpoInforme').innerHTML =
         '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>';
     new bootstrap.Modal(document.getElementById('modalInforme')).show();
     $.get('get_informe_html.php', { id: idHistorial })
         .done(function (html) {
             document.getElementById('cuerpoInforme').innerHTML = html;
+            informeHtmlOriginal = html;
         })
         .fail(function (xhr) {
             document.getElementById('cuerpoInforme').innerHTML =
                 '<div class="alert alert-danger m-3">No se pudo cargar el informe (HTTP ' + xhr.status + ').</div>';
         });
 }
+
+function editarInforme(){
+    var body = document.getElementById('cuerpoInforme');
+    if (!body || !informeIdActual) return;
+    body.contentEditable = 'true';
+    body.style.outline = '2px dashed #ffc107';
+    body.style.background = '#fffdf5';
+    body.focus();
+    document.getElementById('btnEditarInforme').classList.add('d-none');
+    document.getElementById('btnGuardarInforme').classList.remove('d-none');
+    document.getElementById('btnCancelarInforme').classList.remove('d-none');
+}
+
+function cancelarEdicionInforme(){
+    if (!confirm('¿Descartar los cambios del informe?')) return;
+    document.getElementById('cuerpoInforme').innerHTML = informeHtmlOriginal;
+    _resetBotonesInforme();
+}
+
+function guardarInformeEditado(){
+    var body = document.getElementById('cuerpoInforme');
+    if (!body || !informeIdActual) return;
+    var contenido = body.innerHTML;
+    if (contenido.replace(/<[^>]+>/g,'').trim().length < 5) { alert('El informe no puede estar vacío.'); return; }
+    var btn = document.getElementById('btnGuardarInforme');
+    btn.disabled = true;
+    $.post('actualizar_atencion.php', { idHistorial: informeIdActual, informe: contenido }, function(res){
+        btn.disabled = false;
+        res = (res || '').trim();
+        if (res === 'OK') {
+            informeHtmlOriginal = contenido;
+            _resetBotonesInforme();
+            alert('Informe guardado.');
+        } else {
+            alert('No se pudo guardar el informe: ' + res);
+        }
+    }).fail(function(){ btn.disabled = false; alert('Error de conexión.'); });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    var m = document.getElementById('modalInforme');
+    if (m) m.addEventListener('hidden.bs.modal', _resetBotonesInforme);
+});
 
 // ── FullCalendar ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {

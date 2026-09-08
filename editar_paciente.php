@@ -42,6 +42,9 @@ $colExiste = function ($col) use ($conexion, $dbName) {
 };
 $tieneAlerta = $colExiste('ALERTA');
 $tieneIdioma = $colExiste('IDIOMA');
+$tieneIcd10  = $colExiste('IDICD10');
+
+$idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
 // Construir el UPDATE dinámicamente
 $campos = ["NOMBRES = ?", "APELLIDOS = ?", "CEDULA = ?", "TELEFONO = ?", "EMAIL = ?",
@@ -53,6 +56,7 @@ $vals   = [$nombres, $apellidos, $cedula, $telefono, $email,
 
 if ($tieneAlerta) { $campos[] = "ALERTA = ?"; $tipos .= "s"; $vals[] = $alerta; }
 if ($tieneIdioma && $idioma !== '') { $campos[] = "IDIOMA = ?"; $tipos .= "s"; $vals[] = $idioma; }
+if ($tieneIcd10)  { $campos[] = "IDICD10 = ?"; $tipos .= "i"; $vals[] = $idicd10 > 0 ? $idicd10 : null; }
 
 $sql = "UPDATE AG_PACIENTE SET " . implode(", ", $campos) . " WHERE IDPACIENTE = ? AND ESTADO = 'A'";
 $tipos .= "i";

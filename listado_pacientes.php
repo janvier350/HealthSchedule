@@ -57,6 +57,7 @@ $totalRows = $result ? $result->num_rows : 0;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php te('plist.title'); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
@@ -347,6 +348,13 @@ $totalRows = $result ? $result->num_rows : 0;
                                 <option value="en"><?php te('lang.english'); ?></option>
                             </select>
                         </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold"><i class="bi bi-clipboard2-pulse"></i> ICD-10</label>
+                            <select id="epIcd10" name="idicd10" class="form-select">
+                                <option value="">—</option>
+                            </select>
+                            <small class="text-muted">Puedes escribir código o descripción para filtrar.</small>
+                        </div>
                     </div>
 
                     <!-- Notas -->
@@ -438,6 +446,7 @@ $totalRows = $result ? $result->num_rows : 0;
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script>
 var T = {
@@ -459,6 +468,32 @@ var T = {
 };
 
 let epModal = null;
+let icd10Lista = null; // cache: [{id, codigo, descripcion}, ...]
+
+function _cargarIcd10(cb) {
+    if (icd10Lista) { cb(icd10Lista); return; }
+    $.getJSON('get_icd10_list.php')
+        .done(function(data){ icd10Lista = Array.isArray(data) ? data : []; cb(icd10Lista); })
+        .fail(function(){ icd10Lista = []; cb(icd10Lista); });
+}
+
+function _poblarSelectIcd10(selectId, valorActual) {
+    _cargarIcd10(function(rows){
+        var $sel = $('#' + selectId);
+        $sel.empty().append('<option value="">—</option>');
+        rows.forEach(function(r){
+            $sel.append('<option value="' + r.id + '">' + r.codigo + ' — ' + r.descripcion + '</option>');
+        });
+        if (valorActual) $sel.val(String(valorActual));
+        if ($sel.data('select2')) $sel.select2('destroy');
+        $sel.select2({
+            dropdownParent: $sel.closest('.modal').length ? $sel.closest('.modal') : $(document.body),
+            width: '100%',
+            placeholder: 'Buscar código o descripción…',
+            allowClear: true
+        });
+    });
+}
 
 function editarPaciente(idPaciente) {
     if (!epModal) epModal = new bootstrap.Modal(document.getElementById('modalEditarPaciente'));
@@ -483,6 +518,9 @@ function editarPaciente(idPaciente) {
             document.getElementById('epAlerta').value    = p.ALERTA    || '';
             document.getElementById('epNotes').value     = p.NOTES     || '';
             document.getElementById('epAddNotes').value  = p.ADDNOTES  || '';
+
+            // ICD-10: si la columna existe, poblar el select con el catálogo y marcar el valor actual
+            _poblarSelectIcd10('epIcd10', p.IDICD10 || '');
 
             // Si la columna ALERTA aún no existe, avisar que ese campo no se guardará
             const aviso = document.getElementById('epAlertaAviso');

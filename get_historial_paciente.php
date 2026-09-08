@@ -9,16 +9,21 @@ if (!isset($_SESSION["rol"])) { http_response_code(403); exit; }
 $idPaciente = (int)($_GET['id'] ?? 0);
 if (!$idPaciente) { echo '<p class="text-danger p-3">ID no válido.</p>'; exit; }
 
-// ¿Existe la columna ALERTA? (la agrega migrar_notas_paciente.php)
+// ¿Existen las columnas opcionales?
 $dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
-$tieneAlerta = (int)$conexion->query(
-    "SELECT COUNT(*) c FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='ALERTA'"
-)->fetch_assoc()['c'] > 0;
+$colExistePac = function ($col) use ($conexion, $dbName) {
+    return (int)$conexion->query(
+        "SELECT COUNT(*) c FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='$col'"
+    )->fetch_assoc()['c'] > 0;
+};
+$tieneAlerta = $colExistePac('ALERTA');
+$tieneIcd10  = $colExistePac('IDICD10');
 
 // Datos del paciente
 $colsPac = "NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, FECHA_REGISTRO, NOTES, ADDNOTES"
-         . ($tieneAlerta ? ", ALERTA" : "");
+         . ($tieneAlerta ? ", ALERTA"  : "")
+         . ($tieneIcd10  ? ", IDICD10" : "");
 $stmtP = $conexion->prepare(
     "SELECT $colsPac FROM AG_PACIENTE WHERE IDPACIENTE = ? LIMIT 1"
 );
@@ -27,6 +32,21 @@ $stmtP->execute();
 $pac = $stmtP->get_result()->fetch_assoc();
 $stmtP->close();
 if ($pac && !$tieneAlerta) $pac['ALERTA'] = '';
+
+// ICD-10 (código + descripción) si el paciente tiene asignado uno
+$icd10Codigo = ''; $icd10Descripcion = '';
+if ($pac && $tieneIcd10 && !empty($pac['IDICD10'])) {
+    $sIcd = $conexion->prepare(
+        "SELECT CODIGO, DESCRIPCION FROM ENFE_DIAG_COD WHERE ID_ENFE_DIAG_COD = ? LIMIT 1"
+    );
+    $sIcd->bind_param('i', $pac['IDICD10']);
+    $sIcd->execute();
+    if ($r = $sIcd->get_result()->fetch_assoc()) {
+        $icd10Codigo      = $r['CODIGO'];
+        $icd10Descripcion = $r['DESCRIPCION'];
+    }
+    $sIcd->close();
+}
 
 if (!$pac) { echo '<p class="text-danger p-3">Paciente no encontrado.</p>'; exit; }
 
@@ -189,6 +209,12 @@ function imcColor($imc) {
                     <span><i class="bi bi-calendar-plus text-muted me-1"></i>Registrado: <?php echo date('d/m/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
                 <?php endif; ?>
             </div>
+            <?php if ($icd10Codigo !== ''): ?>
+                <div class="mt-2" style="font-size:.85rem;">
+                    <span class="badge bg-info text-dark"><i class="bi bi-clipboard2-pulse me-1"></i>ICD-10: <?php echo htmlspecialchars($icd10Codigo); ?></span>
+                    <span class="text-muted ms-1"><?php echo htmlspecialchars($icd10Descripcion); ?></span>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Estadísticas rápidas -->
