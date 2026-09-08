@@ -611,6 +611,44 @@ function calcularIMC(){
     else                    est.text(ATT.obesity)    .attr('class','badge p-2 d-block fs-6 bg-danger');
 }
 
+// Quita anchos/max-width fijos y márgenes-auto de los contenedores
+// más externos del HTML de una plantilla, para que ocupe todo el ancho
+// del editor en vez de verse encolumnada al centro.
+function _expandirAnchoTemplate(html){
+    var wrap = document.createElement('div');
+    wrap.innerHTML = html;
+
+    function limpiar(el){
+        if (!el || !el.style) return;
+        if (el.style.maxWidth) el.style.maxWidth = '';
+        if (el.style.width && /^\s*\d+(\.\d+)?\s*px\s*$/i.test(el.style.width)) el.style.width = '';
+        if (/auto/i.test(el.style.marginLeft) && /auto/i.test(el.style.marginRight)) {
+            el.style.marginLeft = '';
+            el.style.marginRight = '';
+        }
+        if (el.getAttribute && el.getAttribute('width') && /^\d+$/.test(el.getAttribute('width'))) {
+            el.removeAttribute('width');
+        }
+    }
+
+    // Nivel raíz y primer nivel (donde suele estar el wrapper max-width)
+    Array.prototype.forEach.call(wrap.children, function(child){
+        limpiar(child);
+        if (child.tagName === 'DIV' || child.tagName === 'SECTION' || child.tagName === 'ARTICLE') {
+            Array.prototype.forEach.call(child.children, limpiar);
+        }
+    });
+
+    // <table> con width fijo → 100 %
+    Array.prototype.forEach.call(wrap.querySelectorAll('table'), function(t){
+        if (t.getAttribute('width') && /^\d+$/.test(t.getAttribute('width'))) t.removeAttribute('width');
+        if (t.style && t.style.width && /^\s*\d+(\.\d+)?\s*px\s*$/i.test(t.style.width)) t.style.width = '100%';
+        if (t.style && t.style.maxWidth) t.style.maxWidth = '';
+    });
+
+    return wrap.innerHTML;
+}
+
 // ── CARGAR PLANTILLA ─────────────────────────────────────────────────
 function cargarPlantilla(id){
     if(!id) return;
@@ -734,6 +772,7 @@ function cargarPlantilla(id){
             if (!yaTraeFirma) {
                 html += firmaHtml;
             }
+            html = _expandirAnchoTemplate(html);
             $('#editorInforme').summernote('code', html);
         },
         error: function(){ alert(ATT.templateLoadError); }
