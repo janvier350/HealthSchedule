@@ -504,6 +504,7 @@ const ATT = {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script src="js/who_growth.js"></script>
+<script src="js/cdc_growth.js"></script>
 <script>
 
 // ── INICIALIZAR EDITOR ───────────────────────────────────────────────
@@ -772,6 +773,35 @@ function cargarPlantilla(id){
             if (!yaTraeFirma) {
                 html += firmaHtml;
             }
+
+            // Gráficos CDC (Height / Weight / BMI for age) para plantillas pediátricas
+            // en pacientes de 2 a 20 años. Se insertan justo antes del bloque de firma.
+            var esPediatric = /pediatric|pediátric/i.test(html);
+            var pesoKg  = uPeso  === 'lbs' ? (parseFloat(pesoVal)  || 0) * 0.453592 : (parseFloat(pesoVal)  || 0);
+            var tallaCm = uTalla === 'm'   ? (parseFloat(tallaVal) || 0) * 100      : (parseFloat(tallaVal) || 0);
+            var imcNum  = (tallaCm > 0) ? (pesoKg / ((tallaCm/100)*(tallaCm/100))) : 0;
+            if (esPediatric && window.CDC_GROWTH && _meses !== null && _meses >= 24 && _meses <= 240
+                && (DATOS_CITA.pacienteSexIdx === 0 || DATOS_CITA.pacienteSexIdx === 1)) {
+                var langChart = ATT.snLang && ATT.snLang.indexOf('es') === 0 ? 'es' : 'en';
+                var partes = [
+                    CDC_GROWTH.buildSvg({ kind:'stat', sexIdx:DATOS_CITA.pacienteSexIdx, ageMonths:_meses, value: tallaCm > 0 ? tallaCm : null, lang: langChart }),
+                    CDC_GROWTH.buildSvg({ kind:'wt',   sexIdx:DATOS_CITA.pacienteSexIdx, ageMonths:_meses, value: pesoKg  > 0 ? pesoKg  : null, lang: langChart }),
+                    CDC_GROWTH.buildSvg({ kind:'bmi',  sexIdx:DATOS_CITA.pacienteSexIdx, ageMonths:_meses, value: imcNum  > 0 ? imcNum  : null, lang: langChart })
+                ];
+                var graficosHtml = '<div class="cdc-charts" style="margin-top:16px;">'
+                    + partes.map(function(svg){ return '<div style="margin:8px 0;">' + svg + '</div>'; }).join('')
+                    + '</div>';
+                // Insertar antes del texto "Electronically Signed By" / firma dibujada;
+                // si no encuentra el marcador, va al final.
+                if (/Electronically Signed By/i.test(html)) {
+                    html = html.replace(/(Electronically Signed By)/i, graficosHtml + '$1');
+                } else if (firmaImgHtml && html.indexOf(firmaImgHtml) !== -1) {
+                    html = html.replace(firmaImgHtml, graficosHtml + firmaImgHtml);
+                } else {
+                    html += graficosHtml;
+                }
+            }
+
             html = _expandirAnchoTemplate(html);
             $('#editorInforme').summernote('code', html);
         },
