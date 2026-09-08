@@ -677,6 +677,35 @@ if (!isset($_SESSION["rol"])) {
             allowClear: true
         });
     }
+
+    // Si venimos de crear un paciente, abrir el modal para agregarle seguros
+    var qs = new URLSearchParams(window.location.search);
+    var nuevoId = parseInt(qs.get('nuevo') || '0', 10);
+    if (nuevoId > 0) {
+        fetch('get_paciente.php?id=' + nuevoId)
+            .then(function(r){ return r.json(); })
+            .then(function(p){
+                if (!p || p.error) return;
+                // Reutilizar la misma función que carga el modal de edición
+                cargarDatos({
+                    IDPACIENTE: nuevoId,
+                    NOMBRES: p.NOMBRES || '',
+                    APELLIDOS: p.APELLIDOS || '',
+                    EMAIL: p.EMAIL || '',
+                    TELEFONO: p.TELEFONO || '',
+                    FECHANACIMIENTO: p.FECHANACIMIENTO || '',
+                    CEDULA: p.CEDULA || '',
+                    TITLE: p.TITLE || '',
+                    SEX: p.SEX || '',
+                    GENDER: p.GENDER || '',
+                    IDIOMA: p.IDIOMA || 'es'
+                });
+                cargarSegurosPaciente(nuevoId);
+                var em = document.getElementById('editModal');
+                if (em && window.bootstrap) new bootstrap.Modal(em).show();
+            })
+            .catch(function(){ /* ignorar */ });
+    }
 });
 </script>
    <!-- Modal de Edición -->
