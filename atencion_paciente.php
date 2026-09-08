@@ -649,6 +649,19 @@ function cargarPlantilla(id){
     $.ajax({
         url: 'get_plantilla_html.php', type: 'GET', data: { id: id },
         success: function(html){
+            // ¿La plantilla ya trae su propio bloque de firma?
+            // Marcadores: cualquiera de los placeholders de firma o los textos habituales.
+            const yaTraeFirma = /\{\{firma_(nombre|credenciales|npi|licencia|imagen)\}\}|Electronically Signed By|Firmado electr[oó]nicamente/i.test(html);
+            // Si la plantilla ya trae la firma pero NO tiene {{firma_imagen}}, colocamos
+            // la imagen justo antes de {{firma_nombre}} (o de "Electronically Signed By")
+            // para que aparezca encima del nombre del profesional.
+            if (yaTraeFirma && firmaImgHtml && html.indexOf('{{firma_imagen}}') === -1) {
+                if (html.indexOf('{{firma_nombre}}') !== -1) {
+                    html = html.replace('{{firma_nombre}}', firmaImgHtml + '{{firma_nombre}}');
+                } else {
+                    html = html.replace(/(Electronically Signed By|Firmado electr[oó]nicamente por)/i, firmaImgHtml + '$1');
+                }
+            }
             const vars = {
                 '{{fecha_actual}}': DATOS_CITA.fechaHoy,
                 '{{fecha_evaluacion}}': DATOS_CITA.fechaHoy,
@@ -715,7 +728,12 @@ function cargarPlantilla(id){
                 const regex = new RegExp(tag.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
                 html = html.replace(regex, val);
             }
-            html += firmaHtml;
+            // Sólo agregamos el bloque de firma auto-generado si la plantilla NO
+            // trae uno propio; en caso contrario ya se sustituyó/insertó dentro
+            // del propio texto de la plantilla (ver `yaTraeFirma` arriba).
+            if (!yaTraeFirma) {
+                html += firmaHtml;
+            }
             $('#editorInforme').summernote('code', html);
         },
         error: function(){ alert(ATT.templateLoadError); }
