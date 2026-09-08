@@ -468,6 +468,11 @@ return array(
     'plist.js.historyErrPre'   => 'Error loading the history (HTTP ',
     'plist.js.historyErrTail'  => '). Check the PHP logs.',
     'plist.js.reportErrPre'    => 'The report could not be loaded (HTTP ',
+    'plist.js.reportSaved'     => 'Report saved.',
+    'plist.js.reportSaveErr'   => 'The report could not be saved: ',
+    'plist.js.reportEmpty'     => 'The report cannot be empty.',
+    'plist.js.confirmCancelEdit'=> 'Discard your changes to the report?',
+    'plist.reportCancel'       => 'Cancel',
 
     // ── Encabezado legacy (dropdowns) ──────────────────────────────────
     'hdr.statistics'           => 'Statistics',
