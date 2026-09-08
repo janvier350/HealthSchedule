@@ -468,6 +468,11 @@ return array(
     'plist.js.historyErrPre'   => 'Error al cargar el historial (HTTP ',
     'plist.js.historyErrTail'  => '). Revisa los logs de PHP.',
     'plist.js.reportErrPre'    => 'No se pudo cargar el informe (HTTP ',
+    'plist.js.reportSaved'     => 'Informe guardado.',
+    'plist.js.reportSaveErr'   => 'No se pudo guardar el informe: ',
+    'plist.js.reportEmpty'     => 'El informe no puede estar vacío.',
+    'plist.js.confirmCancelEdit'=> '¿Descartar los cambios del informe?',
+    'plist.reportCancel'       => 'Cancelar',
 
     // ── Encabezado legacy (dropdowns) ──────────────────────────────────
     'hdr.statistics'           => 'Estadística',

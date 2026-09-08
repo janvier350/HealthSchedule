@@ -417,6 +417,15 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 <div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>
             </div>
             <div class="modal-footer py-2">
+                <button id="mnuBtnEditarInforme" type="button" class="btn btn-outline-warning btn-sm" onclick="mnuEditarInforme()">
+                    <i class="bi bi-pencil-square"></i> <?php te('common.edit'); ?>
+                </button>
+                <button id="mnuBtnGuardarInforme" type="button" class="btn btn-success btn-sm d-none" onclick="mnuGuardarInformeEditado()">
+                    <i class="bi bi-check-lg"></i> <?php te('common.saveChanges'); ?>
+                </button>
+                <button id="mnuBtnCancelarInforme" type="button" class="btn btn-outline-secondary btn-sm d-none" onclick="mnuCancelarEdicionInforme()">
+                    <?php te('plist.reportCancel'); ?>
+                </button>
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-printer"></i> <?php te('common.print'); ?>
                 </button>
@@ -435,7 +444,12 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
         loadError:     <?php echo json_encode(t('plist.js.loadError')); ?>,
         loadHttp:      <?php echo json_encode(t('plist.js.loadHttp')); ?>,
         historyErrPre: <?php echo json_encode(t('plist.js.historyErrPre')); ?>,
-        historyErrTail:<?php echo json_encode(t('plist.js.historyErrTail')); ?>
+        historyErrTail:<?php echo json_encode(t('plist.js.historyErrTail')); ?>,
+        reportSaved:   <?php echo json_encode(t('plist.js.reportSaved')); ?>,
+        reportSaveErr: <?php echo json_encode(t('plist.js.reportSaveErr')); ?>,
+        reportEmpty:   <?php echo json_encode(t('plist.js.reportEmpty')); ?>,
+        confirmCancelEdit:<?php echo json_encode(t('plist.js.confirmCancelEdit')); ?>,
+        connError:     <?php echo json_encode(t('common.js.connError')); ?>
     };
 })();
 
@@ -557,13 +571,81 @@ window.mnuSubirImagenSeguro = function (input, id, lado, idPaciente) {
     }
 })();
 
+// ── Edición de informe (compartido, modal del sidebar) ──────────────
+window._mnuInformeId = null;
+window._mnuInformeOriginal = '';
+
+function _mnuResetBotonesInforme(){
+    var e = document.getElementById('mnuBtnEditarInforme');
+    var g = document.getElementById('mnuBtnGuardarInforme');
+    var c = document.getElementById('mnuBtnCancelarInforme');
+    if (e) e.classList.remove('d-none');
+    if (g) g.classList.add('d-none');
+    if (c) c.classList.add('d-none');
+    var body = document.getElementById('mnuCuerpoInforme');
+    if (body) { body.contentEditable = 'false'; body.style.outline = ''; body.style.background = ''; }
+}
+window.mnuEditarInforme = function(){
+    var body = document.getElementById('mnuCuerpoInforme');
+    if (!body || !window._mnuInformeId) return;
+    body.contentEditable = 'true';
+    body.style.outline = '2px dashed #ffc107';
+    body.style.background = '#fffdf5';
+    body.focus();
+    document.getElementById('mnuBtnEditarInforme').classList.add('d-none');
+    document.getElementById('mnuBtnGuardarInforme').classList.remove('d-none');
+    document.getElementById('mnuBtnCancelarInforme').classList.remove('d-none');
+};
+window.mnuCancelarEdicionInforme = function(){
+    if (!confirm(MNU_TXT.confirmCancelEdit)) return;
+    var body = document.getElementById('mnuCuerpoInforme');
+    if (body) body.innerHTML = window._mnuInformeOriginal;
+    _mnuResetBotonesInforme();
+};
+window.mnuGuardarInformeEditado = function(){
+    var body = document.getElementById('mnuCuerpoInforme');
+    if (!body || !window._mnuInformeId) return;
+    var contenido = body.innerHTML;
+    if (contenido.replace(/<[^>]+>/g,'').trim().length < 5) { alert(MNU_TXT.reportEmpty); return; }
+    var btn = document.getElementById('mnuBtnGuardarInforme');
+    if (btn) btn.disabled = true;
+    fetch('actualizar_atencion.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ idHistorial: window._mnuInformeId, informe: contenido })
+    }).then(function(r){ return r.text(); }).then(function(res){
+        if (btn) btn.disabled = false;
+        res = (res || '').trim();
+        if (res === 'OK') {
+            window._mnuInformeOriginal = contenido;
+            _mnuResetBotonesInforme();
+            alert(MNU_TXT.reportSaved);
+        } else {
+            alert(MNU_TXT.reportSaveErr + res);
+        }
+    }).catch(function(){ if (btn) btn.disabled = false; alert(MNU_TXT.connError); });
+};
+
+// Restablecer al cerrar el modal compartido
+(function(){
+    function armar(){
+        var m = document.getElementById('mnuModalInforme');
+        if (m) m.addEventListener('hidden.bs.modal', _mnuResetBotonesInforme);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', armar);
+    else armar();
+})();
+
 // verInforme(id): abre el modal del informe (fallback global).
 if (typeof window.verInforme !== 'function') {
     window.verInforme = function (idHistorial) {
         var body = document.getElementById('mnuCuerpoInforme');
+        window._mnuInformeId = idHistorial;
+        window._mnuInformeOriginal = '';
+        _mnuResetBotonesInforme();
         if (body) body.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>';
         new bootstrap.Modal(document.getElementById('mnuModalInforme')).show();
-        var done = function(html){ body.innerHTML = html; };
+        var done = function(html){ body.innerHTML = html; window._mnuInformeOriginal = html; };
         var fail = function(){ body.innerHTML = '<div class="alert alert-danger m-3">' + MNU_TXT.loadError + '</div>'; };
         if (window.jQuery) {
             jQuery.get('get_informe_html.php', { id: idHistorial }).done(done).fail(fail);
