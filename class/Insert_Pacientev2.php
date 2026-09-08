@@ -68,17 +68,20 @@ if ($existe) {
             VALUES ('".$nombres."', '".$apellidos."', '".$email."', '".$feNac."', '".$telefono."', '".$cedula."', '".$title."', '".$sex."', '".$gender."', 'A','".$address."', '".$notes."', '".$addNotes."'".$valIdioma.$valIcd10.")";
 
     $consulta = $conexion->query($sql) or die("Problemas al insertar datos:<br>".mysqli_error($conexion));
-    
+
     // Insert status
     if ($consulta) {
-        echo 'Event data inserted successfully.. Event ID: '.$conexion->insert_id;
-        echo "<script>javascript: alert('Datos Creados Correctamente!') </script>";    
+        $nuevoId = (int)$conexion->insert_id;
+        // Redirige a la pantalla de creación con el ID recién creado, para que
+        // se abra automáticamente el modal de edición y pueda agregar seguros.
+        echo "<script>javascript: alert('Datos Creados Correctamente!') </script>";
         echo "<Script language='JavaScript'>";
-        echo 'self.location = "../PNC_PacienteCrear.php"';
-        echo "</script>"; 
+        echo 'self.location = "../PNC_PacienteCrear.php?nuevo=' . $nuevoId . '"';
+        echo "</script>";
     } else {
         echo 'Failed to insert '.$consulta.'event data'.mysqli_error($conexion);
-    }    
+    }
+
 } else {
     echo "<script>javascript: alert('Paciente ya existe!') </script>";    
     echo "<Script language='JavaScript'>";
