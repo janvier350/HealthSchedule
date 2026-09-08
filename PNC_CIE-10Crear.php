@@ -1,587 +1,396 @@
-<!doctype html>
-<html lang="en">
-<?
+<?php
+ob_start();
+session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
-$conexion=conectarse();
-?>
+require_once(__DIR__ . "/lang/i18n.php");
+$conexion = conectarse();
+if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
+if (!isset($_SESSION["rol"])) { header("Location: break.php"); exit(); }
+if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
+    session_destroy();
+    header("Location: expirada.php");
+    exit();
+}
+
+// Filtro de búsqueda
+$q         = trim($_GET['q'] ?? '');
+$catFiltro = trim($_GET['cat'] ?? '');
+
+// Categorías disponibles (para el filtro y el select del formulario)
+$categorias = [];
+$rc = $conexion->query("SELECT ID_ENFERMEDAD, CODIGO, NOMBRE, DESCRIPCION FROM ENFERMEDADES_DIAGNOSTICO ORDER BY CODIGO");
+if ($rc) while ($cat = $rc->fetch_assoc()) $categorias[] = $cat;
+
+// Lista de códigos ICD-10 con filtro
+$where = [];
+$params = [];
+$types  = '';
+if ($q !== '') {
+    $where[] = "(CODIGO LIKE CONCAT('%', ?, '%') OR DESCRIPCION LIKE CONCAT('%', ?, '%'))";
+    $params[] = $q; $params[] = $q; $types .= 'ss';
+}
+if ($catFiltro !== '' && ctype_digit($catFiltro)) {
+    $where[] = "ID_ENFERMEDAD = ?";
+    $params[] = (int)$catFiltro; $types .= 'i';
+}
+$sqlList = "SELECT E.ID_ENFE_DIAG_COD, E.ID_ENFERMEDAD, E.CODIGO, E.DESCRIPCION,
+                   C.CODIGO AS CAT_CODIGO, C.NOMBRE AS CAT_NOMBRE, C.DESCRIPCION AS CAT_DESC
+              FROM ENFE_DIAG_COD E
+              LEFT JOIN ENFERMEDADES_DIAGNOSTICO C ON C.ID_ENFERMEDAD = E.ID_ENFERMEDAD"
+         . (count($where) ? "\n             WHERE " . implode(' AND ', $where) : '')
+         . "\n         ORDER BY E.ID_ENFE_DIAG_COD DESC";
+if ($types !== '') {
+    $stmt = $conexion->prepare($sqlList);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $resList = $stmt->get_result();
+} else {
+    $resList = $conexion->query($sqlList);
+}
+$totalCount = (int)$conexion->query("SELECT COUNT(*) c FROM ENFE_DIAG_COD")->fetch_assoc()['c'];
+?>
+<!DOCTYPE html>
+<html lang="<?php echo current_lang(); ?>">
 <head>
-    <meta charset="utf-8">
-    <!-- Favicon de la app -->
+    <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="alternate icon" type="image/png" href="images/favicon.png">
     <link rel="apple-touch-icon" href="images/favicon.png">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Language" content="en">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Calendar - Calendars are used in a lot of apps. We thought to include one for React.</title>
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
-    <meta name="description" content="Calendars are used in a lot of apps. We thought to include one for React.">
-    <meta name="msapplication-tap-highlight" content="no">
-    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css' rel='stylesheet'>
-    <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap JS (necesario para que funcionen los modales) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/jquery.min.js"></script>
-    <link href='./fullcalendar/main.css' rel='stylesheet' />
-    <script src='./fullcalendar/main.js'></script>
-    <script src="./js/calendar.js?2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php te('icd.pageTitle'); ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./main.css" rel="stylesheet">
-
-
+    <script src="js/jquery.min.js"></script>
+    <style>
+        .badge-cat  { background:#eef1f6; color:#33475b; font-weight:600; }
+        .icd-tabla th, .icd-tabla td { font-size:.88rem; }
+        .icd-tabla .col-actions { white-space:nowrap; }
+        .icd-desc { color:#4b5563; }
+    </style>
 </head>
-
 <body>
-    <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
+<div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
 
-
-        <div class="app-header header-shadow">
-            <div class="app-header__logo">
-                <div class="logo-src"></div>
-                <div class="header__pane ml-auto">
-                    <div>
-                        <button type="button" class="hamburger close-sidebar-btn hamburger--elastic" data-class="closed-sidebar">
-                                            <span class="hamburger-box">
-                                                <span class="hamburger-inner"></span>
-                                            </span>
-                                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="app-header__mobile-menu">
-                <div>
-                    <button type="button" class="hamburger hamburger--elastic mobile-toggle-nav">
-                                <span class="hamburger-box">
-                                    <span class="hamburger-inner"></span>
-                                </span>
-                            </button>
-                </div>
-            </div>
-            <div class="app-header__menu">
-                <span>
-                    <button type="button" class="btn-icon btn-icon-only btn btn-primary btn-sm mobile-toggle-header-nav">
-                        <span class="btn-icon-wrapper">
-                            <i class="fa fa-ellipsis-v fa-w-6"></i>
-                        </span>
+    <div class="app-header header-shadow">
+        <div class="app-header__logo"><div class="logo-src"></div>
+            <div class="header__pane ml-auto">
+                <button type="button" class="hamburger close-sidebar-btn hamburger--elastic" data-class="closed-sidebar">
+                    <span class="hamburger-box"><span class="hamburger-inner"></span></span>
                 </button>
-                </span>
             </div>
-            <div class="app-header__content">
-                <div class="app-header-left">
-
-                    <ul class="header-menu nav">
-                        <li class="nav-item">
-                            <a href="javascript:void(0);" class="nav-link">
-                                <i class="nav-link-icon fa fa-database"> </i>
-                                Estadistica
-                            </a>
-                        </li>
-                        <li class="dropdown nav-item">
-                            <a href="javascript:void(0);" class="nav-link">
-                                <i class="nav-link-icon fa fa-cog"></i>
-                                Configuracion
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="app-header-right">
-                    <div class="header-btn-lg pr-0">
-                        <div class="widget-content p-0">
-                            <div class="widget-content-wrapper">
-                                <div class="widget-content-left">
-                                    <div class="btn-group">
-                                        <a data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                                            class="p-0 btn">
-                                            <img width="42" class="rounded-circle" >
-                                            <i class="fa fa-angle-down ml-2 opacity-8"></i>
-                                        </a>
-                                        <div tabindex="-1" role="menu" aria-hidden="true"
-                                            class="dropdown-menu dropdown-menu-right">
-                                            <button type="button" tabindex="0" class="dropdown-item">Perfil de Usuario</button>
-                                            <button type="button" tabindex="0" class="dropdown-item">Configuración</button>
-                                            <div tabindex="-1" class="dropdown-divider"></div>
-                                            <a type="button" tabindex="0" href="" class="dropdown-item">Cerrar
-                                                Sesión</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="widget-content-left  ml-3 header-user-info">
-                                    <div class="widget-heading">
-                                        Admin
-                                    </div>
-                                    <div class="widget-subheading">
-                                        Administrator
-                                    </div>
-                                </div>
+        </div>
+        <div class="app-header__mobile-menu">
+            <button type="button" class="hamburger hamburger--elastic mobile-toggle-nav">
+                <span class="hamburger-box"><span class="hamburger-inner"></span></span>
+            </button>
+        </div>
+        <div class="app-header__content">
+            <div class="app-header-left"></div>
+            <div class="app-header-right">
+                <div class="header-btn-lg pr-0">
+                    <div class="widget-content p-0">
+                        <div class="widget-content-wrapper">
+                            <div class="widget-content-left ml-3 header-user-info">
+                                <div class="widget-heading"><?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?></div>
+                                <div class="widget-subheading"><?php echo htmlspecialchars($_SESSION['rol'] ?? ''); ?></div>
+                            </div>
+                            <div class="widget-content-left ms-3">
+                                <a href="salir.php" class="btn btn-sm btn-outline-secondary"><?php te('common.close'); ?></a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="ui-theme-settings" style="visibility:hidden">
-            <button type="button" id="TooltipDemo" class="btn-open-options btn btn-warning">
-                        <i class="fa fa-cog fa-w-16 fa-spin fa-2x"></i>
-                    </button>
-            <div class="theme-settings__inner">
-                <div class="scrollbar-container">
-                    <div class="theme-settings__options-wrapper">
+    </div>
 
+    <div class="app-main">
+        <div class="app-sidebar sidebar-shadow">
+            <?php include("./menu/menu_adm.php"); ?>
+        </div>
 
-                        <h3 class="themeoptions-heading">
+        <div class="app-main__outer">
+            <div class="app-main__inner">
+
+                <div class="app-page-title mb-3">
+                    <div class="page-title-wrapper">
+                        <div class="page-title-heading">
+                            <div class="page-title-icon">
+                                <i class="pe-7s-note2 icon-gradient bg-warm-flame"></i>
+                            </div>
                             <div>
-                                Cabecera
+                                <?php te('icd.title'); ?>
+                                <div class="page-title-subheading"><?php te('icd.subtitle'); ?></div>
                             </div>
-                            <button type="button" class="btn-pill btn-shadow btn-wide ml-auto btn btn-focus btn-sm switch-header-cs-class" data-class="">
-                                        Restablecer
-                                    </button>
-                        </h3>
-
-                        <h3 class="themeoptions-heading">
-                            <div>Menu</div>
-                            <button type="button" class="btn-pill btn-shadow btn-wide ml-auto btn btn-focus btn-sm switch-sidebar-cs-class" data-class="">
-                                        Restablecer
-                                    </button>
-                        </h3>
-
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="app-main">
-            <div class="app-sidebar sidebar-shadow">
-                <!-- ======= MENU========================  -->
-                <?php include("./menu/menu_adm.php"); ?>
+                <?php
+                    $ok      = isset($_GET['ok']);
+                    $deleted = isset($_GET['deleted']);
+                    $errCode = $_GET['err'] ?? '';
+                    if ($ok) echo '<div class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>' . htmlspecialchars(t('icd.js.saved')) . '</div>';
+                    if ($deleted) echo '<div class="alert alert-info py-2"><i class="bi bi-trash me-1"></i>' . htmlspecialchars(t('icd.js.deleted')) . '</div>';
+                    if ($errCode === 'dup') {
+                        $codDup = htmlspecialchars($_GET['codigo'] ?? '');
+                        echo '<div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars(t('icd.js.dup')) . ' <strong>' . $codDup . '</strong></div>';
+                    } elseif ($errCode === 'empty') {
+                        echo '<div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars(t('icd.js.empty')) . '</div>';
+                    } elseif ($errCode === 'inuse') {
+                        $cnt = (int)($_GET['count'] ?? 0);
+                        echo '<div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars(t('icd.js.inuse')) . ' (' . $cnt . ')</div>';
+                    } elseif ($errCode !== '') {
+                        echo '<div class="alert alert-danger py-2"><i class="bi bi-x-circle me-1"></i>' . htmlspecialchars($errCode) . '</div>';
+                    }
+                ?>
 
-            </div>
-            <div class="app-main__outer">
-                <div class="app-main__inner">
-                    <div class="app-page-title">
-                        <div class="page-title-wrapper">
-                            <div class="page-title-heading">
-                                <div class="page-title-icon">
-                                    <i class="pe-7s-add-user icon-gradient bg-warm-flame">
-                                        </i>
-                                </div>
-                                <div>Crear nuevo
-                                    <div class="page-title-subheading">Codigo CIE-10
+                <ul class="nav nav-pills mb-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-icd-crear" type="button" role="tab">
+                            <i class="bi bi-plus-circle me-1"></i><?php te('icd.tab.register'); ?>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-icd-lista" type="button" role="tab">
+                            <i class="bi bi-list-ul me-1"></i><?php te('icd.tab.list'); ?> <span class="badge bg-secondary ms-1"><?php echo $totalCount; ?></span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- REGISTER -->
+                    <div class="tab-pane fade show active" id="tab-icd-crear" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3"><?php te('icd.formTitle'); ?></h5>
+                                <form id="formIcd" method="post" action="class/Insert_CieCode.php" novalidate>
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label small fw-semibold"><?php te('icd.code'); ?> *</label>
+                                            <input type="text" class="form-control" id="cieCode" name="cieCode" placeholder="E11.9" maxlength="20" required>
+                                            <div class="form-text"><?php te('icd.codeHelp'); ?></div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small fw-semibold"><?php te('icd.description'); ?> *</label>
+                                            <input type="text" class="form-control" id="description" name="description" placeholder="Type 2 diabetes mellitus" maxlength="255" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-semibold"><?php te('icd.category'); ?></label>
+                                            <select name="category" id="category" class="form-select">
+                                                <?php foreach ($categorias as $cat): ?>
+                                                    <option value="<?php echo (int)$cat['ID_ENFERMEDAD']; ?>">
+                                                        <?php echo htmlspecialchars(($cat['CODIGO'] ? '(' . $cat['CODIGO'] . ') ' : '') . ($cat['DESCRIPCION'] ?: $cat['NOMBRE'])); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="page-title-actions">
-                                <!--   <button type="button" data-toggle="tooltip" title="Example Tooltip" data-placement="bottom" class="btn-shadow mr-3 btn btn-dark">
-                                        <i class="fa fa-star"></i>
+                                    <div id="icdInlineErr" class="alert alert-warning py-2 mt-3 d-none"></div>
+                                    <button type="submit" class="btn btn-primary mt-3">
+                                        <i class="bi bi-check-lg me-1"></i><?php te('icd.save'); ?>
                                     </button>
-                                    <div class="d-inline-block dropdown">
-                                        <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn-shadow dropdown-toggle btn btn-info">
-                                            <span class="btn-icon-wrapper pr-2 opacity-7">
-                                                <i class="fa fa-business-time fa-w-20"></i>
-                                            </span>
-                                            Buttons
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LIST -->
+                    <div class="tab-pane fade" id="tab-icd-lista" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <form method="get" class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" class="form-control" name="q" value="<?php echo htmlspecialchars($q); ?>" placeholder="<?php te('icd.filterPh'); ?>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select name="cat" class="form-select">
+                                            <option value=""><?php te('icd.allCategories'); ?></option>
+                                            <?php foreach ($categorias as $cat): ?>
+                                                <option value="<?php echo (int)$cat['ID_ENFERMEDAD']; ?>" <?php if ($catFiltro !== '' && (int)$catFiltro === (int)$cat['ID_ENFERMEDAD']) echo 'selected'; ?>>
+                                                    <?php echo htmlspecialchars(($cat['CODIGO'] ? '(' . $cat['CODIGO'] . ') ' : '') . ($cat['DESCRIPCION'] ?: $cat['NOMBRE'])); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 d-flex gap-1">
+                                        <button type="submit" class="btn btn-primary flex-grow-1">
+                                            <i class="bi bi-funnel me-1"></i><?php te('icd.filter'); ?>
                                         </button>
-                                        <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
-                                            <ul class="nav flex-column">
-                                                <li class="nav-item">
-                                                    <a href="javascript:void(0);" class="nav-link">
-                                                        <i class="nav-link-icon lnr-inbox"></i>
-                                                        <span>
-                                                            Inbox
-                                                        </span>
-                                                        <div class="ml-auto badge badge-pill badge-secondary">86</div>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a href="javascript:void(0);" class="nav-link">
-                                                        <i class="nav-link-icon lnr-book"></i>
-                                                        <span>
-                                                            Book
-                                                        </span>
-                                                        <div class="ml-auto badge badge-pill badge-danger">5</div>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a href="javascript:void(0);" class="nav-link">
-                                                        <i class="nav-link-icon lnr-picture"></i>
-                                                        <span>
-                                                            Picture
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a disabled href="javascript:void(0);" class="nav-link disabled">
-                                                        <i class="nav-link-icon lnr-file-empty"></i>
-                                                        <span>
-                                                            File Disabled
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div> -->
-                            </div>
-                        </div>
-                    </div>
-                    <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
-                        <li class="nav-item">
-                            <a role="tab" class="nav-link active" id="tab-0" data-toggle="tab" href="#tab-content-0">
-                                <span>Register</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a role="tab" class="nav-link" id="tab-1" data-toggle="tab" href="#tab-content-1">
-                                <span>List View</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a role="tab" class="nav-link" id="tab-2" data-toggle="tab" href="#tab-content-2">
-                                <!-- <span>Background Events</span> -->
-                            </a>
-                        </li>
-                    </ul>
-                    <div class="tab-content">
-                        <div class="tab-pane tabs-animation fade show active" id="tab-content-0" role="tabpanel">
-                            <div class="main-card mb-3 card">
-                                <div class="card-body">
-                                    <!-- <div id='calendar1'></div> -->
-                                    <div class="main-card mb-3 card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">Información del código.</h5>
-                                            <form class="needs-validation" novalidate method="post"
-                                                action="class/Insert_CieCode.php">
-                                                <div class="form-row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="validationCustom01">Code</label>
-                                                        <input type="text" class="form-control" id="cieCode" name="cieCode" placeholder="CIE - CODE"  required>
-                                                        <div class="valid-feedback">
-                                                            Looks good!
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="validationCustom02">Description</label>
-                                                        <input type="text" class="form-control" id="description" name="description" placeholder="description" required>
-                                                        <input type=hidden id="category" name ="category" value="1">
-                                                        <div class="valid-feedback">
-                                                            Looks good!
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="validationCustom04">Category</label>
-                                                        <input type="text" class="form-control" id="especialidad" name="especialidad" value="(E00-E90) Endocrine, nutritional and metabolic diseases  " required>
-
-                                                    </div>
-                                                </div>
-                                                <div class="form-row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="validationCustomUsername">Especialidad</label>
-                                                        <div class="input-group">
-                                                            <div class="input-group-prepend">
-                                                                <span class="input-group-text" id="inputGroupPrepend"><i class="pe-7s-user"> </i></span>
-                                                            </div>
-                                                            <input type="text" class="form-control" id="validationCustomUsername" placeholder="Especialidad" aria-describedby="inputGroupPrepend" required>
-                                                            <div class="invalid-feedback">
-                                                                Please choose a Especialidad.
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="validationCustomUsername">Especialidad</label>
-                                                        <div class="input-group">
-                                                            <div class="input-group-prepend">
-                                                                <span class="input-group-text" id="inputGroupPrepend"><i class="pe-7s-user"> </i></span>
-                                                            </div>
-                                                            <select name="idEnfermedades[]" id="idEnfermedades" class="form-control" multiple required>
-                                                                                                                                <?php
-                                                                                                                                
-                                                                                                                        
-                                                                                                                                $query = "SELECT ID_ENFERMEDAD, CODIGO,NOMBRE, DESCRIPCION FROM ENFERMEDADES_DIAGNOSTICO";
-                                                                                                                                $resultado = mysqli_query($conexion, $query);
-                                                                                                                        
-                                                                                                                                if ($resultado) {
-                                                                                                                                    while ($fila = mysqli_fetch_assoc($resultado)) {
-                                                                                                                                        $id = $fila['ID_ENFERMEDAD'];
-                                                                                                                                        $codigo = $fila['CODIGO'];
-                                                                                                                                        $nombre = $fila['NOMBRE'];
-                                                                                                                                        $descripcion = $fila['DESCRIPCION'];
-                                                                                                                                        echo "<option value=\"$id\">$codigo - $descripcion</option>";
-                                                                                                                                    }
-                                                                                                                                } else {
-                                                                                                                                    echo "<option value=\"\">Error al cargar datos</option>";
-                                                                                                                                }
-                                                                                                                                ?>
-                                                                                                                            </select>
-                                                            <div class="invalid-feedback">
-                                                                Please choose a Especialidad.
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Enfermedades</label>
-
-                                                    </div>
-                                                    <!-- <div class="col-md-4 mb-3">
-                                                            <label for="validationCustom03">E-Mail</label>
-                                                            <input type="email" class="form-control" id="validationCustom03" placeholder="E-mail" required>
-                                                            <div class="invalid-feedback">
-                                                                Please provide a valid Password.
-                                                            </div>
-                                                        </div>
-                                                        -->
-
-
-                                                    <div class="col-md-4 mb-3">
-                                                        <!-- <label for="validationCustom05">Rol</label>
-                                                            <div class="position-relative form-group">
-                                                                <select name="select" id="validationCustom05" class="form-control" required>
-                                                                <option>Default Select</option>
-                                                                <option>Sistema</option>
-                                                                <option>Doctor</option>
-                                                                <option>Usuario</option> 
-                                                            </select>
-                                                        </div> -->
-                                                        <div class="invalid-feedback">
-                                                            Please provide a valid rol.
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <!-- 
-                                                    <div class="form-group">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
-                                                            <label class="form-check-label" for="invalidCheck">
-                                                                Agree to terms and conditions
-                                                            </label>
-                                                            <div class="invalid-feedback">
-                                                                You must agree before submitting.
-                                                            </div>
-                                                        </div>
-                                                    </div> -->
-                                                <button class="btn btn-primary" type="submit">Save register</button>
-                                            </form>
-
-                                            <script>
-                                                // Example starter JavaScript for disabling form submissions if there are invalid fields
-                                                    (function() {
-                                                        'use strict';
-                                                        window.addEventListener('load', function() {
-                                                            // Fetch all the forms we want to apply custom Bootstrap validation styles to
-                                                            var forms = document.getElementsByClassName('needs-validation');
-                                                            // Loop over them and prevent submission
-                                                            var validation = Array.prototype.filter.call(forms, function(form) {
-                                                                form.addEventListener('submit', function(event) {
-                                                                    if (form.checkValidity() === false) {
-                                                                        event.preventDefault();
-                                                                        event.stopPropagation();
-                                                                    }
-                                                                    form.classList.add('was-validated');
-                                                                }, false);
-                                                            });
-                                                        }, false);
-                                                    })();
-                                            </script>
-                                        </div>
+                                        <a href="PNC_CIE-10Crear.php" class="btn btn-outline-secondary" title="<?php te('icd.reset'); ?>">
+                                            <i class="bi bi-x-lg"></i>
+                                        </a>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane tabs-animation fade" id="tab-content-1" role="tabpanel">
-                            <div class="main-card mb-3 card">
-                                <div class="card-body">
-                                    <!-- <div id='calendar-list'></div> -->
-                                    <div class="main-card mb-3 card">
-                                        <div class="card-body">
-                                            <!-- <div id='calendar1'></div> -->
-                                            <table class="table align-middle mb-0 bg-white">
-                                                <thead class="bg-light">
-                                                    <tr>
-                                                        <th>Endocrine, nutritional and metabolic diseases </th>
-                                                        <th></th>
-                                                        <!--<th>Status</th>-->
-                                                        <!-- <th>Position</th> -->
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php
-                                                $sql = "SELECT ID_ENFE_DIAG_COD , ID_ENFERMEDAD, CODIGO, DESCRIPCION FROM ENFE_DIAG_COD ORDER BY `ENFE_DIAG_COD`.`ID_ENFE_DIAG_COD` DESC";
-                                                $query = $conexion->query($sql);
+                                </form>
 
-                                                if (!$query) {
-                                                    die("Error en la consulta: " . $conexion->error);
-                                                }
-
-                                                if ($query->num_rows > 0) {
-                                                    while ($valores = mysqli_fetch_array($query)) {
-                                                ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <!--<img-->
-                                                                <!--    src="https://mdbootstrap.com/img/new/avatars/8.jpg"-->
-                                                                <!--    alt=""-->
-                                                                <!--    style="width: 45px; height: 45px"-->
-                                                                <!--    class="rounded-circle"-->
-                                                                <!--    />-->
-                                                                <div class="ms-3">
-                                                                    <p class="fw-bold mb-1">
-                                                                        <?php echo $valores['CODIGO']; ?>
-                                                                    </p>
-                                                                    <p class="text-muted mb-0">
-                                                                        <?php echo $valores['DESCRIPCION']; ?>
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <p class="fw-normal mb-1">
-                                                                <?php echo $valores['ID_ENFERMEDAD']; ?>
-                                                            </p>
-                                                            <p class="text-muted mb-0">
-                                                                <?php echo $valores['CODIGO']; ?>
-                                                            </p>
-                                                        </td>
-
-                                                        <td>
-
-                                                            <!-- <button class="btn btn-outline-success fa fa-key"
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#editModalClave" 
-                                                                onclick="cargarDatos(<?php echo htmlspecialchars(json_encode($valores), ENT_QUOTES, 'UTF-8'); ?>)">
-                                                            </button>
-                                                            -->
-
-                                                            <button class="btn btn-outline-warning fa fa-edit"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#editModal"
-                                                                onclick="cargarDatos(<?php echo htmlspecialchars(json_encode($valores), ENT_QUOTES, 'UTF-8'); ?>)">
-                                                            </button>
-
-
-                                                            <!-- Botón para eliminar con confirmación -->
-                                                            <button class="btn-shadow btn btn-outline-danger fa fa-minus-circle"
-                                                                onclick="confirmarEliminacion(<?php echo $valores['ID_ENFE_DIAG_COD']; ?>)">
-                                                            </button>
-
-
-                                                        </td>
-                                                    </tr>
-                                                    <?php 
-                                                    }
-                                                } else {
-                                                    echo "<tr><td colspan='4' class='text-center'>No hay datos disponibles</td></tr>";
-                                                }
-                                                ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane tabs-animation fade" id="tab-content-2" role="tabpanel">
-                            <div class="main-card mb-3 card">
-                                <div class="card-body">
-                                    <!-- <div id="calendar-bg-events"></div> -->
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle icd-tabla mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width:110px;"><?php te('icd.code'); ?></th>
+                                                <th><?php te('icd.description'); ?></th>
+                                                <th style="width:220px;"><?php te('icd.category'); ?></th>
+                                                <th class="col-actions text-end" style="width:120px;"><?php te('icd.actions'); ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <?php if ($resList && $resList->num_rows > 0): ?>
+                                            <?php while ($r = $resList->fetch_assoc()):
+                                                $rowJson = htmlspecialchars(json_encode($r, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                                            ?>
+                                            <tr>
+                                                <td><span class="badge bg-primary"><?php echo htmlspecialchars($r['CODIGO']); ?></span></td>
+                                                <td class="icd-desc"><?php echo htmlspecialchars($r['DESCRIPCION']); ?></td>
+                                                <td>
+                                                    <?php if ($r['CAT_CODIGO'] || $r['CAT_DESC'] || $r['CAT_NOMBRE']): ?>
+                                                        <span class="badge badge-cat">
+                                                            <?php echo htmlspecialchars(($r['CAT_CODIGO'] ? '(' . $r['CAT_CODIGO'] . ') ' : '') . ($r['CAT_DESC'] ?: $r['CAT_NOMBRE'])); ?>
+                                                        </span>
+                                                    <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                                                </td>
+                                                <td class="col-actions text-end">
+                                                    <button class="btn btn-sm btn-outline-warning" title="<?php te('common.edit'); ?>"
+                                                            onclick='abrirEditar(<?php echo $rowJson; ?>)'>
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" title="<?php te('icd.delete'); ?>"
+                                                            onclick="confirmarEliminarCie(<?php echo (int)$r['ID_ENFE_DIAG_COD']; ?>, '<?php echo htmlspecialchars(addslashes($r['CODIGO'])); ?>')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <?php endwhile; ?>
+                                        <?php else: ?>
+                                            <tr><td colspan="4" class="text-center py-4 text-muted">
+                                                <i class="bi bi-inbox fs-3 d-block mb-2"></i><?php te('icd.empty'); ?>
+                                            </td></tr>
+                                        <?php endif; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="app-wrapper-footer">
-                    <div class="app-footer">
-                        <div class="app-footer__inner">
 
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
-    <script>
-        function confirmarEliminacion(idDoctor) {
-                                                if (confirm("¿Estás seguro de desactivar este Doctor?")) {
-                                                    window.location.href = "class/Desactivar_DoctorV2.php?idDoctor=" + idDoctor;
-                                                }
-                                            }
-                                            function confirmarActivacion(idDoctor) {
-                                                if (confirm("¿Estás seguro de activar este Doctor?")) {
-                                                    window.location.href = "class/Activar_DoctorV2.php?idDoctor=" + idDoctor;
-                                                }
-                                            }
-    </script>
-    <script>
-        function cargarDatos(usuario) {
-        document.getElementById('idDoctor').value = usuario.IDDOCTOR;
-        document.getElementById('nombresD').value = usuario.NOMBRES;
-        document.getElementById('apellidosD').value = usuario.APELLIDOS;
-        
-        document.getElementById('especialidadD').value = usuario.ESPECIALIDAD;
-      
-    }
+</div>
 
-    function guardarEdicion() {
-        var formData = new FormData(document.getElementById("formEditarDoctor"));
-
-        fetch("class/Editar_Doctor.php", {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            alert(data);
-            location.reload(); // Recargar la página tras la edición
-        })
-        .catch(error => console.error("Error:", error));
-    }
-    
-    </script>
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Editar datos Doctor</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formEditarDoctor">
-                        <input type="hidden" id="idDoctor" name="idDoctor">
-
-                        <div class="mb-3">
-                            <label class="form-label">Nombres</label>
-                            <input type="text" class="form-control" id="nombresD" name="nombresD">
-                        </div>
-
-
-
-                        <div class="mb-3">
-                            <label class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="apellidosD" name="apellidosD">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Especialidad</label>
-                            <input type="text" class="form-control" id="especialidadD" name="especialidadD">
-                        </div>
-
-
-
-
-                        <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
-                    </form>
-                </div>
+<!-- ══ MODAL EDITAR ICD-10 ═════════════════════════════════════════════ -->
+<div class="modal fade" id="modalEditarIcd" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2" style="background:#5a2d82;">
+                <h6 class="modal-title text-white mb-0"><i class="bi bi-pencil-square me-2"></i><?php te('icd.editTitle'); ?></h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarIcd">
+                    <input type="hidden" id="eId" name="id">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold"><?php te('icd.code'); ?> *</label>
+                        <input type="text" id="eCieCode" name="cieCode" class="form-control" maxlength="20" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold"><?php te('icd.description'); ?> *</label>
+                        <input type="text" id="eDescription" name="description" class="form-control" maxlength="255" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold"><?php te('icd.category'); ?></label>
+                        <select id="eCategory" name="category" class="form-select">
+                            <?php foreach ($categorias as $cat): ?>
+                                <option value="<?php echo (int)$cat['ID_ENFERMEDAD']; ?>">
+                                    <?php echo htmlspecialchars(($cat['CODIGO'] ? '(' . $cat['CODIGO'] . ') ' : '') . ($cat['DESCRIPCION'] ?: $cat['NOMBRE'])); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div id="eErr" class="alert alert-warning py-2 mt-2 d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
+                <button type="button" class="btn btn-primary btn-sm" id="eGuardar" onclick="guardarEdicionIcd()">
+                    <i class="bi bi-check-lg me-1"></i><?php te('common.saveChanges'); ?>
+                </button>
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="./assets/scripts/main.js"></script>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="./assets/scripts/main.js"></script>
+<script>
+var ICD_T = {
+    dup:         <?php echo json_encode(t('icd.js.dup')); ?>,
+    empty:       <?php echo json_encode(t('icd.js.empty')); ?>,
+    confirmDel:  <?php echo json_encode(t('icd.js.confirmDel')); ?>,
+    saveErr:     <?php echo json_encode(t('icd.js.saveErr')); ?>,
+    connErr:     <?php echo json_encode(t('common.js.connError')); ?>
+};
+
+// Si la URL trae ?err=dup abrimos la pestaña Register y mostramos el aviso inline
+(function(){
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('err') === 'dup' || params.get('err') === 'empty') {
+        var tab = document.querySelector('[data-bs-target="#tab-icd-crear"]');
+        if (tab) new bootstrap.Tab(tab).show();
+    }
+    if (params.get('q') || params.get('cat')) {
+        var tab = document.querySelector('[data-bs-target="#tab-icd-lista"]');
+        if (tab) new bootstrap.Tab(tab).show();
+    }
+})();
+
+function abrirEditar(row){
+    document.getElementById('eId').value          = row.ID_ENFE_DIAG_COD;
+    document.getElementById('eCieCode').value     = row.CODIGO;
+    document.getElementById('eDescription').value = row.DESCRIPCION;
+    document.getElementById('eCategory').value    = row.ID_ENFERMEDAD || '';
+    document.getElementById('eErr').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalEditarIcd')).show();
+}
+
+function guardarEdicionIcd(){
+    var btn = document.getElementById('eGuardar');
+    btn.disabled = true;
+    var err = document.getElementById('eErr');
+    err.classList.add('d-none');
+
+    $.post('class/Update_CieCode.php', $('#formEditarIcd').serialize(), function(res){
+        btn.disabled = false;
+        res = (res || '').trim();
+        if (res === 'OK') { location.reload(); return; }
+        if (res === 'DUP') { err.textContent = ICD_T.dup; err.classList.remove('d-none'); return; }
+        if (res === 'DATOS_INCOMPLETOS') { err.textContent = ICD_T.empty; err.classList.remove('d-none'); return; }
+        err.textContent = ICD_T.saveErr + ' ' + res; err.classList.remove('d-none');
+    }).fail(function(){ btn.disabled = false; err.textContent = ICD_T.connErr; err.classList.remove('d-none'); });
+}
+
+function confirmarEliminarCie(id, codigo){
+    if (!confirm(ICD_T.confirmDel + ' ' + codigo + '?')) return;
+    window.location.href = 'class/Delete_CieCode.php?id=' + id;
+}
+
+// Validación cliente-side simple (no vacío, longitud) — el servidor valida duplicados
+document.getElementById('formIcd').addEventListener('submit', function(ev){
+    var c = document.getElementById('cieCode').value.trim();
+    var d = document.getElementById('description').value.trim();
+    var err = document.getElementById('icdInlineErr');
+    if (!c || !d) {
+        ev.preventDefault();
+        err.textContent = ICD_T.empty;
+        err.classList.remove('d-none');
+    }
+});
+</script>
 </body>
-
 </html>
