@@ -27,6 +27,7 @@ if (!isset($_SESSION["rol"])) {
     <meta name="msapplication-tap-highlight" content="no">
     <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
 <!-- Bootstrap JS (necesario para que funcionen los modales) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -418,6 +419,23 @@ if (!isset($_SESSION["rol"])) {
                                                                 <option value="en"><?php te('lang.english'); ?></option>
                                                             </select>
                                                         </div>
+                                                        <div class="col-md-8 mb-4">
+                                                            <label for="pcIcd10"><i class="bi bi-clipboard2-pulse"></i> ICD-10</label>
+                                                            <select name="idicd10" id="pcIcd10" class="form-control">
+                                                                <option value="">—</option>
+                                                                <?php
+                                                                    $resIcd = $conexion->query("SELECT ID_ENFE_DIAG_COD, CODIGO, DESCRIPCION FROM ENFE_DIAG_COD ORDER BY CODIGO");
+                                                                    if ($resIcd) {
+                                                                        while ($ic = $resIcd->fetch_assoc()) {
+                                                                            echo '<option value="' . (int)$ic['ID_ENFE_DIAG_COD'] . '">'
+                                                                               . htmlspecialchars($ic['CODIGO']) . ' — '
+                                                                               . htmlspecialchars($ic['DESCRIPCION']) . '</option>';
+                                                                        }
+                                                                    }
+                                                                ?>
+                                                            </select>
+                                                            <small class="text-muted">Puedes escribir código o descripción para filtrar.</small>
+                                                        </div>
                                                     </div>
 
 
@@ -646,11 +664,19 @@ if (!isset($_SESSION["rol"])) {
         </div>
     </div>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
     $(document).ready(function () {
     $('#example').DataTable({
         autoWidth: false
     });
+    if ($.fn.select2 && $('#pcIcd10').length) {
+        $('#pcIcd10').select2({
+            width: '100%',
+            placeholder: 'Buscar código o descripción…',
+            allowClear: true
+        });
+    }
 });
 </script>
    <!-- Modal de Edición -->

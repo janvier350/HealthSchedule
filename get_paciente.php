@@ -21,10 +21,12 @@ $colExiste = function ($col) use ($conexion, $dbName) {
 };
 $tieneAlerta = $colExiste('ALERTA');
 $tieneIdioma = $colExiste('IDIOMA');
+$tieneIcd10  = $colExiste('IDICD10');
 
 $cols = "NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, TITLE, ADDRESS, NOTES, ADDNOTES"
-      . ($tieneAlerta ? ", ALERTA" : "")
-      . ($tieneIdioma ? ", IDIOMA" : "");
+      . ($tieneAlerta ? ", ALERTA"  : "")
+      . ($tieneIdioma ? ", IDIOMA"  : "")
+      . ($tieneIcd10  ? ", IDICD10" : "");
 
 $stmt = $conexion->prepare("SELECT $cols FROM AG_PACIENTE WHERE IDPACIENTE = ? AND ESTADO = 'A' LIMIT 1");
 $stmt->bind_param("i", $id);
@@ -38,6 +40,22 @@ if (!$tieneAlerta) $p['ALERTA'] = '';
 if (($p['FECHANACIMIENTO'] ?? '') === '0000-00-00') $p['FECHANACIMIENTO'] = '';
 $p['IDIOMA'] = $tieneIdioma ? (strtolower($p['IDIOMA'] ?? 'es') ?: 'es') : 'es';
 
+// ICD-10: cargar codigo + descripción si hay uno asignado
+$p['IDICD10']         = $tieneIcd10 ? (int)($p['IDICD10'] ?? 0) : 0;
+$p['ICD10_CODIGO']      = '';
+$p['ICD10_DESCRIPCION'] = '';
+if ($p['IDICD10'] > 0) {
+    $s2 = $conexion->prepare("SELECT CODIGO, DESCRIPCION FROM ENFE_DIAG_COD WHERE ID_ENFE_DIAG_COD = ? LIMIT 1");
+    $s2->bind_param('i', $p['IDICD10']);
+    $s2->execute();
+    if ($row = $s2->get_result()->fetch_assoc()) {
+        $p['ICD10_CODIGO']      = $row['CODIGO'];
+        $p['ICD10_DESCRIPCION'] = $row['DESCRIPCION'];
+    }
+    $s2->close();
+}
+
 $p['_tieneAlerta'] = $tieneAlerta;
 $p['_tieneIdioma'] = $tieneIdioma;
+$p['_tieneIcd10']  = $tieneIcd10;
 echo json_encode($p);
