@@ -271,6 +271,70 @@ if (!isset($_SESSION["rol"])) {
                             <div class="tab-pane tabs-animation fade show active" id="tab-content-0" role="tabpanel">
                                 <div class="main-card mb-3 card">
                                     <div class="card-body">
+
+                                        <?php
+                                        // Si venimos de crear un paciente, mostramos un banner inline
+                                        // con la sección de Patient Insurance ya cargada, para agregar
+                                        // seguros sin cambiar de pantalla.
+                                        $nuevoId = isset($_GET['nuevo']) && ctype_digit((string)$_GET['nuevo']) ? (int)$_GET['nuevo'] : 0;
+                                        if ($nuevoId > 0):
+                                            $pNv = null;
+                                            $sN  = $conexion->prepare("SELECT NOMBRES, APELLIDOS, CEDULA FROM AG_PACIENTE WHERE IDPACIENTE = ? LIMIT 1");
+                                            $sN->bind_param('i', $nuevoId);
+                                            $sN->execute();
+                                            $pNv = $sN->get_result()->fetch_assoc();
+                                            $sN->close();
+                                            if ($pNv):
+                                        ?>
+                                        <div class="alert alert-success py-2 d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                <?php te('pcreate.js.confirmDelete'); ?>
+                                                <strong><?php echo htmlspecialchars($pNv['NOMBRES'] . ' ' . $pNv['APELLIDOS']); ?></strong>
+                                                — <?php te('pcreate.insurance'); ?>
+                                            </div>
+                                            <a href="PNC_PacienteCrear.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus-lg"></i> <?php te('pcreate.newTitle'); ?></a>
+                                        </div>
+                                        <div class="card shadow-sm mb-3" id="nuevoSegurosCard">
+                                            <div class="card-body">
+                                                <h6 class="mb-3">🛡️ <?php te('pcreate.insurance'); ?> — <?php echo htmlspecialchars($pNv['NOMBRES'] . ' ' . $pNv['APELLIDOS']); ?></h6>
+                                                <input type="hidden" id="nuevoIdPaciente" value="<?php echo (int)$nuevoId; ?>">
+                                                <div class="row g-2 align-items-end mb-2">
+                                                    <div class="col-12 col-md-5">
+                                                        <label class="form-label small mb-1"><?php te('pcreate.insurer'); ?></label>
+                                                        <select id="nvSeguro" class="form-select form-select-sm">
+                                                            <option value=""><?php te('pcreate.selectDash'); ?></option>
+                                                            <?php
+                                                                $resSN = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
+                                                                while ($resSN && $sp = $resSN->fetch_assoc()):
+                                                            ?>
+                                                                <option value="<?php echo (int)$sp['Id_seguro']; ?>"><?php echo htmlspecialchars($sp['Empresa_seguro']); ?></option>
+                                                            <?php endwhile; ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6 col-md-3">
+                                                        <label class="form-label small mb-1"><?php te('pcreate.policyNo'); ?></label>
+                                                        <input type="text" id="nvPoliza" class="form-control form-control-sm" maxlength="60">
+                                                    </div>
+                                                    <div class="col-6 col-md-2">
+                                                        <label class="form-label small mb-1"><?php te('pcreate.priority'); ?></label>
+                                                        <select id="nvPrioridad" class="form-select form-select-sm">
+                                                            <option value="Primario"><?php te('pcreate.priorityPrimary'); ?></option>
+                                                            <option value="Secundario"><?php te('pcreate.prioritySecondary'); ?></option>
+                                                            <option value="Terciario"><?php te('pcreate.priorityTertiary'); ?></option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-12 col-md-2">
+                                                        <button type="button" class="btn btn-sm btn-success w-100" onclick="nvAgregarSeguro()"><?php te('pcreate.addBtn'); ?></button>
+                                                    </div>
+                                                </div>
+                                                <div id="nvLista"><div class="text-muted small">—</div></div>
+                                            </div>
+                                        </div>
+                                        <?php
+                                            endif;
+                                        endif;
+                                        ?>
                                         <!-- <div id='calendar1'></div> -->
                                         <div class="main-card mb-3 card">
                                             <div class="card-body">
@@ -678,33 +742,28 @@ if (!isset($_SESSION["rol"])) {
         });
     }
 
-    // Si venimos de crear un paciente, abrir el modal para agregarle seguros
-    var qs = new URLSearchParams(window.location.search);
-    var nuevoId = parseInt(qs.get('nuevo') || '0', 10);
-    if (nuevoId > 0) {
-        fetch('get_paciente.php?id=' + nuevoId)
-            .then(function(r){ return r.json(); })
-            .then(function(p){
-                if (!p || p.error) return;
-                // Reutilizar la misma función que carga el modal de edición
-                cargarDatos({
-                    IDPACIENTE: nuevoId,
-                    NOMBRES: p.NOMBRES || '',
-                    APELLIDOS: p.APELLIDOS || '',
-                    EMAIL: p.EMAIL || '',
-                    TELEFONO: p.TELEFONO || '',
-                    FECHANACIMIENTO: p.FECHANACIMIENTO || '',
-                    CEDULA: p.CEDULA || '',
-                    TITLE: p.TITLE || '',
-                    SEX: p.SEX || '',
-                    GENDER: p.GENDER || '',
-                    IDIOMA: p.IDIOMA || 'es'
-                });
-                cargarSegurosPaciente(nuevoId);
-                var em = document.getElementById('editModal');
-                if (em && window.bootstrap) new bootstrap.Modal(em).show();
-            })
-            .catch(function(){ /* ignorar */ });
+    // Si venimos de crear un paciente y hay banner inline, sincronizamos el
+    // hidden #idPaciente del modal (que las funciones existentes usan) y
+    // preparamos los IDs para reutilizar toda la lógica ya escrita.
+    var nvId = document.getElementById('nuevoIdPaciente');
+    if (nvId) {
+        var idNv = parseInt(nvId.value, 10);
+        // Renombrar los IDs de la sección DEL MODAL (que va a estar oculta)
+        // para que los del BANNER queden como los canónicos (psSeguro, etc).
+        ['psSeguro','psPoliza','psPrioridad','psLista'].forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) el.id = id + '_modal';
+        });
+        // Ahora renombrar los del banner al ID canónico
+        document.getElementById('nvSeguro').id    = 'psSeguro';
+        document.getElementById('nvPoliza').id    = 'psPoliza';
+        document.getElementById('nvPrioridad').id = 'psPrioridad';
+        document.getElementById('nvLista').id     = 'psLista';
+        // Fijar el idPaciente que usan agregar/eliminar/subir
+        var hp = document.getElementById('idPaciente');
+        if (hp) hp.value = idNv;
+        window.nvAgregarSeguro = function(){ agregarSeguroPaciente(); };
+        cargarSegurosPaciente(idNv);
     }
 });
 </script>
