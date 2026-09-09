@@ -940,6 +940,17 @@ $(document).on('shown.bs.dropdown', function(ev){
 $(document).ready(renderTimeRange);
 
 // ── CALCULADORA NUTRICIONAL ──────────────────────────────────────────
+// Mover el modal a <body> para escapar del stacking context del
+// .app-container (evita que el backdrop de Bootstrap tape el modal).
+(function(){
+    function moverAlBody(){
+        var el = document.getElementById('modalNutriCalc');
+        if (el && el.parentNode !== document.body) document.body.appendChild(el);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', moverAlBody);
+    else moverAlBody();
+})();
+
 var _nutriCalcMounted = false;
 function abrirCalculadora(){
     var modal = new bootstrap.Modal(document.getElementById('modalNutriCalc'));
