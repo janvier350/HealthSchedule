@@ -395,6 +395,9 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-info" type="button" onclick="abrirCalculadora()">
+                    <i class="bi bi-calculator"></i> <?php te('nc.title'); ?>
+                </button>
                 <button class="btn btn-outline-primary" onclick="imprimirInforme()">
                     <i class="bi bi-printer"></i> <?php te('att.previewPrint'); ?>
                 </button>
@@ -406,6 +409,24 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
 
     </div>
 </div><!-- /main-card -->
+
+<!-- ══ MODAL CALCULADORA NUTRICIONAL ══════════════════════════════════ -->
+<div class="modal fade" id="modalNutriCalc" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2" style="background:#5a2d82;">
+                <h6 class="modal-title text-white mb-0"><i class="bi bi-calculator me-2"></i><?php te('nc.title'); ?></h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <?php include(__DIR__ . '/calculadora_nutricional_widget.php'); ?>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
 
             </div><!-- /app-main__inner -->
         </div><!-- /app-main__outer -->
@@ -506,6 +527,8 @@ const ATT = {
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script src="js/who_growth.js"></script>
 <script src="js/cdc_growth.js"></script>
+<script src="js/nutri_calc.js"></script>
+<script src="js/nutri_calc_ui.js"></script>
 <script>
 
 // ── INICIALIZAR EDITOR ───────────────────────────────────────────────
@@ -915,6 +938,35 @@ $(document).on('shown.bs.dropdown', function(ev){
 
 // Renderizar rango al cargar la página
 $(document).ready(renderTimeRange);
+
+// ── CALCULADORA NUTRICIONAL ──────────────────────────────────────────
+var _nutriCalcMounted = false;
+function abrirCalculadora(){
+    var modal = new bootstrap.Modal(document.getElementById('modalNutriCalc'));
+    modal.show();
+    if (!_nutriCalcMounted) {
+        _nutriCalcMounted = true;
+        NutriCalcUI.mount('#ncRoot', { lang: <?php echo json_encode(current_lang()); ?> });
+    }
+    // Prefill con datos del paciente actual
+    var uPeso  = $('input[name="unidadPeso"]:checked').val()  || 'kg';
+    var uTalla = $('input[name="unidadTalla"]:checked').val() || 'cm';
+    var pesoV  = parseFloat($('#peso').val())  || 0;
+    var tallaV = parseFloat($('#talla').val()) || 0;
+    var pesoKg  = uPeso  === 'lbs' ? pesoV  * 0.453592 : pesoV;
+    var tallaCm = uTalla === 'm'   ? tallaV * 100      : tallaV;
+    // Edad en años (desde meses)
+    var meses = edadPacienteMeses();
+    var ageYrs = meses != null ? Math.floor(meses / 12) : 0;
+    var sex = (DATOS_CITA.pacienteSexIdx === 1) ? 'F' : 'M';
+    NutriCalcUI.prefill({ sex: sex, age: ageYrs, weightKg: pesoKg, heightCm: tallaCm });
+}
+// Handler global que la calculadora invoca al pulsar "Insertar en el informe"
+window._nutriInsertHandler = function(html){
+    $('#editorInforme').summernote('pasteHTML', html);
+    var m = bootstrap.Modal.getInstance(document.getElementById('modalNutriCalc'));
+    if (m) m.hide();
+};
 
 // ── IMPRIMIR ──────────────────────────────────────────────────────────
 function imprimirInforme(){

@@ -273,6 +273,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> <?php te('menu.templates'); ?>
                 </a>
             </li>
+            <li>
+                <a href="calculadora_nutricional.php" class="<?php echo menuActivo('calculadora_nutricional.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-calculator"></i> <?php te('menu.nutricalc'); ?>
+                </a>
+            </li>
             <?php endif; ?>
 
             <!-- ══ PANEL DE CONTROL (solo SISTEMA) ═══════════════════ -->
