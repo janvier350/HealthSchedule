@@ -40,8 +40,8 @@ $tablas = [
 ];
 
 $expected = [
-    'AG_CITA'                   => ['idx_fecha','idx_fecha_estado','idx_estado_cita','idx_paciente_fecha','idx_medico_fecha','idx_serie'],
-    'AG_HISTORIAL'              => ['idx_cita','idx_paciente'],
+    'AG_CITA'                   => ['idx_fecha','idx_fecha_estado','idx_estado_cita','idx_paciente_fecha','idx_doctor_fecha','idx_serie'],
+    'AG_HISTORIAL'              => ['idx_cita'],
     'AG_PACIENTE'               => ['idx_estado','idx_estado_ape_nom'],
     'paciente_seguro'           => ['idx_paciente'],
     'documento_envio'           => ['idx_token','idx_paciente_estado'],
