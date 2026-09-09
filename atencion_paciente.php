@@ -447,6 +447,7 @@ const ATT = {
     emptyReport:       <?php echo json_encode(t('att.js.emptyReport')); ?>,
     confirmFinish:     <?php echo json_encode(t('att.js.confirmFinish')); ?>,
     savedOk:           <?php echo json_encode(t('att.js.savedOk')); ?>,
+    savedPartial:      <?php echo json_encode(t('att.js.savedPartial')); ?>,
     saveError:         <?php echo json_encode(t('att.js.saveError')); ?>,
     saveConnError:     <?php echo json_encode(t('att.js.saveConnError')); ?>,
     reportTitle:       <?php echo json_encode(t('att.js.reportTitle')); ?>,
@@ -829,10 +830,22 @@ function guardarAtencion(){
         data: { idCita: DATOS_CITA.idCita, informe: contenido,
                 peso: pesoKg.toFixed(2), talla: tallaCm.toFixed(1), imc: imcVal },
         success: function(res){
-            if(res.trim() === 'OK'){
+            var r = (res || '').trim();
+            if (r === 'OK') {
                 alert(ATT.savedOk);
                 window.location.href = 'SCH_Calendar.php';
-            } else { alert(ATT.saveError + ' ' + res); }
+            } else if (r.indexOf('PARCIAL:') === 0) {
+                // Informe guardado, pero no se pudo marcar la cita como Atendida.
+                alert(ATT.savedPartial + '\n\n' + r.substring(8).trim());
+                window.location.href = 'SCH_Calendar.php';
+            } else if (r === 'DATOS_INCOMPLETOS') {
+                alert(ATT.emptyReport);
+            } else if (r === 'SIN_SESION') {
+                alert(ATT.saveConnError);
+                window.location.href = 'index.php';
+            } else {
+                alert(ATT.saveError + ' ' + r);
+            }
         },
         error: function(){ alert(ATT.saveConnError); }
     });

@@ -805,6 +805,7 @@ return array(
     'att.js.emptyReport'      => 'The report appears to be empty. Complete it before saving.',
     'att.js.confirmFinish'    => 'Do you want to finish the consultation and save the record?',
     'att.js.savedOk'          => 'Consultation saved successfully.',
+    'att.js.savedPartial'     => 'The report was saved, but the appointment could not be marked as Attended. Please open the appointment and confirm the status.',
     'att.js.saveError'        => 'Error saving:',
     'att.js.saveConnError'    => 'Connection error while saving. Please try again.',
     'att.js.reportTitle'      => 'Report',
