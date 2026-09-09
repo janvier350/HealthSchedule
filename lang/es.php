@@ -805,6 +805,7 @@ return array(
     'att.js.emptyReport'      => 'El informe parece estar vacío. Complételo antes de guardar.',
     'att.js.confirmFinish'    => '¿Desea finalizar la atención y guardar el historial?',
     'att.js.savedOk'          => 'Atención guardada con éxito.',
+    'att.js.savedPartial'     => 'El informe se guardó, pero no se pudo marcar la cita como Atendida. Abre la cita y confirma el estado.',
     'att.js.saveError'        => 'Error al guardar:',
     'att.js.saveConnError'    => 'Error de conexión al guardar. Intente de nuevo.',
     'att.js.reportTitle'      => 'Informe',
