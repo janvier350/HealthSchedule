@@ -35,6 +35,16 @@ var CDC_DATA = {"stat":{"b":[[24.5,80.26,82.36,84.49,86.86,89.23,91.36,93.46],[2
         }
     };
     var PERCENTILES = ['3','10','25','50','75','90','97']; // orden de columnas en los arrays
+    // Paleta clínica por percentil: P3/P97 rojo, P10/P90 naranja, P25/P75 amarillo, P50 verde
+    var PERCENTILE_COLORS = {
+        '3':  '#e74c3c',
+        '10': '#f39c12',
+        '25': '#f1c40f',
+        '50': '#27ae60',
+        '75': '#f1c40f',
+        '90': '#f39c12',
+        '97': '#e74c3c'
+    };
 
     // Redondeo suave hacia arriba/abajo al siguiente múltiplo de step
     function roundDown(v, step){ return Math.floor(v / step) * step; }
@@ -140,24 +150,25 @@ var CDC_DATA = {"stat":{"b":[[24.5,80.26,82.36,84.49,86.86,89.23,91.36,93.46],[2
         svg.push('<line x1="' + pad.l + '" y1="' + pad.t + '" x2="' + pad.l + '" y2="' + (pad.t + innerH) + '" stroke="#999" stroke-width="0.7"/>');
         svg.push('<line x1="' + pad.l + '" y1="' + (pad.t + innerH) + '" x2="' + (pad.l + innerW) + '" y2="' + (pad.t + innerH) + '" stroke="#999" stroke-width="0.7"/>');
 
-        // Curvas percentilares — P50 destacada, resto tenues
+        // Curvas percentilares con paleta clínica (rojo bordes / amarillo / verde P50)
         for (var p = 0; p < PERCENTILES.length; p++) {
             var series = seriesByPercentile(rows, p);
-            var isMedian = (PERCENTILES[p] === '50');
-            var stroke   = isMedian ? '#7c7c7c' : '#c9c9c9';
-            var width    = isMedian ? 0.9 : 0.6;
+            var perc     = PERCENTILES[p];
+            var isMedian = (perc === '50');
+            var stroke   = PERCENTILE_COLORS[perc] || '#999';
+            var width    = isMedian ? 1.4 : 0.9;
             var d = pathFromSeries(series, xToPx, yToPx);
-            svg.push('<path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="' + width + '"/>');
-            // Label del percentil al final derecho de cada curva
+            svg.push('<path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="' + width + '" stroke-linejoin="round" stroke-linecap="round"/>');
+            // Label del percentil al final derecho de cada curva (con el mismo color)
             var last = series[series.length - 1];
-            svg.push('<text x="' + (xToPx(last[0]) + 4) + '" y="' + (yToPx(last[1]) + 3).toFixed(1) + '" font-size="8" fill="#999">' + PERCENTILES[p] + '</text>');
+            svg.push('<text x="' + (xToPx(last[0]) + 4) + '" y="' + (yToPx(last[1]) + 3).toFixed(1) + '" font-size="8" font-weight="600" fill="' + stroke + '">' + perc + '</text>');
         }
 
-        // Punto del paciente
+        // Punto del paciente (rojo, resaltado)
         if (ageMonths !== null && value !== null && ageMonths >= xMin && ageMonths <= xMax
             && value >= yLo && value <= yHi) {
             var px2 = xToPx(ageMonths), py2 = yToPx(value);
-            svg.push('<circle cx="' + px2.toFixed(1) + '" cy="' + py2.toFixed(1) + '" r="4" fill="#d9534f" stroke="#fff" stroke-width="1"/>');
+            svg.push('<circle cx="' + px2.toFixed(1) + '" cy="' + py2.toFixed(1) + '" r="5" fill="#2563eb" stroke="#fff" stroke-width="1.5"/>');
         }
 
         svg.push('</svg>');

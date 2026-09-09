@@ -522,21 +522,18 @@ while ($a = $resAgencias->fetch_assoc()) {
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><?php te('cal.startTime'); ?></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                            <select class="form-select select-busqueda" name="timeIni" id="timeIni" required>
-                                <option value=""><?php te('cal.selectTime'); ?></option>
-                                <?php
-                                $inicio    = new DateTime('07:00');
-                                $fin       = new DateTime('22:30');
-                                $intervalo = new DateInterval('PT30M');
-                                foreach (new DatePeriod($inicio, $intervalo, $fin) as $hora):
-                                    $v = $hora->format('H:i');
-                                ?>
-                                <option value="<?php echo $v; ?>"><?php echo $hora->format('h:i A'); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                        <select class="form-select select-busqueda" name="timeIni" id="timeIni" required>
+                            <option value=""><?php te('cal.selectTime'); ?></option>
+                            <?php
+                            $inicio    = new DateTime('07:00');
+                            $fin       = new DateTime('22:30');
+                            $intervalo = new DateInterval('PT30M');
+                            foreach (new DatePeriod($inicio, $intervalo, $fin) as $hora):
+                                $v = $hora->format('H:i');
+                            ?>
+                            <option value="<?php echo $v; ?>"><?php echo $hora->format('h:i A'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><?php te('cal.consultType'); ?></label>

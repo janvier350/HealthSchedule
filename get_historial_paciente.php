@@ -2,6 +2,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 
 if (!isset($_SESSION["rol"])) { http_response_code(403); exit; }
@@ -152,10 +153,20 @@ function badgeClass($est) {
     }
 }
 function imcLabel($imc) {
-    if ($imc < 18.5) return 'Bajo peso';
-    if ($imc < 25)   return 'Normal';
-    if ($imc < 30)   return 'Sobrepeso';
-    return 'Obesidad';
+    if ($imc < 18.5) return t('hp.bmi.underweight');
+    if ($imc < 25)   return t('hp.bmi.normal');
+    if ($imc < 30)   return t('hp.bmi.overweight');
+    return t('hp.bmi.obesity');
+}
+function estadoLabel($est) {
+    switch ($est) {
+        case 'A':            return t('hp.attendedShort');
+        case 'Pendiente':    return t('hp.st.pending');
+        case 'Confirmada':   return t('hp.st.confirmed');
+        case 'Cancelada':
+        case 'Cancelado':    return t('hp.st.cancelled');
+        default:             return $est;
+    }
 }
 function imcColor($imc) {
     if ($imc < 18.5) return '#0dcaf0';
@@ -188,7 +199,7 @@ function imcColor($imc) {
             </div>
             <div class="d-flex flex-wrap gap-3" style="font-size:.85rem;">
                 <?php if ($edad !== null): ?>
-                    <span><i class="bi bi-person-fill text-muted me-1"></i><?php echo $edad; ?> años</span>
+                    <span><i class="bi bi-person-fill text-muted me-1"></i><?php echo $edad; ?> <?php te('hp.years'); ?></span>
                 <?php endif; ?>
                 <?php if ($tallaActual): ?>
                     <?php $tallaM = $tallaActual > 3 ? $tallaActual / 100 : $tallaActual; ?>
@@ -206,7 +217,7 @@ function imcColor($imc) {
                 <span><i class="bi bi-telephone text-muted me-1"></i><?php echo htmlspecialchars($pac['TELEFONO'] ?? '—'); ?></span>
                 <span><i class="bi bi-envelope text-muted me-1"></i><?php echo htmlspecialchars($pac['EMAIL'] ?? '—'); ?></span>
                 <?php if (!empty($pac['FECHA_REGISTRO'])): ?>
-                    <span><i class="bi bi-calendar-plus text-muted me-1"></i>Registrado: <?php echo date('d/m/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
+                    <span><i class="bi bi-calendar-plus text-muted me-1"></i><?php te('hp.registered'); ?>: <?php echo date('d/m/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
                 <?php endif; ?>
             </div>
             <?php if ($icd10Codigo !== ''): ?>
@@ -222,24 +233,24 @@ function imcColor($imc) {
             <div class="d-flex flex-wrap gap-2 justify-content-md-end">
                 <div class="text-center px-3 py-1 rounded" style="background:#e8f0fe;">
                     <div style="font-size:1.2rem;font-weight:700;color:#3d5af1;"><?php echo $totalCitas; ?></div>
-                    <div class="info-label">Total citas</div>
+                    <div class="info-label"><?php te('hp.totalAppts'); ?></div>
                 </div>
                 <div class="text-center px-3 py-1 rounded" style="background:#ede7f6;">
                     <div style="font-size:1.2rem;font-weight:700;color:#6f42c1;"><?php echo $atendidas; ?></div>
-                    <div class="info-label">Atendidas</div>
+                    <div class="info-label"><?php te('hp.attended'); ?></div>
                 </div>
                 <div class="text-center px-3 py-1 rounded" style="background:#fff3cd;">
                     <div style="font-size:1.2rem;font-weight:700;color:#e67e22;"><?php echo $pendientes; ?></div>
-                    <div class="info-label">Pendientes</div>
+                    <div class="info-label"><?php te('hp.pending'); ?></div>
                 </div>
                 <div class="text-center px-3 py-1 rounded" style="background:#fdecea;">
                     <div style="font-size:1.2rem;font-weight:700;color:#c0392b;"><?php echo $canceladas; ?></div>
-                    <div class="info-label">Canceladas</div>
+                    <div class="info-label"><?php te('hp.cancelled'); ?></div>
                 </div>
                 <?php if ($imcProm): ?>
                 <div class="text-center px-3 py-1 rounded" style="background:#e8f5e9;">
                     <div style="font-size:1.2rem;font-weight:700;color:#2e7d32;"><?php echo $imcProm; ?></div>
-                    <div class="info-label">IMC prom.</div>
+                    <div class="info-label"><?php te('hp.bmiAvg'); ?></div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -267,7 +278,7 @@ function imcColor($imc) {
     <?php if ($notasTxt !== ''): ?>
     <div class="col-md-6">
         <div class="border rounded p-2 h-100" style="background:#fff;">
-            <div class="info-label mb-1"><i class="bi bi-journal-text"></i> Notas Importantes</div>
+            <div class="info-label mb-1"><i class="bi bi-journal-text"></i> <?php te('hp.important'); ?></div>
             <div style="font-size:.83rem;white-space:pre-wrap;"><?php echo htmlspecialchars($notasTxt); ?></div>
         </div>
     </div>
@@ -275,7 +286,7 @@ function imcColor($imc) {
     <?php if ($factNotasTxt !== ''): ?>
     <div class="col-md-6">
         <div class="border rounded p-2 h-100" style="background:#fff;">
-            <div class="info-label mb-1"><i class="bi bi-receipt"></i> Notas de Facturación</div>
+            <div class="info-label mb-1"><i class="bi bi-receipt"></i> <?php te('hp.billing'); ?></div>
             <div style="font-size:.83rem;white-space:pre-wrap;"><?php echo htmlspecialchars($factNotasTxt); ?></div>
         </div>
     </div>
@@ -287,18 +298,18 @@ function imcColor($imc) {
 <?php if (!empty($planesPeso)): ?>
 <div class="mx-4 mt-3">
     <div class="border rounded p-2" style="background:#fff;">
-        <div class="info-label mb-2"><i class="bi bi-graph-down-arrow"></i> Planes de peso (Planificador NIH)</div>
+        <div class="info-label mb-2"><i class="bi bi-graph-down-arrow"></i> <?php te('hp.weightPlans'); ?></div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0" style="font-size:.8rem;">
                 <thead class="table-light">
                     <tr>
-                        <th>Fecha</th>
-                        <th>Peso inicial → meta</th>
-                        <th>Fecha meta</th>
-                        <th class="text-center">Mantener actual</th>
-                        <th class="text-center">Alcanzar meta</th>
-                        <th class="text-center">Mantener meta</th>
-                        <th>Registrado por</th>
+                        <th><?php te('hp.date'); ?></th>
+                        <th><?php te('hp.startWeightGoal'); ?></th>
+                        <th><?php te('hp.goalDate'); ?></th>
+                        <th class="text-center"><?php te('hp.maintainCurrent'); ?></th>
+                        <th class="text-center"><?php te('hp.reachGoal'); ?></th>
+                        <th class="text-center"><?php te('hp.maintainGoal'); ?></th>
+                        <th><?php te('hp.registeredBy'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -321,7 +332,7 @@ function imcColor($imc) {
                 </tbody>
             </table>
         </div>
-        <div class="text-muted mt-1" style="font-size:.7rem;">Calorías por día. Modelo NIH (Hall et al., Lancet 2011).</div>
+        <div class="text-muted mt-1" style="font-size:.7rem;"><?php te('hp.caloriesNote'); ?></div>
     </div>
 </div>
 <?php endif; ?>
@@ -331,25 +342,25 @@ function imcColor($imc) {
     <?php if (empty($citas)): ?>
         <div class="text-center py-5 text-muted">
             <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
-            Este paciente no tiene citas registradas.
+            <?php te('hp.noAppts'); ?>
         </div>
     <?php else: ?>
     <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
             <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Tipo</th>
-                <th>Doctor</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">IMC</th>
-                <th class="text-center">Informe</th>
+                <th><?php te('hp.date'); ?></th>
+                <th><?php te('hp.time'); ?></th>
+                <th><?php te('hp.type'); ?></th>
+                <th><?php te('hp.doctor'); ?></th>
+                <th class="text-center"><?php te('hp.status'); ?></th>
+                <th class="text-center"><?php te('hp.bmi'); ?></th>
+                <th class="text-center"><?php te('hp.report'); ?></th>
             </tr>
         </thead>
         <tbody>
         <?php foreach ($citas as $c):
             $est      = $c['IDHISTORIAL'] ? 'A' : $c['ESTADO_CITA'];
-            $estLabel = $est === 'A' ? 'Atendida' : $est;
+            $estLabel = estadoLabel($est);
             $bc       = badgeClass($est);
         ?>
         <tr>
@@ -382,7 +393,7 @@ function imcColor($imc) {
                 <?php if ($c['IDHISTORIAL']): ?>
                     <button class="btn btn-outline-secondary btn-sm py-0 px-2"
                             onclick="verInforme(<?php echo $c['IDHISTORIAL']; ?>)"
-                            title="Ver informe">
+                            title="<?php te('hp.viewReport'); ?>">
                         <i class="bi bi-file-earmark-text"></i>
                     </button>
                 <?php else: ?>
@@ -399,25 +410,25 @@ function imcColor($imc) {
 <!-- ── DOCUMENTOS DEL PACIENTE (lista en divs para no mezclarse con las citas) ── -->
 <?php if (!empty($documentosPac)): ?>
 <div class="px-4 py-3 border-top">
-    <h6 class="text-muted mb-2"><i class="bi bi-file-earmark-text"></i> Documentos enviados (<?php echo count($documentosPac); ?>)</h6>
+    <h6 class="text-muted mb-2"><i class="bi bi-file-earmark-text"></i> <?php te('hp.docsSent'); ?> (<?php echo count($documentosPac); ?>)</h6>
     <?php foreach ($documentosPac as $doc): ?>
         <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-1">
             <div>
                 <strong><?php echo htmlspecialchars($doc['titulo']); ?></strong><br>
                 <small class="text-muted">
-                    Enviado: <?php echo $doc['fecha_envio'] ? date('d/m/Y', strtotime($doc['fecha_envio'])) : '—'; ?>
+                    <?php te('hp.sent'); ?>: <?php echo $doc['fecha_envio'] ? date('d/m/Y', strtotime($doc['fecha_envio'])) : '—'; ?>
                     <?php if ($doc['estado'] === 'Firmado' && $doc['fecha_firma']): ?>
-                        &nbsp;·&nbsp; Firmado: <?php echo date('d/m/Y', strtotime($doc['fecha_firma'])); ?>
+                        &nbsp;·&nbsp; <?php te('hp.signed'); ?>: <?php echo date('d/m/Y', strtotime($doc['fecha_firma'])); ?>
                     <?php endif; ?>
                 </small>
             </div>
             <div class="text-end" style="white-space:nowrap;">
                 <?php if ($doc['estado'] === 'Firmado'): ?>
-                    <span class="badge bg-success">Firmado</span>
+                    <span class="badge bg-success"><?php te('hp.signed'); ?></span>
                     <a href="ver_documento_firmado.php?id=<?php echo (int)$doc['id_envio']; ?>" target="_blank"
-                       class="btn btn-outline-primary btn-sm py-0 px-2" title="Ver firmado"><i class="bi bi-eye"></i></a>
+                       class="btn btn-outline-primary btn-sm py-0 px-2" title="<?php te('hp.viewSigned'); ?>"><i class="bi bi-eye"></i></a>
                 <?php else: ?>
-                    <span class="badge bg-warning text-dark">Pendiente</span>
+                    <span class="badge bg-warning text-dark"><?php te('hp.st.pending'); ?></span>
                 <?php endif; ?>
             </div>
         </div>
