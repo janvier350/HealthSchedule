@@ -269,7 +269,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <?php if ($esSistema || $esDoctor): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.reports'); ?></li>
             <li>
-                <a href="visor_plantillas.php" class="<?php echo menuActivo('visor_plantillas.php', $paginaActual); ?>">
+                <a href="plantillas_admin.php" class="<?php echo menuActivo('plantillas_admin.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> <?php te('menu.templates'); ?>
                 </a>
             </li>
