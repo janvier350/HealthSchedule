@@ -1,0 +1,76 @@
+# -----------------------------------------------------------------------------
+# HealthSchedule — perf .htaccess
+# Sólo optimizaciones seguras:
+#   1) Compresión gzip para HTML/CSS/JS/JSON/SVG/XML.
+#   2) Cache-Control largo para assets estáticos versionables.
+#   3) Sin cache para .php (dinámicos).
+# No cambia rewrites ni auth.
+# -----------------------------------------------------------------------------
+
+# --- 1) Compresión ------------------------------------------------------------
+<IfModule mod_deflate.c>
+    <IfModule mod_filter.c>
+        AddOutputFilterByType DEFLATE text/html
+        AddOutputFilterByType DEFLATE text/plain
+        AddOutputFilterByType DEFLATE text/css
+        AddOutputFilterByType DEFLATE text/xml
+        AddOutputFilterByType DEFLATE application/javascript
+        AddOutputFilterByType DEFLATE application/x-javascript
+        AddOutputFilterByType DEFLATE application/json
+        AddOutputFilterByType DEFLATE application/xml
+        AddOutputFilterByType DEFLATE application/xhtml+xml
+        AddOutputFilterByType DEFLATE application/rss+xml
+        AddOutputFilterByType DEFLATE image/svg+xml
+        AddOutputFilterByType DEFLATE font/ttf
+        AddOutputFilterByType DEFLATE font/otf
+        AddOutputFilterByType DEFLATE application/font-woff
+        AddOutputFilterByType DEFLATE application/font-woff2
+    </IfModule>
+</IfModule>
+
+# Brotli si el hosting lo tiene compilado (opcional, se ignora si no).
+<IfModule mod_brotli.c>
+    <IfModule mod_filter.c>
+        AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css
+        AddOutputFilterByType BROTLI_COMPRESS application/javascript application/json
+        AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+    </IfModule>
+</IfModule>
+
+# --- 2) Cabeceras de cache ----------------------------------------------------
+<IfModule mod_headers.c>
+    # Assets estáticos: 30 días de cache pública.
+    <FilesMatch "\.(?:css|js|svg|ico|gif|png|jpe?g|webp|woff2?|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+        Header unset ETag
+    </FilesMatch>
+
+    # Nunca cachear la respuesta de PHP (contiene datos del paciente/sesión).
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                  "access plus 30 days"
+    ExpiresByType application/javascript    "access plus 30 days"
+    ExpiresByType image/svg+xml             "access plus 30 days"
+    ExpiresByType image/png                 "access plus 30 days"
+    ExpiresByType image/jpeg                "access plus 30 days"
+    ExpiresByType image/webp                "access plus 30 days"
+    ExpiresByType image/x-icon              "access plus 30 days"
+    ExpiresByType font/woff2                "access plus 30 days"
+    ExpiresByType font/woff                 "access plus 30 days"
+    ExpiresByType font/ttf                  "access plus 30 days"
+    ExpiresByType application/font-woff2    "access plus 30 days"
+    ExpiresByType application/font-woff     "access plus 30 days"
+</IfModule>
+
+# --- 3) Endurecimiento leve ---------------------------------------------------
+# Bloquear listados de directorio; sirve el index si existe.
+Options -Indexes
+
+# Ocultar la firma del server (menos superficie).
+ServerSignature Off
