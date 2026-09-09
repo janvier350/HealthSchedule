@@ -47,23 +47,23 @@ $plan = [
         ['name' => 'idx_fecha_estado',     'cols' => ['FECHA_CITA','ESTADO']],
         ['name' => 'idx_estado_cita',      'cols' => ['ESTADO_CITA','ESTADO','FECHA_CITA']],
         ['name' => 'idx_paciente_fecha',   'cols' => ['IDPACIENTE','FECHA_CITA']],
-        ['name' => 'idx_medico_fecha',     'cols' => ['IDMEDICO','FECHA_CITA']],
+        ['name' => 'idx_doctor_fecha',     'cols' => ['IDDOCTOR','FECHA_CITA']],
         ['name' => 'idx_serie',            'cols' => ['IDSERIE']],
     ],
     'AG_HISTORIAL' => [
         ['name' => 'idx_cita',             'cols' => ['IDCITA']],
-        ['name' => 'idx_paciente',         'cols' => ['IDPACIENTE']],
+        // Nota: AG_HISTORIAL no tiene IDPACIENTE (se resuelve vía JOIN con AG_CITA).
     ],
     'AG_PACIENTE' => [
         ['name' => 'idx_estado',           'cols' => ['ESTADO']],
         ['name' => 'idx_estado_ape_nom',   'cols' => ['ESTADO','APELLIDOS','NOMBRES']],
     ],
     'paciente_seguro' => [
-        ['name' => 'idx_paciente',         'cols' => ['id_paciente']],
+        ['name' => 'idx_paciente',         'cols' => ['IDPACIENTE']],
     ],
     'documento_envio' => [
         ['name' => 'idx_token',            'cols' => ['token']],
-        ['name' => 'idx_paciente_estado',  'cols' => ['id_paciente','estado']],
+        ['name' => 'idx_paciente_estado',  'cols' => ['IDPACIENTE','estado']],
     ],
     'documentos' => [
         ['name' => 'idx_titulo',           'cols' => ['titulo']],
