@@ -37,6 +37,11 @@ $sql = "SELECT
         ORDER BY P.APELLIDOS, P.NOMBRES";
 $result    = $conexion->query($sql);
 $totalRows = $result ? $result->num_rows : 0;
+
+// Catálogo de aseguradoras para el select de "agregar seguro" en el modal
+$segurosCat = [];
+$rSegCat = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
+if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo current_lang(); ?>">
@@ -285,6 +290,37 @@ $totalRows = $result ? $result->num_rows : 0;
                         <textarea id="epAddNotes" name="addNotes" class="form-control" rows="2"></textarea>
                     </div>
                 </form>
+
+                <!-- 🛡️ Seguros del paciente: agregar / quitar / fotos -->
+                <hr class="my-3">
+                <h6 class="text-muted mb-2">🛡️ <?php te('pcreate.insurance'); ?></h6>
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-md-5">
+                        <label class="form-label small mb-1"><?php te('pcreate.insurer'); ?></label>
+                        <select id="psSeguro" class="form-select form-select-sm">
+                            <option value=""><?php te('pcreate.selectDash'); ?></option>
+                            <?php foreach ($segurosCat as $sc): ?>
+                                <option value="<?php echo (int)$sc['Id_seguro']; ?>"><?php echo htmlspecialchars($sc['Empresa_seguro']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1"><?php te('pcreate.policyNo'); ?></label>
+                        <input type="text" id="psPoliza" class="form-control form-control-sm" maxlength="60">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1"><?php te('pcreate.priority'); ?></label>
+                        <select id="psPrioridad" class="form-select form-select-sm">
+                            <option value="Primario"><?php te('pcreate.priorityPrimary'); ?></option>
+                            <option value="Secundario"><?php te('pcreate.prioritySecondary'); ?></option>
+                            <option value="Terciario"><?php te('pcreate.priorityTertiary'); ?></option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <button type="button" class="btn btn-sm btn-success w-100" onclick="agregarSeguroPaciente()"><?php te('pcreate.addBtn'); ?></button>
+                    </div>
+                </div>
+                <div id="psLista"><div class="text-muted small">—</div></div>
             </div>
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
@@ -308,7 +344,14 @@ var T = {
     connError:    <?php echo json_encode(t('common.js.connError')); ?>,
     delConfirm:   <?php echo json_encode(t('pcrud.js.confirmDelete')); ?>,
     delOk:        <?php echo json_encode(t('pcrud.js.deleted')); ?>,
-    delError:     <?php echo json_encode(t('pcrud.js.deleteError')); ?>
+    delError:     <?php echo json_encode(t('pcrud.js.deleteError')); ?>,
+    loading:      <?php echo json_encode(t('common.loading')); ?>,
+    selectInsurer:<?php echo json_encode(t('pcreate.js.selectInsurer')); ?>,
+    insDup:       <?php echo json_encode(t('pcreate.js.insDup')); ?>,
+    insAddError:  <?php echo json_encode(t('pcreate.js.insAddError')); ?>,
+    insRemoveConf:<?php echo json_encode(t('pcreate.js.insRemoveConf')); ?>,
+    insRemoveErr: <?php echo json_encode(t('pcreate.js.insRemoveErr')); ?>,
+    imgUploadErr: <?php echo json_encode(t('pcreate.js.imgUploadErr')); ?>
 };
 
 let epModal = null;
@@ -354,9 +397,79 @@ function editarPaciente(id) {
             document.getElementById('epNotes').value     = p.NOTES     || '';
             document.getElementById('epAddNotes').value  = p.ADDNOTES  || '';
             _poblarSelectIcd10('epIcd10', p.IDICD10 || '');
+            // Cargar los seguros del paciente en el modal
+            document.getElementById('psSeguro').value = '';
+            document.getElementById('psPoliza').value = '';
+            document.getElementById('psPrioridad').value = 'Primario';
+            cargarSegurosPaciente(id);
             epModal.show();
         })
         .fail(function(xhr){ alert(T.loadHttp + xhr.status + ').'); });
+}
+
+// ── Seguros del paciente (agregar / quitar / fotos) ──────────────────
+function cargarSegurosPaciente(idPaciente) {
+    const cont = document.getElementById('psLista');
+    if (!cont) return;
+    cont.innerHTML = '<div class="text-muted small">' + T.loading + '</div>';
+    fetch('seguro_paciente_listar.php?id_paciente=' + encodeURIComponent(idPaciente))
+        .then(r => r.text())
+        .then(html => { cont.innerHTML = html; })
+        .catch(() => { cont.innerHTML = '<div class="text-danger small">' + T.connError + '</div>'; });
+}
+
+function agregarSeguroPaciente() {
+    const idPaciente = document.getElementById('epId').value;
+    const idSeguro   = document.getElementById('psSeguro').value;
+    const poliza     = document.getElementById('psPoliza').value;
+    const prioridad  = document.getElementById('psPrioridad').value;
+    if (!idPaciente) return;
+    if (!idSeguro) { alert(T.selectInsurer); return; }
+    fetch('seguro_paciente_guardar.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id_paciente: idPaciente, id_seguro: idSeguro, num_poliza: poliza, prioridad: prioridad })
+    })
+    .then(r => r.text())
+    .then(res => {
+        res = res.trim();
+        if (res === 'OK') {
+            document.getElementById('psSeguro').value = '';
+            document.getElementById('psPoliza').value = '';
+            document.getElementById('psPrioridad').value = 'Primario';
+            cargarSegurosPaciente(idPaciente);
+        } else if (res === 'DUP') { alert(T.insDup); }
+        else { alert(T.insAddError + res); }
+    })
+    .catch(() => alert(T.connError));
+}
+
+function eliminarSeguroPaciente(id) {
+    if (!confirm(T.insRemoveConf)) return;
+    const idPaciente = document.getElementById('epId').value;
+    fetch('seguro_paciente_eliminar.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id: id })
+    })
+    .then(r => r.text())
+    .then(res => { if (res.trim() === 'OK') cargarSegurosPaciente(idPaciente); else alert(T.insRemoveErr + res); })
+    .catch(() => alert(T.connError));
+}
+
+function subirImagenSeguro(input, id, lado) {
+    if (!input.files || !input.files[0]) return;
+    const fd = new FormData();
+    fd.append('id_paciente_seguro', id);
+    fd.append('lado', lado);
+    fd.append('imagen', input.files[0]);
+    fetch('seguro_paciente_subir_imagen.php', { method: 'POST', body: fd })
+        .then(r => r.text())
+        .then(res => {
+            if (res.trim().startsWith('OK')) cargarSegurosPaciente(document.getElementById('epId').value);
+            else alert(T.imgUploadErr + res);
+        })
+        .catch(() => alert(T.connError));
 }
 
 function guardarPaciente() {
