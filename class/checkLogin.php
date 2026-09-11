@@ -32,7 +32,9 @@ if ($result->num_rows > 0) {
         $_SESSION['nombres'] = $row['NOMBRES'];  // Guardar nombres en la sesión
         $_SESSION['apellidos'] = $row['APELLIDOS'];  // Guardar apellidos en la sesión
         $_SESSION['start'] = time();
-        $_SESSION['expire'] = $_SESSION['start'] + (60 * 60);
+        // Ventana de sesión: 12 horas (cubre una jornada completa de consultas
+        // sin que se cierre a mitad de una atención). Antes era 1 hora.
+        $_SESSION['expire'] = $_SESSION['start'] + (60 * 60 * 12);
 
         echo "<script language='JavaScript'>";
         echo 'self.location = "../SCH_Calendar.php"';
