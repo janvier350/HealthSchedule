@@ -604,6 +604,7 @@ return array(
     'pcreate.save'             => 'Save',
     'pcreate.th.actions'       => 'Actions',
     'pcreate.insurance'        => 'Patient insurance',
+    'pcreate.createdOk'        => 'Patient created',
     'pcreate.insurer'          => 'Insurer',
     'pcreate.selectDash'       => '— Select —',
     'pcreate.policyNo'         => 'Policy no.',

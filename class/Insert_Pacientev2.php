@@ -72,8 +72,30 @@ if ($existe) {
     // Insert status
     if ($consulta) {
         $nuevoId = (int)$conexion->insert_id;
+
+        // Seguro primario (opcional): si el usuario eligió una aseguradora en el mismo
+        // formulario de Create Patient, se guarda junto con el paciente. Así evitamos
+        // el paso separado de "agregar seguro" tras crear el paciente.
+        $primSeg   = isset($_POST['primary_seguro'])    && ctype_digit((string)$_POST['primary_seguro']) ? (int)$_POST['primary_seguro'] : 0;
+        $primPol   = trim($_POST['primary_poliza']    ?? '');
+        $primPrio  = trim($_POST['primary_prioridad'] ?? 'Primario');
+        if (!in_array($primPrio, ['Primario', 'Secundario', 'Terciario'], true)) {
+            $primPrio = 'Primario';
+        }
+        if ($primSeg > 0) {
+            $stmtSeg = $conexion->prepare(
+                "INSERT INTO paciente_seguro (IDPACIENTE, Id_seguro, num_poliza, prioridad, estado)
+                 VALUES (?, ?, ?, ?, 1)"
+            );
+            if ($stmtSeg) {
+                $stmtSeg->bind_param("iiss", $nuevoId, $primSeg, $primPol, $primPrio);
+                @$stmtSeg->execute();
+                $stmtSeg->close();
+            }
+        }
+
         // Redirige a la pantalla de creación con el ID recién creado, para que
-        // se abra automáticamente el modal de edición y pueda agregar seguros.
+        // el banner permita agregar más seguros (secundario/terciario) si hace falta.
         echo "<script>javascript: alert('Datos Creados Correctamente!') </script>";
         echo "<Script language='JavaScript'>";
         echo 'self.location = "../PNC_PacienteCrear.php?nuevo=' . $nuevoId . '"';

@@ -604,6 +604,7 @@ return array(
     'pcreate.save'             => 'Guardar',
     'pcreate.th.actions'       => 'Acciones',
     'pcreate.insurance'        => 'Seguros del paciente',
+    'pcreate.createdOk'        => 'Paciente creado',
     'pcreate.insurer'          => 'Aseguradora',
     'pcreate.selectDash'       => '— Seleccione —',
     'pcreate.policyNo'         => 'N° póliza',
