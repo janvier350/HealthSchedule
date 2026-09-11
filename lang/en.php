@@ -102,6 +102,7 @@ return array(
     'nc.insertBtn'             => 'Insert into report',
     'menu.nutricalc'           => 'Nutrition Calculator',
     'common.edit'              => 'Edit',
+    'common.delete'            => 'Delete',
     'common.search'            => 'Search',
 
     // ── Perfil ─────────────────────────────────────────────────────────
@@ -706,6 +707,12 @@ return array(
     'menu.patientList'         => 'Patient List',
     'menu.createPatient'       => 'Create Patient',
     'menu.registerPatientInsurance' => 'Register Patient/Insurance',
+    'menu.patientsCrud'        => 'Manage Patients',
+    'pcrud.title'             => 'Manage Patients',
+    'pcrud.subtitle'          => 'Registered patients — edit and delete.',
+    'pcrud.js.confirmDelete'  => 'Delete patient "%s"? This can be reversed by support.',
+    'pcrud.js.deleted'        => 'Patient deleted.',
+    'pcrud.js.deleteError'    => 'Could not delete: ',
     'rps.pageTitle'            => 'Register Patient / Insurance',
     'rps.title'               => 'Register Patient / Insurance',
     'rps.subtitle'            => 'Create a patient and their insurances (with card photos) in one form.',
