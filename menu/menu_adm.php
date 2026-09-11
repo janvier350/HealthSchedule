@@ -152,16 +152,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
                 <ul>
                     <li>
-                        <a href="listado_pacientes.php" class="<?php echo menuActivo('listado_pacientes.php', $paginaActual); ?>">
-                            <i class="metismenu-icon"></i> <?php te('menu.patientList'); ?>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="PNC_PacienteCrear.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.createPatient'); ?>
-                        </a>
-                    </li>
-                    <li>
                         <a href="registrar_paciente_seguro.php" class="<?php echo menuActivo('registrar_paciente_seguro.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> <?php te('menu.registerPatientInsurance'); ?>
                         </a>

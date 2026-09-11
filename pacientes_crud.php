@@ -259,11 +259,23 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-semibold"><?php te('pf.sex'); ?></label>
-                            <input type="text" id="epSex" name="sex" class="form-control" placeholder="M / F">
+                            <select id="epSex" name="sex" class="form-select">
+                                <option value="N/A">Default Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-semibold"><?php te('pf.gender'); ?></label>
-                            <input type="text" id="epGender" name="gender" class="form-control">
+                            <select id="epGender" name="gender" class="form-select">
+                                <option value="Default Select">Default Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Transgender man/trans man/female-to-male(FTM)">Transgender man (FTM)</option>
+                                <option value="Transgender woman/trans woman/male-to-female(MTF)">Transgender woman (MTF)</option>
+                                <option value="Genderqueer/gender nonconforming">Genderqueer / nonconforming</option>
+                                <option value="Decline to answer">Decline to answer</option>
+                            </select>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
@@ -357,6 +369,20 @@ var T = {
 let epModal = null;
 let icd10Lista = null;
 
+// Setea el valor de un <select>; si el valor guardado no existe como opción
+// (datos antiguos), lo agrega para no perderlo al guardar.
+function _setSelectSafe(selectId, value) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    value = value || '';
+    if (value !== '' && !Array.from(sel.options).some(o => o.value === value)) {
+        const opt = document.createElement('option');
+        opt.value = value; opt.textContent = value;
+        sel.appendChild(opt);
+    }
+    sel.value = value;
+}
+
 function _cargarIcd10(cb) {
     if (icd10Lista) { cb(icd10Lista); return; }
     $.getJSON('get_icd10_list.php')
@@ -390,8 +416,8 @@ function editarPaciente(id) {
             document.getElementById('epTelefono').value  = p.TELEFONO  || '';
             document.getElementById('epFecNac').value    = p.FECHANACIMIENTO || '';
             document.getElementById('epEmail').value     = p.EMAIL     || '';
-            document.getElementById('epSex').value       = p.SEX       || '';
-            document.getElementById('epGender').value    = p.GENDER    || '';
+            _setSelectSafe('epSex',    p.SEX);
+            _setSelectSafe('epGender', p.GENDER);
             document.getElementById('epAddress').value   = p.ADDRESS   || '';
             document.getElementById('epIdioma').value    = (p.IDIOMA === 'en') ? 'en' : 'es';
             document.getElementById('epNotes').value     = p.NOTES     || '';
