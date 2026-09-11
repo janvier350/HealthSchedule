@@ -289,7 +289,7 @@ if (!isset($_SESSION["rol"])) {
                                         <div class="alert alert-success py-2 d-flex justify-content-between align-items-center mb-3">
                                             <div>
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                <?php te('pcreate.js.confirmDelete'); ?>
+                                                <?php te('pcreate.createdOk'); ?>:
                                                 <strong><?php echo htmlspecialchars($pNv['NOMBRES'] . ' ' . $pNv['APELLIDOS']); ?></strong>
                                                 — <?php te('pcreate.insurance'); ?>
                                             </div>
@@ -502,7 +502,41 @@ if (!isset($_SESSION["rol"])) {
                                                         </div>
                                                     </div>
 
-
+                                                    <!-- 🛡️ Seguro (opcional) — se guarda junto con el paciente en un solo submit -->
+                                                    <div class="main-card mb-3 card">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">🛡️ <?php te('pcreate.insurance'); ?>
+                                                                <small class="text-muted" style="font-weight:400;font-size:0.85rem;">(<?php te('pcreate.selectDash'); ?>)</small>
+                                                            </h5>
+                                                            <div class="form-row">
+                                                                <div class="col-md-5 mb-3">
+                                                                    <label class="form-label"><?php te('pcreate.insurer'); ?></label>
+                                                                    <select name="primary_seguro" class="form-control">
+                                                                        <option value=""><?php te('pcreate.selectDash'); ?></option>
+                                                                        <?php
+                                                                            $resSeg = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
+                                                                            while ($resSeg && $sp2 = $resSeg->fetch_assoc()):
+                                                                        ?>
+                                                                            <option value="<?php echo (int)$sp2['Id_seguro']; ?>"><?php echo htmlspecialchars($sp2['Empresa_seguro']); ?></option>
+                                                                        <?php endwhile; ?>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-md-4 mb-3">
+                                                                    <label class="form-label"><?php te('pcreate.policyNo'); ?></label>
+                                                                    <input type="text" name="primary_poliza" class="form-control" maxlength="60">
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <label class="form-label"><?php te('pcreate.priority'); ?></label>
+                                                                    <select name="primary_prioridad" class="form-control">
+                                                                        <option value="Primario"><?php te('pcreate.priorityPrimary'); ?></option>
+                                                                        <option value="Secundario"><?php te('pcreate.prioritySecondary'); ?></option>
+                                                                        <option value="Terciario"><?php te('pcreate.priorityTertiary'); ?></option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <small class="text-muted">Si seleccionas una aseguradora aquí, se guarda junto con el paciente. Podrás agregar más seguros después desde la ficha del paciente.</small>
+                                                        </div>
+                                                    </div>
 
                                                     <button class="btn btn-primary" type="submit"><?php te('pcreate.save'); ?></button>
                                                 </form>
