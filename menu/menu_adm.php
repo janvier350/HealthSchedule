@@ -166,6 +166,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> <?php te('menu.registerPatientInsurance'); ?>
                         </a>
                     </li>
+                    <li>
+                        <a href="pacientes_crud.php" class="<?php echo menuActivo('pacientes_crud.php', $paginaActual); ?>">
+                            <i class="metismenu-icon"></i> <?php te('menu.patientsCrud'); ?>
+                        </a>
+                    </li>
                 </ul>
             </li>
             <?php if ($esSistema): ?>

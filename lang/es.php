@@ -102,6 +102,7 @@ return array(
     'nc.insertBtn'             => 'Insertar en el informe',
     'menu.nutricalc'           => 'Calculadora Nutricional',
     'common.edit'              => 'Editar',
+    'common.delete'            => 'Eliminar',
     'common.search'            => 'Buscar',
 
     // ── Perfil ─────────────────────────────────────────────────────────
@@ -706,6 +707,12 @@ return array(
     'menu.patientList'         => 'Listado de Pacientes',
     'menu.createPatient'       => 'Crear Paciente',
     'menu.registerPatientInsurance' => 'Registrar Paciente/Seguros',
+    'menu.patientsCrud'        => 'Gestionar Pacientes',
+    'pcrud.title'             => 'Gestionar Pacientes',
+    'pcrud.subtitle'          => 'Pacientes registrados — editar y eliminar.',
+    'pcrud.js.confirmDelete'  => '¿Eliminar al paciente "%s"? Puede revertirse con soporte.',
+    'pcrud.js.deleted'        => 'Paciente eliminado.',
+    'pcrud.js.deleteError'    => 'No se pudo eliminar: ',
     'rps.pageTitle'            => 'Registrar Paciente / Seguros',
     'rps.title'               => 'Registrar Paciente / Seguros',
     'rps.subtitle'            => 'Crea un paciente y sus seguros (con fotos del carnet) en un solo formulario.',
