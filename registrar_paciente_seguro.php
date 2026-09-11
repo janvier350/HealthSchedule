@@ -36,14 +36,24 @@ $errMsg = trim($_GET['err'] ?? '');
     <title><?php te('rps.pageTitle'); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="./main.css" rel="stylesheet">
     <style>
         .seg-card { border:1px solid #e6e9f0; border-radius:10px; }
         .seg-card .seg-head { background:#f6f8fc; border-bottom:1px solid #e6e9f0; padding:8px 12px; border-radius:10px 10px 0 0; }
         .foto-preview { max-height:120px; border:1px solid #dee2e6; border-radius:8px; margin-top:6px; display:none; }
         .foto-box label { font-size:.8rem; font-weight:600; color:#33475b; }
+        /* select2 a la altura de los inputs de Bootstrap 5 */
+        .select2-container .select2-selection--single { height: calc(2.375rem + 2px); display:flex; align-items:center; }
+        .select2-container--default .select2-selection--single { border:1px solid #ced4da; border-radius:.375rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height:1.5; padding-left:.75rem; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: calc(2.375rem); }
+        .select2-container { width: 100% !important; }
+        .form-label { margin-bottom:.25rem; font-size:.85rem; color:#33475b; }
     </style>
 </head>
 <body>
@@ -135,15 +145,48 @@ $errMsg = trim($_GET['err'] ?? '');
                     <!-- ═══ Datos del paciente ═══ -->
                     <div class="main-card mb-3 card">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fa fa-user"></i> <?php te('pcreate.info'); ?></h5>
-                            <div class="row">
-                                <div class="col-md-2 mb-3">
+                            <h5 class="card-title mb-3"><i class="fa fa-user"></i> <?php te('pcreate.info'); ?></h5>
+
+                            <!-- Fila 1: nombres/apellidos anchos -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold"><?php te('pf.firstName'); ?> *</label>
+                                    <input type="text" class="form-control" name="nombres" required>
+                                    <div class="invalid-feedback"><?php te('pf.firstName'); ?></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold"><?php te('pf.lastName'); ?> *</label>
+                                    <input type="text" class="form-control" name="apellidos" required>
+                                    <div class="invalid-feedback"><?php te('pf.lastName'); ?></div>
+                                </div>
+                            </div>
+
+                            <!-- Fila 2: email ancho + phone + dob -->
+                            <div class="row g-3 mt-0">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold"><?php te('pf.email'); ?></label>
+                                    <input type="email" class="form-control" name="email" placeholder="name@mail.com">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><?php te('pf.phone'); ?> *</label>
+                                    <input type="text" class="form-control" name="telefono" required>
+                                    <div class="invalid-feedback"><?php te('pf.phone'); ?></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><?php te('pf.dob'); ?></label>
+                                    <input type="date" name="feNac" class="form-control">
+                                </div>
+                            </div>
+
+                            <!-- Fila 3: ID + Title + Sex + Gender -->
+                            <div class="row g-3 mt-0">
+                                <div class="col-md-3">
                                     <label class="form-label">ID</label>
                                     <input type="text" class="form-control" name="cedula" placeholder="09923006589">
                                 </div>
-                                <div class="col-md-2 mb-3">
+                                <div class="col-md-3">
                                     <label class="form-label"><?php te('pcreate.title'); ?></label>
-                                    <select name="title" class="form-control">
+                                    <select name="title" class="form-select js-select2">
                                         <option value="">Default Select</option>
                                         <option value="Dr">Dr</option><option value="Fr">Fr</option>
                                         <option value="Master">Master</option><option value="Miss">Miss</option>
@@ -152,38 +195,17 @@ $errMsg = trim($_GET['err'] ?? '');
                                         <option value="Pr">Pr</option><option value="Prof">Prof</option><option value="Rev">Rev</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label"><?php te('pf.firstName'); ?></label>
-                                    <input type="text" class="form-control" name="nombres" required>
-                                    <div class="invalid-feedback"><?php te('pf.firstName'); ?></div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label"><?php te('pf.lastName'); ?></label>
-                                    <input type="text" class="form-control" name="apellidos" required>
-                                    <div class="invalid-feedback"><?php te('pf.lastName'); ?></div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label"><?php te('pf.phone'); ?></label>
-                                    <input type="text" class="form-control" name="telefono" required>
-                                    <div class="invalid-feedback"><?php te('pf.phone'); ?></div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label"><?php te('pf.email'); ?></label>
-                                    <input type="email" class="form-control" name="email" placeholder="name@mail.com">
-                                </div>
-                                <div class="col-md-2 mb-3">
+                                <div class="col-md-3">
                                     <label class="form-label"><?php te('pf.sex'); ?></label>
-                                    <select name="sex" class="form-control">
+                                    <select name="sex" class="form-select js-select2">
                                         <option value="N/A">Default Select</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-3">
                                     <label class="form-label"><?php te('pcreate.genderIdentity'); ?></label>
-                                    <select name="gender" class="form-control">
+                                    <select name="gender" class="form-select js-select2">
                                         <option value="Default Select">Default Select</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
@@ -194,35 +216,35 @@ $errMsg = trim($_GET['err'] ?? '');
                                     </select>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label"><?php te('pf.dob'); ?></label>
-                                    <input type="date" name="feNac" class="form-control">
-                                </div>
-                                <div class="col-md-5 mb-3">
+
+                            <!-- Fila 4: address + language + important notes -->
+                            <div class="row g-3 mt-0">
+                                <div class="col-md-6">
                                     <label class="form-label"><?php te('pf.address'); ?></label>
                                     <input type="text" class="form-control" name="address">
                                 </div>
-                                <div class="col-md-2 mb-3">
+                                <div class="col-md-3">
                                     <label class="form-label"><?php te('pf.language'); ?></label>
-                                    <select name="idioma" class="form-control">
+                                    <select name="idioma" class="form-select js-select2">
                                         <option value="es"><?php te('lang.spanish'); ?></option>
                                         <option value="en"><?php te('lang.english'); ?></option>
                                     </select>
                                 </div>
-                                <div class="col-md-2 mb-3">
+                                <div class="col-md-3">
                                     <label class="form-label"><?php te('pf.importantNotes'); ?></label>
                                     <input type="text" class="form-control" name="notes">
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
+
+                            <!-- Fila 5: billing + ICD-10 -->
+                            <div class="row g-3 mt-0">
+                                <div class="col-md-4">
                                     <label class="form-label"><?php te('pf.billingNotes'); ?></label>
                                     <input type="text" class="form-control" name="addNotes">
                                 </div>
-                                <div class="col-md-8 mb-3">
+                                <div class="col-md-8">
                                     <label class="form-label"><i class="bi bi-clipboard2-pulse"></i> ICD-10</label>
-                                    <select name="idicd10" class="form-control">
+                                    <select name="idicd10" class="form-select js-select2-search">
                                         <option value="">—</option>
                                         <?php foreach ($icd10 as $ic): ?>
                                             <option value="<?php echo (int)$ic['ID_ENFE_DIAG_COD']; ?>">
@@ -272,7 +294,7 @@ $errMsg = trim($_GET['err'] ?? '');
             <div class="row">
                 <div class="col-md-5 mb-3">
                     <label class="form-label small"><?php te('pcreate.insurer'); ?></label>
-                    <select name="seg_id[]" class="form-control form-control-sm">
+                    <select name="seg_id[]" class="form-select js-seg-insurer">
                         <option value=""><?php te('pcreate.selectDash'); ?></option>
                         <?php foreach ($seguros as $s): ?>
                             <option value="<?php echo (int)$s['Id_seguro']; ?>"><?php echo htmlspecialchars($s['Empresa_seguro']); ?></option>
@@ -281,11 +303,11 @@ $errMsg = trim($_GET['err'] ?? '');
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label small"><?php te('pcreate.policyNo'); ?></label>
-                    <input type="text" name="seg_poliza[]" class="form-control form-control-sm" maxlength="60">
+                    <input type="text" name="seg_poliza[]" class="form-control" maxlength="60">
                 </div>
                 <div class="col-md-3 mb-3">
                     <label class="form-label small"><?php te('pcreate.priority'); ?></label>
-                    <select name="seg_prioridad[]" class="form-control form-control-sm">
+                    <select name="seg_prioridad[]" class="form-select js-seg-priority">
                         <option value="Primario"><?php te('pcreate.priorityPrimary'); ?></option>
                         <option value="Secundario"><?php te('pcreate.prioritySecondary'); ?></option>
                         <option value="Terciario"><?php te('pcreate.priorityTertiary'); ?></option>
@@ -309,13 +331,36 @@ $errMsg = trim($_GET['err'] ?? '');
 </template>
 
 <script>
+    // Inicializa select2 en un contenedor (o en todo el documento por defecto).
+    function initSelect2(scope) {
+        var $scope = scope ? $(scope) : $(document);
+        // Selects normales con búsqueda
+        $scope.find('.js-select2').each(function(){
+            if ($(this).data('select2')) return;
+            $(this).select2({ width: '100%' });
+        });
+        // Selects con lista larga (ICD-10, aseguradora)
+        $scope.find('.js-select2-search, .js-seg-insurer').each(function(){
+            if ($(this).data('select2')) return;
+            $(this).select2({ width: '100%', placeholder: <?php echo json_encode(t('pcreate.selectDash')); ?>, allowClear: true });
+        });
+        // Prioridad del seguro
+        $scope.find('.js-seg-priority').each(function(){
+            if ($(this).data('select2')) return;
+            $(this).select2({ width: '100%' });
+        });
+    }
+
     // Cada fila mantiene su índice de nombre estable por posición del array.
     function agregarFilaSeguro() {
         const tpl  = document.getElementById('tplSeguro');
         const cont = document.getElementById('segurosContenedor');
         const node = tpl.content.cloneNode(true);
         cont.appendChild(node);
+        // La última fila agregada es el último hijo del contenedor
+        const nuevaFila = cont.lastElementChild;
         renumerar();
+        initSelect2(nuevaFila);
     }
     function quitarFilaSeguro(btn) {
         const row = btn.closest('[data-seg-row]');
@@ -337,8 +382,11 @@ $errMsg = trim($_GET['err'] ?? '');
             img.style.display = 'none';
         }
     }
-    // Empezar con una fila de seguro visible
-    document.addEventListener('DOMContentLoaded', agregarFilaSeguro);
+    // Al cargar: inicializar select2 del paciente y una fila de seguro
+    document.addEventListener('DOMContentLoaded', function(){
+        initSelect2(document);   // selects del paciente
+        agregarFilaSeguro();     // primera fila de seguro (ya inicializa su select2)
+    });
 
     // Validación Bootstrap
     (function() {
