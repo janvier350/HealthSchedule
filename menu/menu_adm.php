@@ -252,6 +252,16 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                         </a>
                     </li>
                     <li>
+                        <a href="cuentas_por_cobrar.php" class="<?php echo menuActivo('cuentas_por_cobrar.php', $paginaActual); ?>">
+                            <i class="metismenu-icon"></i> Cuentas por Cobrar
+                        </a>
+                    </li>
+                    <li>
+                        <a href="importar_facturas_kalix.php" class="<?php echo menuActivo('importar_facturas_kalix.php', $paginaActual); ?>">
+                            <i class="metismenu-icon"></i> Importar Facturas (Kalix)
+                        </a>
+                    </li>
+                    <li>
                         <a href="DashBoardReportesCuentasPorCobrar.php">
                             <i class="metismenu-icon"></i> <?php te('menu.reports'); ?>
                         </a>
