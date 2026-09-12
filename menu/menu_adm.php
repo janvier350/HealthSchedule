@@ -237,6 +237,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
                 <ul>
                     <li>
+                        <a href="bill_items_admin.php" class="<?php echo menuActivo('bill_items_admin.php', $paginaActual); ?>">
+                            <i class="metismenu-icon"></i> Bill Items
+                        </a>
+                    </li>
+                    <li>
                         <a href="BILLS_FacturaCrear.php">
                             <i class="metismenu-icon"></i> <?php te('menu.registerBills'); ?>
                         </a>
