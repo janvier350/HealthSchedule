@@ -252,7 +252,12 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                         </a>
                     </li>
                     <li>
-                        <a href="cuentas_por_cobrar.php" class="<?php echo menuActivo('cuentas_por_cobrar.php', $paginaActual); ?>">
+                        <a href="crear_factura.php" class="<?php echo menuActivo('crear_factura.php', $paginaActual); ?>">
+                            <i class="metismenu-icon"></i> Crear Factura
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cuentas_por_cobrar.php" class="<?php echo menuActivo(['cuentas_por_cobrar.php','factura_ver.php'], $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Cuentas por Cobrar
                         </a>
                     </li>

@@ -93,7 +93,9 @@ $hoy = new DateTime('today');
             <div class="app-page-title mb-3"><div class="page-title-wrapper"><div class="page-title-heading">
                 <div class="page-title-icon"><i class="pe-7s-cash icon-gradient bg-plum-plate"></i></div>
                 <div>Cuentas por Cobrar <div class="page-title-subheading">Facturas abiertas con saldo pendiente.</div></div>
-            </div></div></div>
+            </div>
+            <div class="page-title-actions"><a href="crear_factura.php" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Crear factura</a></div>
+            </div></div>
 
             <?php if (!$tablaOk): ?>
                 <div class="alert alert-warning">Falta el esquema de facturación.
@@ -169,7 +171,7 @@ $hoy = new DateTime('today');
                         <thead class="table-light"><tr>
                             <th>Fecha</th><th>№ Factura</th><th>Paciente</th><th>Descripción</th>
                             <th>Vence</th><th class="text-end">Total</th><th class="text-end">Pagado</th>
-                            <th class="text-end">Saldo</th><th class="text-center">Estado</th>
+                            <th class="text-end">Saldo</th><th class="text-center">Estado</th><th></th>
                         </tr></thead>
                         <tbody>
                         <?php if ($rows): foreach ($rows as $f):
@@ -197,9 +199,14 @@ $hoy = new DateTime('today');
                                     ?>
                                     <span class="badge bg-<?php echo $st[0]; ?> <?php echo $st[0]==='warning'?'text-dark':''; ?>"><?php echo $st[1]; ?></span>
                                 </td>
+                                <td class="text-end pe-3">
+                                    <a href="factura_ver.php?id=<?php echo (int)$f['id']; ?>" class="btn btn-sm btn-outline-primary py-0 px-2">
+                                        <i class="bi bi-eye"></i> <?php echo $f['saldo']>0.001?'Ver / Pagar':'Ver'; ?>
+                                    </a>
+                                </td>
                             </tr>
                         <?php endforeach; else: ?>
-                            <tr><td colspan="9" class="text-center py-5 text-muted"><i class="bi bi-check2-circle fs-2 d-block mb-2"></i>Sin facturas pendientes.</td></tr>
+                            <tr><td colspan="10" class="text-center py-5 text-muted"><i class="bi bi-check2-circle fs-2 d-block mb-2"></i>Sin facturas pendientes.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
