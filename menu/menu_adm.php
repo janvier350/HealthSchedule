@@ -117,6 +117,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-calendar3"></i> <?php te('menu.calendar'); ?>
                 </a>
             </li>
+            <li>
+                <a href="gestionar_colores_estado.php" class="<?php echo menuActivo('gestionar_colores_estado.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-palette2"></i> <?php te('menu.statusColors'); ?>
+                </a>
+            </li>
             <?php if ($esSistema || $esUsuario): ?>
             <li>
                 <a href="Agenda_Pendientes.php" class="<?php echo menuActivo('Agenda_Pendientes.php', $paginaActual); ?>">
@@ -229,11 +234,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <li>
                 <a href="gestionar_tipos_consulta.php" class="<?php echo menuActivo('gestionar_tipos_consulta.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-palette"></i> <?php te('menu.consultTypes'); ?>
-                </a>
-            </li>
-            <li>
-                <a href="gestionar_colores_estado.php" class="<?php echo menuActivo('gestionar_colores_estado.php', $paginaActual); ?>">
-                    <i class="metismenu-icon bi bi-palette2"></i> <?php te('menu.statusColors'); ?>
                 </a>
             </li>
             <?php endif; ?>
