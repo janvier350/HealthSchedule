@@ -17,7 +17,17 @@ if (!isset($_SESSION["rol"], $_SESSION["iduser"])) { header("Location: break.php
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 $idUser = (int)$_SESSION['iduser'];
-$tablaOk = ($conexion->query("SHOW TABLES LIKE 'paletas_estado'")->num_rows ?? 0) > 0;
+
+// Detección defensiva del sistema de paletas. Evita 500 cuando la migración
+// aún no se ha ejecutado (o quedó incompleta) y mysqli lanza excepciones.
+$rt = $conexion->query("SHOW TABLES LIKE 'paletas_estado'");
+$tablaOk = $rt ? (($rt->num_rows ?? 0) > 0) : false;
+
+$rc0 = $conexion->query("SHOW COLUMNS FROM ADM_USUARIO LIKE 'IDPALETA_ESTADO'");
+$colUsuarioOk = $rc0 ? (($rc0->num_rows ?? 0) > 0) : false;
+
+// El sistema está listo sólo si existen las tablas y la columna de perfil.
+$sistemaListo = $tablaOk && $colUsuarioOk;
 
 $estadosDef = [
     'pendiente'=>'Pendiente / Reagendada','confirmada'=>'Confirmada','atendida'=>'Atendida',
@@ -26,7 +36,7 @@ $estadosDef = [
 ];
 
 $msg = null;
-if ($tablaOk && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($sistemaListo && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
     if ($accion === 'seleccionar') {
         $idPal = (int)($_POST['id_paleta'] ?? 0);
@@ -75,10 +85,12 @@ if ($tablaOk && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Paleta seleccionada del usuario
+// Paleta seleccionada del usuario (sólo si la columna existe)
 $idSel = 0;
-$rs = $conexion->query("SELECT IDPALETA_ESTADO FROM ADM_USUARIO WHERE IDADM_USUARIO=$idUser LIMIT 1");
-if ($rs && ($r=$rs->fetch_assoc())) $idSel=(int)($r['IDPALETA_ESTADO'] ?? 0);
+if ($colUsuarioOk) {
+    $rs = $conexion->query("SELECT IDPALETA_ESTADO FROM ADM_USUARIO WHERE IDADM_USUARIO=$idUser LIMIT 1");
+    if ($rs && ($r=$rs->fetch_assoc())) $idSel=(int)($r['IDPALETA_ESTADO'] ?? 0);
+}
 
 // Cargar paletas disponibles + sus colores
 $paletas=[];
@@ -135,8 +147,12 @@ $base = $paletas[$idSel]['colores'] ?? ($paletas ? reset($paletas)['colores'] : 
             <div class="page-title-actions"><a href="SCH_Calendar.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar3"></i> Ver calendario</a></div>
             </div></div>
 
-            <?php if (!$tablaOk): ?>
-                <div class="alert alert-warning">Falta el sistema de paletas. <a href="migrar_paletas_estado.php" class="alert-link">Créalo aquí</a>.</div>
+            <?php if (!$sistemaListo): ?>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Falta preparar el sistema de paletas<?php echo ($tablaOk && !$colUsuarioOk) ? ' (falta la columna de perfil <code>IDPALETA_ESTADO</code>)' : ''; ?>.
+                    <a href="migrar_paletas_estado.php" class="alert-link">Ejecútalo aquí</a> (es idempotente, puedes correrlo sin riesgo).
+                </div>
             <?php else: ?>
                 <?php if ($msg): ?><div class="alert alert-<?php echo h($msg[0]); ?>"><?php echo h($msg[1]); ?></div><?php endif; ?>
 

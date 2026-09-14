@@ -1,6 +1,12 @@
 <?php
 function conectarse()
 {
+    // Esta aplicación está escrita para el modo clásico de mysqli: cada consulta
+    // devuelve false ante un error y el código lo comprueba (o usa "or die").
+    // En PHP 8.1+ el modo por defecto lanza excepciones, lo que convertía
+    // cualquier error de consulta en un HTTP 500. Restauramos el modo clásico.
+    if (function_exists('mysqli_report')) { mysqli_report(MYSQLI_REPORT_OFF); }
+
     $db_host   = "localhost";
     $db_nombre = "srossnut_agenda";
     $db_user   = "srossnut_agenda";
