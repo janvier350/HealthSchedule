@@ -56,20 +56,44 @@ $query = "SELECT
 $resultado = $conexion->query($query);
 $eventos   = array();
 
-while ($row = $resultado->fetch_assoc()) {
-    switch($row['ESTADO_CITA']) {
+// Colores de estado (editables desde gestionar_colores_estado.php).
+// Se cargan de la tabla estado_cita_colores si existe; si no, se usan los
+// valores por defecto históricos.
+$colDefault = [
+    'pendiente'             => '#3b4252',
+    'confirmada'            => '#6f42c1',
+    'atendida'              => '#28a745',
+    'cancelada'             => '#fd7e14',
+    'cancelacion_tardia'    => '#ffc107',
+    'cancelado_profesional' => '#ff8a80',
+    'no_asistio'            => '#dc3545',
+    'default'               => '#007bff',
+];
+$colEstado = $colDefault;
+if (($conexion->query("SHOW TABLES LIKE 'estado_cita_colores'")->num_rows ?? 0) > 0) {
+    $rc = $conexion->query("SELECT clave, color FROM estado_cita_colores");
+    if ($rc) while ($x = $rc->fetch_assoc()) { $colEstado[$x['clave']] = $x['color']; }
+}
+// Mapea un ESTADO_CITA a su clave de color
+function claveEstado($e) {
+    switch ($e) {
         case 'Pendiente':
-        case 'Reagendada':              $colorEstado = '#212529'; break; // Negro  - Pendiente / Reagendada
-        case 'Confirmada':              $colorEstado = '#6f42c1'; break; // Morado - Confirmada
-        case 'A':                       $colorEstado = '#28a745'; break; // Verde  - Atendida
+        case 'Reagendada':                return 'pendiente';
+        case 'Confirmada':                return 'confirmada';
+        case 'A':                         return 'atendida';
         case 'Cancelada':
-        case 'Cancelado':               $colorEstado = '#fd7e14'; break; // Naranja - Cancelada
+        case 'Cancelado':                 return 'cancelada';
         case 'Atrasado':
-        case 'Cancelación Tardía':      $colorEstado = '#ffc107'; break; // Ámbar  - Cancelación tardía
-        case 'Cancelado por Profesional': $colorEstado = '#ff8a80'; break; // Salmón - Cancelado por el profesional
-        case 'No Asistió':              $colorEstado = '#dc3545'; break; // Rojo   - No asistió
-        default:                        $colorEstado = '#007bff'; break; // Azul
+        case 'Cancelación Tardía':        return 'cancelacion_tardia';
+        case 'Cancelado por Profesional': return 'cancelado_profesional';
+        case 'No Asistió':                return 'no_asistio';
+        default:                          return 'default';
     }
+}
+
+while ($row = $resultado->fetch_assoc()) {
+    $claveE = claveEstado($row['ESTADO_CITA']);
+    $colorEstado = $colEstado[$claveE] ?? $colEstado['default'];
 
     $colorTipo = !empty($row['TIPO_COLOR']) ? $row['TIPO_COLOR'] : $colorTipoDefault;
 

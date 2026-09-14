@@ -730,6 +730,7 @@ return array(
     'menu.cie10'               => 'ICD-10 Code',
     'menu.createCie10'         => 'Create ICD-10',
     'menu.consultTypes'        => 'Consultation Types',
+    'menu.statusColors'        => 'Status Colors',
     'menu.register'            => 'Register',
     'menu.registerBills'       => 'Register Bills',
     'menu.registerPayments'    => 'Register Payments',
