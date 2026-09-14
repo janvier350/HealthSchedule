@@ -22,10 +22,12 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
     .scrollbar-sidebar  { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; overflow-x: hidden !important; }
     .app-sidebar__inner { padding-bottom: 12px; }
 
+    /* El pie ahora es el último <li> de la lista: siempre queda al final,
+       nunca "sube" aunque el contenedor con scroll colapse. */
+    .sidebar-footer-li { list-style: none; margin-top: 8px; }
     .sidebar-logout-footer {
-        flex: 0 0 auto;
         border-top: 1px solid rgba(0,0,0,.08);
-        padding: 10px 14px;
+        padding: 12px 14px 16px;
     }
     .sidebar-logout-footer a.logout-link {
         display: flex; align-items: center; gap: 8px;
@@ -217,6 +219,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-palette"></i> <?php te('menu.consultTypes'); ?>
                 </a>
             </li>
+            <li>
+                <a href="gestionar_colores_estado.php" class="<?php echo menuActivo('gestionar_colores_estado.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-palette2"></i> <?php te('menu.statusColors'); ?>
+                </a>
+            </li>
             <?php endif; ?>
             <?php if ($esDoctor): ?>
             <li>
@@ -324,20 +331,22 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
+            <!-- ══ PIE: idioma + cerrar sesión (dentro de la lista, siempre al final) ══ -->
+            <li class="sidebar-footer-li">
+                <div class="sidebar-logout-footer">
+                    <div class="sidebar-lang">
+                        <span class="lang-label"><i class="bi bi-translate"></i> <?php te('lang.language'); ?>:</span>
+                        <a href="set_lang.php?lang=en&redir=<?php echo urlencode($redirLang); ?>" class="<?php echo $lang === 'en' ? 'active' : ''; ?>">EN</a>
+                        <a href="set_lang.php?lang=es&redir=<?php echo urlencode($redirLang); ?>" class="<?php echo $lang === 'es' ? 'active' : ''; ?>">ES</a>
+                    </div>
+                    <a href="salir.php" class="logout-link">
+                        <i class="metismenu-icon bi bi-power"></i> <?php te('menu.logout'); ?>
+                    </a>
+                </div>
+            </li>
+
         </ul>
     </div>
-</div>
-
-<!-- ══ PIE: idioma + cerrar sesión ══════════════════════════════════ -->
-<div class="sidebar-logout-footer">
-    <div class="sidebar-lang">
-        <span class="lang-label"><i class="bi bi-translate"></i> <?php te('lang.language'); ?>:</span>
-        <a href="set_lang.php?lang=en&redir=<?php echo urlencode($redirLang); ?>" class="<?php echo $lang === 'en' ? 'active' : ''; ?>">EN</a>
-        <a href="set_lang.php?lang=es&redir=<?php echo urlencode($redirLang); ?>" class="<?php echo $lang === 'es' ? 'active' : ''; ?>">ES</a>
-    </div>
-    <a href="salir.php" class="logout-link">
-        <i class="metismenu-icon bi bi-power"></i> <?php te('menu.logout'); ?>
-    </a>
 </div>
 
 <script>

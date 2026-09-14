@@ -730,6 +730,7 @@ return array(
     'menu.cie10'               => 'Código CIE-10',
     'menu.createCie10'         => 'Crear Nuevo CIE-10',
     'menu.consultTypes'        => 'Tipos de Consulta',
+    'menu.statusColors'        => 'Colores de Estados',
     'menu.register'            => 'Registrar',
     'menu.registerBills'       => 'Registrar Bills',
     'menu.registerPayments'    => 'Registrar Abonos',
