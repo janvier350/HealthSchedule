@@ -71,6 +71,34 @@ if (!$res || $res->num_rows == 0) {
 }
 $d = $res->fetch_assoc();
 
+// ── Nota de ESTA cita (si ya fue atendida antes) y de la consulta ANTERIOR ──
+$idCitaInt   = (int)$idCita;
+$idPacienteA = (int)$d['IDPACIENTE'];
+
+// Nota ya guardada para esta misma cita (permite reabrir/editar una atención)
+$informeActual = '';
+if ($sa = $conexion->prepare("SELECT CONTENIDO_INFORME FROM AG_HISTORIAL WHERE IDCITA=? LIMIT 1")) {
+    $sa->bind_param('i', $idCitaInt); $sa->execute();
+    $ra = $sa->get_result()->fetch_assoc(); $sa->close();
+    if ($ra) $informeActual = (string)$ra['CONTENIDO_INFORME'];
+}
+
+// Nota de la consulta anterior del mismo paciente (para precargar en follow-ups)
+$prevInforme = ''; $prevFecha = ''; $prevTipo = '';
+if ($sp = $conexion->prepare(
+    "SELECT H.CONTENIDO_INFORME, C.FECHA_CITA, TC.NOMBRES AS TIPO
+     FROM AG_HISTORIAL H
+     INNER JOIN AG_CITA C ON C.IDCITA = H.IDCITA
+     LEFT  JOIN AG_TIPOCONSULTA TC ON TC.IDTIPOCONSULTA = C.IDTIPOCONSULTA
+     WHERE C.IDPACIENTE = ? AND H.IDCITA <> ?
+       AND TRIM(COALESCE(H.CONTENIDO_INFORME,'')) <> ''
+     ORDER BY C.FECHA_CITA DESC, C.HORA_INICIO DESC, H.IDHISTORIAL DESC
+     LIMIT 1")) {
+    $sp->bind_param('ii', $idPacienteA, $idCitaInt); $sp->execute();
+    $rp = $sp->get_result()->fetch_assoc(); $sp->close();
+    if ($rp) { $prevInforme = (string)$rp['CONTENIDO_INFORME']; $prevFecha = (string)$rp['FECHA_CITA']; $prevTipo = (string)($rp['TIPO'] ?? ''); }
+}
+
 $sessionNombres   = $_SESSION['nombres']   ?? '';
 $sessionApellidos = $_SESSION['apellidos'] ?? '';
 $docNombreCompleto = trim($d['DOC_NOMBRES'] . ' ' . $d['DOC_APELLIDOS']);
@@ -375,7 +403,20 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
             </button>
         </div>
 
+        <!-- ── AVISO: consulta anterior precargada ─────────────────── -->
+        <div id="avisoPrevio" class="alert alert-info d-none align-items-center justify-content-between flex-wrap gap-2 py-2">
+            <span><i class="bi bi-clock-history me-1"></i><span id="avisoPrevioTxt"></span></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="empezarEnBlanco()">
+                <i class="bi bi-eraser"></i> <?php te('att.prev.blank'); ?>
+            </button>
+        </div>
+
         <!-- ── EDITOR ──────────────────────────────────────────────── -->
+        <div class="mb-1 d-flex justify-content-end">
+            <button type="button" id="btnCargarPrevia" class="btn btn-sm btn-outline-primary d-none" onclick="cargarConsultaAnterior()">
+                <i class="bi bi-arrow-clockwise"></i> <?php te('att.prev.load'); ?>
+            </button>
+        </div>
         <div class="mb-3">
             <textarea id="editorInforme" name="informe"></textarea>
         </div>
@@ -484,13 +525,22 @@ const DATOS_CITA = {
     fechaHoy:        "<?php echo date('d/m/Y'); ?>",
     firmaNpi:        "<?php echo addslashes($firmaNpi); ?>",
     firmaLicense:    "<?php echo addslashes($firmaLicense); ?>",
-    firmaImg:        <?php echo json_encode($firmaImg ?: ''); ?>
+    firmaImg:        <?php echo json_encode($firmaImg ?: ''); ?>,
+    informeActual:   <?php echo json_encode($informeActual); ?>,
+    prevInforme:     <?php echo json_encode($prevInforme); ?>,
+    prevFecha:       <?php echo json_encode($prevFecha ? date('d/m/Y', strtotime($prevFecha)) : ''); ?>,
+    prevTipo:        <?php echo json_encode($prevTipo); ?>
 };
 
 // ── Textos traducibles (i18n) ────────────────────────────────────────
 const ATT = {
     snLang:            <?php echo json_encode($snLang); ?>,
     editorPlaceholder: <?php echo json_encode(t('att.js.editorPlaceholder')); ?>,
+    prev: {
+        loadedMsg:      <?php echo json_encode(t('att.prev.loadedMsg')); ?>,
+        confirmReplace: <?php echo json_encode(t('att.prev.confirmReplace')); ?>,
+        confirmBlank:   <?php echo json_encode(t('att.prev.confirmBlank')); ?>
+    },
     templateLoadError: <?php echo json_encode(t('att.js.templateLoadError')); ?>,
     emptyReport:       <?php echo json_encode(t('att.js.emptyReport')); ?>,
     confirmFinish:     <?php echo json_encode(t('att.js.confirmFinish')); ?>,
@@ -575,7 +625,41 @@ $(document).ready(function(){
             ['view',   ['fullscreen','codeview','help']]
         ]
     });
+
+    // Precarga de contenido del informe:
+    //  1) Si esta cita ya tiene nota guardada → cargarla (reabrir/editar atención).
+    //  2) Si no, y el paciente tiene una consulta anterior → precargarla (follow-up).
+    var actual = (DATOS_CITA.informeActual || '').trim();
+    var previa = (DATOS_CITA.prevInforme   || '').trim();
+    if (actual !== '') {
+        $('#editorInforme').summernote('code', DATOS_CITA.informeActual);
+    } else if (previa !== '') {
+        $('#editorInforme').summernote('code', DATOS_CITA.prevInforme);
+        var txt = ATT.prev.loadedMsg
+            .replace('%d', DATOS_CITA.prevFecha || '')
+            .replace('%t', DATOS_CITA.prevTipo || '');
+        $('#avisoPrevioTxt').text(txt);
+        $('#avisoPrevio').removeClass('d-none').addClass('d-flex');
+    }
+    // El botón para (re)cargar la consulta anterior sólo si existe una.
+    if (previa !== '') $('#btnCargarPrevia').removeClass('d-none');
 });
+
+// Carga (o recarga) la nota de la consulta anterior en el editor.
+function cargarConsultaAnterior(){
+    var previa = (DATOS_CITA.prevInforme || '').trim();
+    if (previa === '') return;
+    var actual = ($('#editorInforme').summernote('code') || '').replace(/<[^>]*>/g,'').trim();
+    if (actual !== '' && !confirm(ATT.prev.confirmReplace)) return;
+    $('#editorInforme').summernote('code', DATOS_CITA.prevInforme);
+}
+
+// Vacía el editor para empezar la nota desde cero.
+function empezarEnBlanco(){
+    if (!confirm(ATT.prev.confirmBlank)) return;
+    $('#editorInforme').summernote('code', '');
+    $('#avisoPrevio').addClass('d-none').removeClass('d-flex');
+}
 
 // ── CALCULAR IMC ─────────────────────────────────────────────────────
 // Edad del paciente en meses (a partir del DOB); null si no hay fecha válida.
