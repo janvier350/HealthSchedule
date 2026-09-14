@@ -180,6 +180,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> <?php te('menu.patientsDeleted'); ?>
                         </a>
                     </li>
+                    <li>
+                        <a href="fusionar_pacientes.php" class="<?php echo menuActivo('fusionar_pacientes.php', $paginaActual); ?>">
+                            <i class="metismenu-icon"></i> <?php te('menu.mergePatients'); ?>
+                        </a>
+                    </li>
                     <?php endif; ?>
                 </ul>
             </li>

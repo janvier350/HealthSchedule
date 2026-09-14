@@ -711,6 +711,7 @@ return array(
     'menu.registerPatientInsurance' => 'Register Patient/Insurance',
     'menu.patientsCrud'        => 'Manage Patients',
     'menu.patientsDeleted'     => 'Deleted Patients',
+    'menu.mergePatients'       => 'Merge Duplicates',
     'cc.title'                => 'Cancelled Appointments',
     'cc.subtitle'            => 'Cancelled appointments with their cancellation reason, who and when.',
     'cc.needMigration'       => 'The cancellation audit is missing.',

@@ -711,6 +711,7 @@ return array(
     'menu.registerPatientInsurance' => 'Registrar Paciente/Seguros',
     'menu.patientsCrud'        => 'Gestionar Pacientes',
     'menu.patientsDeleted'     => 'Pacientes Eliminados',
+    'menu.mergePatients'       => 'Fusionar Duplicados',
     'cc.title'                => 'Citas Canceladas',
     'cc.subtitle'            => 'Citas canceladas con su motivo de cancelación, quién y cuándo.',
     'cc.needMigration'       => 'Falta la auditoría de cancelación.',
