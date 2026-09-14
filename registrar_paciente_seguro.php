@@ -169,12 +169,22 @@ $errMsg = trim($_GET['err'] ?? '');
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label"><?php te('pf.phone'); ?> *</label>
-                                    <input type="text" class="form-control" name="telefono" required>
+                                    <input type="text" class="form-control" name="telefono" id="telefono" required onblur="checkTelefono()">
                                     <div class="invalid-feedback"><?php te('pf.phone'); ?></div>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label"><?php te('pf.dob'); ?></label>
                                     <input type="date" name="feNac" class="form-control">
+                                </div>
+                                <div class="col-12" id="telDupWrap" style="display:none;">
+                                    <div class="alert alert-warning py-2 mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                        Este teléfono ya está registrado en: <strong id="telDupNombre"></strong>.
+                                        <div class="form-check mt-1">
+                                            <input class="form-check-input" type="checkbox" name="force_tel" id="force_tel" value="1">
+                                            <label class="form-check-label" for="force_tel">Registrar de todas formas (permitir teléfono duplicado)</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -331,6 +341,25 @@ $errMsg = trim($_GET['err'] ?? '');
 </template>
 
 <script>
+    // Verifica si el teléfono ya existe y muestra aviso + checkbox "forzar".
+    function checkTelefono() {
+        var tel = (document.getElementById('telefono').value || '').trim();
+        var wrap = document.getElementById('telDupWrap');
+        if (tel === '') { wrap.style.display='none'; return; }
+        fetch('paciente_check_telefono.php?tel=' + encodeURIComponent(tel))
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if (d && d.exists) {
+                    document.getElementById('telDupNombre').textContent = d.nombre + (d.cedula ? ' · '+d.cedula : '');
+                    wrap.style.display = 'block';
+                } else {
+                    wrap.style.display = 'none';
+                    document.getElementById('force_tel').checked = false;
+                }
+            })
+            .catch(function(){ /* silencioso: el backend igual valida */ });
+    }
+
     // Inicializa select2 en un contenedor (o en todo el documento por defecto).
     function initSelect2(scope) {
         var $scope = scope ? $(scope) : $(document);

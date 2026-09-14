@@ -54,15 +54,19 @@ $tieneIdioma = $colExiste('IDIOMA');
 $tieneIcd10  = $colExiste('IDICD10');
 $idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
-// Evitar duplicado por teléfono (mismo criterio que el flujo actual)
-$stmtDup = $conexion->prepare("SELECT IDPACIENTE FROM AG_PACIENTE WHERE TELEFONO = ? AND ESTADO = 'A' LIMIT 1");
-$stmtDup->bind_param('s', $telefono);
-$stmtDup->execute();
-if ($stmtDup->get_result()->fetch_assoc()) {
+// Duplicado por teléfono: sólo bloquea si NO se marcó "registrar de todas formas".
+$forzarTel = isset($_POST['force_tel']) && $_POST['force_tel'] === '1';
+if (!$forzarTel && $telefono !== '') {
+    $stmtDup = $conexion->prepare("SELECT NOMBRES, APELLIDOS FROM AG_PACIENTE WHERE TELEFONO = ? AND ESTADO = 'A' LIMIT 1");
+    $stmtDup->bind_param('s', $telefono);
+    $stmtDup->execute();
+    $dupRow = $stmtDup->get_result()->fetch_assoc();
     $stmtDup->close();
-    volverConError('Ya existe un paciente activo con ese teléfono.');
+    if ($dupRow) {
+        $quien = trim($dupRow['APELLIDOS'].', '.$dupRow['NOMBRES']);
+        volverConError('El teléfono '.$telefono.' ya está registrado en: '.$quien.'. Marca "Registrar de todas formas" si quieres crearlo igual.');
+    }
 }
-$stmtDup->close();
 
 // ── Insertar paciente (prepared statement, columnas dinámicas) ─────────
 $cols = ['NOMBRES','APELLIDOS','EMAIL','FECHANACIMIENTO','TELEFONO','CEDULA','TITLE','SEX','GENDER','ESTADO','ADDRESS','NOTES','ADDNOTES'];
