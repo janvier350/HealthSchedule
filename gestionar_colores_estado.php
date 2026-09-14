@@ -159,13 +159,13 @@ $base = $paletas[$idSel]['colores'] ?? ($paletas ? reset($paletas)['colores'] : 
                 <!-- Paletas elegibles -->
                 <div class="card shadow-sm mb-3"><div class="card-body">
                     <h6 class="mb-3"><i class="bi bi-palette2"></i> Elige tu paleta</h6>
-                    <div class="row g-3">
+                    <div class="row g-3 align-items-start">
                         <?php foreach ($paletas as $id=>$pal):
                             $sel = ($id===$idSel);
                             $propia = ((int)$pal['id_usuario']===$idUser && (int)$pal['es_sistema']===0);
                         ?>
                         <div class="col-md-6 col-lg-4 col-xl-3">
-                            <div class="paleta-card h-100 p-2 <?php echo $sel?'sel':''; ?>">
+                            <div class="paleta-card p-2 <?php echo $sel?'sel':''; ?>">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="fw-semibold small"><?php echo h($pal['nombre']); ?>
                                         <?php echo $propia?'<span class="badge bg-info text-dark ms-1">Mía</span>':''; ?>

@@ -81,7 +81,7 @@ if ($r) while($x=$r->fetch_assoc()) $rows[]=$x;
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light"><tr>
                         <th>Paciente</th><th>Cédula</th><th>Teléfono</th>
-                        <?php if($tieneAudit): ?><th>Motivo</th><th>Eliminado</th><th>Por</th><?php endif; ?>
+                        <th>Motivo</th><th>Eliminado</th><th>Eliminado por</th>
                         <th class="text-end pe-3">Acción</th>
                     </tr></thead>
                     <tbody>
@@ -90,11 +90,9 @@ if ($r) while($x=$r->fetch_assoc()) $rows[]=$x;
                             <td class="fw-semibold"><?php echo h(trim($p['APELLIDOS'].', '.$p['NOMBRES'])); ?></td>
                             <td><small class="text-muted"><?php echo h($p['CEDULA']?:'—'); ?></small></td>
                             <td><small><?php echo h($p['TELEFONO']?:'—'); ?></small></td>
-                            <?php if($tieneAudit): ?>
-                                <td style="max-width:320px;"><small><?php echo h($p['MOTIVO_ELIMINACION']?:'—'); ?></small></td>
-                                <td><small><?php echo !empty($p['FECHA_ELIMINACION'])?date('d/m/Y H:i',strtotime($p['FECHA_ELIMINACION'])):'—'; ?></small></td>
-                                <td><small class="text-muted"><?php echo h($p['ELIMINADO_POR_NOMBRE']?:'—'); ?></small></td>
-                            <?php endif; ?>
+                            <td style="max-width:320px;"><small><?php echo $tieneAudit ? h(($p['MOTIVO_ELIMINACION']??'')?:'—') : '—'; ?></small></td>
+                            <td><small><?php echo ($tieneAudit && !empty($p['FECHA_ELIMINACION']))?date('d/m/Y H:i',strtotime($p['FECHA_ELIMINACION'])):'—'; ?></small></td>
+                            <td><small class="text-muted"><?php echo $tieneAudit ? h(($p['ELIMINADO_POR_NOMBRE']??'')?:'—') : '—'; ?></small></td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="recuperar(<?php echo (int)$p['IDPACIENTE']; ?>)">
                                     <i class="bi bi-arrow-counterclockwise"></i> Recuperar
@@ -102,7 +100,7 @@ if ($r) while($x=$r->fetch_assoc()) $rows[]=$x;
                             </td>
                         </tr>
                     <?php endforeach; else: ?>
-                        <tr><td colspan="<?php echo $tieneAudit?7:4; ?>" class="text-center py-5 text-muted"><i class="bi bi-trash fs-2 d-block mb-2"></i>No hay pacientes eliminados.</td></tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-trash fs-2 d-block mb-2"></i>No hay pacientes eliminados.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>

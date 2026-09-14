@@ -154,7 +154,7 @@ $badge = [
                         <th><?php te('cc.type'); ?></th>
                         <th><?php te('cc.status'); ?></th>
                         <th><?php te('cc.reason'); ?></th>
-                        <?php if($tieneAudit): ?><th><?php te('cc.cancelledBy'); ?></th><?php endif; ?>
+                        <th><?php te('cc.cancelledBy'); ?></th>
                     </tr></thead>
                     <tbody>
                     <?php if($rows): foreach($rows as $c):
@@ -174,14 +174,12 @@ $badge = [
                             <td><small><?php echo h($c['TIPO_CONSULTA']?:'—'); ?></small></td>
                             <td><span class="badge" style="background:<?php echo $col; ?>;color:#fff;"><?php echo h(estado_label($c['ESTADO_CITA'])); ?></span></td>
                             <td style="max-width:340px;"><small><?php echo $motivo!==''?h($motivo):'<span class="text-muted">—</span>'; ?></small></td>
-                            <?php if($tieneAudit): ?>
-                                <td><small class="text-muted"><?php echo h($c['CANCELADO_POR_NOMBRE']?:'—'); ?></small>
-                                    <?php if(!empty($c['FECHA_CANCELACION'])): ?><div class="text-muted small"><?php echo h(date('d/m/Y H:i', strtotime($c['FECHA_CANCELACION']))); ?></div><?php endif; ?>
-                                </td>
-                            <?php endif; ?>
+                            <td><small class="text-muted"><?php echo $tieneAudit ? h($c['CANCELADO_POR_NOMBRE']?:'—') : '—'; ?></small>
+                                <?php if($tieneAudit && !empty($c['FECHA_CANCELACION'])): ?><div class="text-muted small"><?php echo h(date('d/m/Y H:i', strtotime($c['FECHA_CANCELACION']))); ?></div><?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; else: ?>
-                        <tr><td colspan="<?php echo $tieneAudit?7:6; ?>" class="text-center py-5 text-muted"><i class="bi bi-calendar-x fs-2 d-block mb-2"></i><?php te('cc.empty'); ?></td></tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-calendar-x fs-2 d-block mb-2"></i><?php te('cc.empty'); ?></td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
