@@ -107,8 +107,21 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
     <script src="js/jquery.min.js"></script>
     <style>
         .unit-toggle .btn { padding: 2px 8px; font-size: 0.78rem; }
-        .medicion-group { display: flex; gap: 6px; align-items: center; }
+        .medicion-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .medicion-group input { max-width: 100px; }
+        /* Los inputs de pies/pulgadas comparten el ancho disponible */
+        #grpFtIn { flex: 1 1 100%; min-width: 0; }
+        #grpFtIn .input-group { flex: 1 1 0; min-width: 0; }
+        #grpFtIn .input-group input { max-width: none; min-width: 0; }
+
+        /* En pantallas pequeñas: apilar inputs y selector de unidad para que
+           pies/pulgadas no se vean apretados. */
+        @media (max-width: 575.98px) {
+            .medicion-group { flex-direction: column; align-items: stretch; gap: 8px; }
+            .medicion-group input { max-width: none; width: 100%; }
+            .unit-toggle { display: flex; width: 100%; }
+            .unit-toggle .btn { flex: 1 1 0; padding: 5px 4px; }
+        }
 
         /* ── Tarjetas de medición (acorde a la plantilla de la app) ── */
         .att-metrics .att-tile {
