@@ -20,12 +20,15 @@ $tablaOk = ($conexion->query("SHOW TABLES LIKE 'estado_cita_colores'")->num_rows
 $msg = null;
 if ($tablaOk && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $colores = $_POST['color'] ?? [];
-    $up = $conexion->prepare("UPDATE estado_cita_colores SET color=? WHERE clave=?");
+    $textos  = $_POST['text_color'] ?? [];
+    $up = $conexion->prepare("UPDATE estado_cita_colores SET color=?, text_color=? WHERE clave=?");
     $n=0;
     foreach ($colores as $clave=>$color) {
         $color = trim($color);
+        $tcol  = trim($textos[$clave] ?? '#ffffff');
         if (!preg_match('/^#[0-9a-fA-F]{6}$/',$color)) continue;
-        $up->bind_param('ss',$color,$clave); $up->execute(); $n++;
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/',$tcol)) $tcol = '#ffffff';
+        $up->bind_param('sss',$color,$tcol,$clave); $up->execute(); $n++;
     }
     $up->close();
     $msg = ['success', "Colores actualizados ($n). Los cambios se ven al recargar el calendario."];
@@ -86,20 +89,30 @@ if ($tablaOk) {
                 <div class="card shadow-sm mb-3"><div class="card-body">
                     <h6 class="mb-2"><i class="bi bi-palette2"></i> Paletas predefinidas (armónicas)</h6>
                     <p class="text-muted small">Haz clic en una paleta para aplicarla a todos los estados; luego puedes ajustar colores individuales y Guardar.</p>
-                    <div class="row g-2" id="presets"></div>
+                    <div class="row g-2 align-items-start" id="presets"></div>
                 </div></div>
 
                 <form method="POST">
                     <div class="card shadow-sm mb-3"><div class="card-body">
                         <div class="table-responsive"><table class="table align-middle">
-                            <thead class="table-light"><tr><th>Estado</th><th>Color</th><th>Hex</th><th>Vista previa</th></tr></thead>
+                            <thead class="table-light"><tr><th>Estado</th><th>Fondo</th><th>Letra</th><th>Vista previa</th></tr></thead>
                             <tbody>
-                            <?php foreach ($rows as $r): $c=h($r['color']); $k=h($r['clave']); ?>
+                            <?php foreach ($rows as $r): $c=h($r['color']); $tc=h($r['text_color'] ?? '#ffffff'); $k=h($r['clave']); ?>
                                 <tr>
                                     <td class="fw-semibold"><?php echo h($r['etiqueta']); ?></td>
-                                    <td><input type="color" value="<?php echo $c; ?>" data-clave="<?php echo $k; ?>" onchange="syncHex(this)"></td>
-                                    <td><input type="text" name="color[<?php echo $k; ?>]" id="hex_<?php echo $k; ?>" value="<?php echo $c; ?>" class="form-control form-control-sm" style="width:110px;" maxlength="7" oninput="syncColor('<?php echo $k; ?>',this.value)"></td>
-                                    <td><span class="color-chip" id="chip_<?php echo $k; ?>" style="background:<?php echo $c; ?>;">10:00 Paciente</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <input type="color" value="<?php echo $c; ?>" data-bg="<?php echo $k; ?>" onchange="syncHex(this,'bg')">
+                                            <input type="text" name="color[<?php echo $k; ?>]" id="hex_<?php echo $k; ?>" value="<?php echo $c; ?>" class="form-control form-control-sm" style="width:92px;" maxlength="7" oninput="syncColor('<?php echo $k; ?>')">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <input type="color" value="<?php echo $tc; ?>" data-tx="<?php echo $k; ?>" onchange="syncHex(this,'tx')">
+                                            <input type="text" name="text_color[<?php echo $k; ?>]" id="txt_<?php echo $k; ?>" value="<?php echo $tc; ?>" class="form-control form-control-sm" style="width:92px;" maxlength="7" oninput="syncColor('<?php echo $k; ?>')">
+                                        </div>
+                                    </td>
+                                    <td><span class="color-chip" id="chip_<?php echo $k; ?>" style="background:<?php echo $c; ?>;color:<?php echo $tc; ?>;">10:00 Paciente</span></td>
                                 </tr>
                             <?php endforeach; ?>
                             </tbody>
@@ -115,45 +128,55 @@ if ($tablaOk) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Paletas armónicas: cada una define color por clave
+// Paletas armónicas: cada clave define { bg, tx } (fondo y letra)
+var D='#ffffff', K='#212529'; // blanco / casi-negro
 var PRESETS = {
     'Suave (pastel)': {
-        pendiente:'#5c6b7a', confirmada:'#8e7cc3', atendida:'#6aa84f', cancelada:'#e69138',
-        cancelacion_tardia:'#f1c232', cancelado_profesional:'#e6a0a0', no_asistio:'#cc6666', default:'#6d9eeb'
+        pendiente:{bg:'#5c6b7a',tx:D}, confirmada:{bg:'#b4a7d6',tx:K}, atendida:{bg:'#a8d5a2',tx:K}, cancelada:{bg:'#f6b26b',tx:K},
+        cancelacion_tardia:{bg:'#ffe599',tx:K}, cancelado_profesional:{bg:'#ea9999',tx:K}, no_asistio:{bg:'#e06666',tx:D}, default:{bg:'#9fc5e8',tx:K}
     },
     'Profesional': {
-        pendiente:'#3b4252', confirmada:'#6f42c1', atendida:'#28a745', cancelada:'#fd7e14',
-        cancelacion_tardia:'#ffc107', cancelado_profesional:'#ff8a80', no_asistio:'#dc3545', default:'#007bff'
+        pendiente:{bg:'#3b4252',tx:D}, confirmada:{bg:'#6f42c1',tx:D}, atendida:{bg:'#28a745',tx:D}, cancelada:{bg:'#fd7e14',tx:D},
+        cancelacion_tardia:{bg:'#ffc107',tx:K}, cancelado_profesional:{bg:'#ff8a80',tx:K}, no_asistio:{bg:'#dc3545',tx:D}, default:{bg:'#007bff',tx:D}
     },
     'Océano (frío)': {
-        pendiente:'#34495e', confirmada:'#2980b9', atendida:'#16a085', cancelada:'#e67e22',
-        cancelacion_tardia:'#f39c12', cancelado_profesional:'#c39bd3', no_asistio:'#c0392b', default:'#3498db'
+        pendiente:{bg:'#34495e',tx:D}, confirmada:{bg:'#2980b9',tx:D}, atendida:{bg:'#16a085',tx:D}, cancelada:{bg:'#e67e22',tx:D},
+        cancelacion_tardia:{bg:'#f39c12',tx:K}, cancelado_profesional:{bg:'#c39bd3',tx:K}, no_asistio:{bg:'#c0392b',tx:D}, default:{bg:'#3498db',tx:D}
     },
     'Alto contraste': {
-        pendiente:'#212529', confirmada:'#6610f2', atendida:'#198754', cancelada:'#fd7e14',
-        cancelacion_tardia:'#ffca2c', cancelado_profesional:'#e35d6a', no_asistio:'#d00000', default:'#0d6efd'
+        pendiente:{bg:'#212529',tx:D}, confirmada:{bg:'#6610f2',tx:D}, atendida:{bg:'#198754',tx:D}, cancelada:{bg:'#fd7e14',tx:K},
+        cancelacion_tardia:{bg:'#ffca2c',tx:K}, cancelado_profesional:{bg:'#e35d6a',tx:D}, no_asistio:{bg:'#d00000',tx:D}, default:{bg:'#0d6efd',tx:D}
     }
 };
-function syncHex(inp){ var k=inp.dataset.clave; syncColor(k, inp.value); document.getElementById('hex_'+k).value=inp.value; }
-function syncColor(k,val){
-    if(!/^#[0-9a-fA-F]{6}$/.test(val)) return;
-    var chip=document.getElementById('chip_'+k); if(chip) chip.style.background=val;
-    var picker=document.querySelector('input[type=color][data-clave="'+k+'"]'); if(picker) picker.value=val;
+// inp = input color; tipo = 'bg' | 'tx' → refleja al hex de texto correspondiente
+function syncHex(inp,tipo){
+    var k = tipo==='bg' ? inp.dataset.bg : inp.dataset.tx;
+    var target = tipo==='bg' ? document.getElementById('hex_'+k) : document.getElementById('txt_'+k);
+    if(target) target.value = inp.value;
+    syncColor(k);
+}
+function syncColor(k){
+    var bg=(document.getElementById('hex_'+k)||{}).value;
+    var tx=(document.getElementById('txt_'+k)||{}).value;
+    var chip=document.getElementById('chip_'+k);
+    if(chip){ if(/^#[0-9a-fA-F]{6}$/.test(bg)) chip.style.background=bg; if(/^#[0-9a-fA-F]{6}$/.test(tx)) chip.style.color=tx; }
+    var pb=document.querySelector('input[type=color][data-bg="'+k+'"]'); if(pb && /^#[0-9a-fA-F]{6}$/.test(bg)) pb.value=bg;
+    var pt=document.querySelector('input[type=color][data-tx="'+k+'"]'); if(pt && /^#[0-9a-fA-F]{6}$/.test(tx)) pt.value=tx;
 }
 function aplicarPreset(name){
     var p=PRESETS[name]; if(!p) return;
     Object.keys(p).forEach(function(k){
-        var hex=document.getElementById('hex_'+k);
-        if(hex){ hex.value=p[k]; syncColor(k,p[k]); }
+        var bg=document.getElementById('hex_'+k), tx=document.getElementById('txt_'+k);
+        if(bg) bg.value=p[k].bg; if(tx) tx.value=p[k].tx; syncColor(k);
     });
 }
 (function(){
     var cont=document.getElementById('presets'); if(!cont) return;
     Object.keys(PRESETS).forEach(function(name){
         var p=PRESETS[name];
-        var sw=Object.keys(p).map(function(k){return '<span class="preset-swatch" style="background:'+p[k]+'"></span>';}).join(' ');
+        var sw=Object.keys(p).map(function(k){return '<span class="preset-swatch" style="background:'+p[k].bg+'"></span>';}).join(' ');
         var col=document.createElement('div'); col.className='col-md-6 col-lg-3';
-        col.innerHTML='<div class="card preset-card h-100" onclick="aplicarPreset(\''+name+'\')"><div class="card-body p-2">'
+        col.innerHTML='<div class="card preset-card" onclick="aplicarPreset(\''+name+'\')"><div class="card-body p-2">'
             +'<div class="fw-semibold small mb-1">'+name+'</div><div class="d-flex flex-wrap gap-1">'+sw+'</div></div></div>';
         cont.appendChild(col);
     });

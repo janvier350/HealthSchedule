@@ -70,9 +70,15 @@ $colDefault = [
     'default'               => '#007bff',
 ];
 $colEstado = $colDefault;
+$txtEstado = [];  // clave => color de letra
 if (($conexion->query("SHOW TABLES LIKE 'estado_cita_colores'")->num_rows ?? 0) > 0) {
-    $rc = $conexion->query("SELECT clave, color FROM estado_cita_colores");
-    if ($rc) while ($x = $rc->fetch_assoc()) { $colEstado[$x['clave']] = $x['color']; }
+    // ¿existe la columna text_color?
+    $hayTxt = ($conexion->query("SHOW COLUMNS FROM estado_cita_colores LIKE 'text_color'")->num_rows ?? 0) > 0;
+    $rc = $conexion->query("SELECT clave, color".($hayTxt?", text_color":"")." FROM estado_cita_colores");
+    if ($rc) while ($x = $rc->fetch_assoc()) {
+        $colEstado[$x['clave']] = $x['color'];
+        if ($hayTxt && !empty($x['text_color'])) $txtEstado[$x['clave']] = $x['text_color'];
+    }
 }
 // Mapea un ESTADO_CITA a su clave de color
 function claveEstado($e) {
@@ -94,6 +100,7 @@ function claveEstado($e) {
 while ($row = $resultado->fetch_assoc()) {
     $claveE = claveEstado($row['ESTADO_CITA']);
     $colorEstado = $colEstado[$claveE] ?? $colEstado['default'];
+    $colorTexto  = $txtEstado[$claveE] ?? '#ffffff';
 
     $colorTipo = !empty($row['TIPO_COLOR']) ? $row['TIPO_COLOR'] : $colorTipoDefault;
 
@@ -104,7 +111,7 @@ while ($row = $resultado->fetch_assoc()) {
         'end'             => $row['FECHA_CITA'] . 'T' . $row['HORA_FIN'],
         'backgroundColor' => $colorEstado,
         'borderColor'     => $colorTipo,
-        'textColor'       => '#ffffff',
+        'textColor'       => $colorTexto,
         'extendedProps'   => array(
             'cita'      => $row['ESTADO_CITA'],
             'medico'    => $row['DOCTOR'],
