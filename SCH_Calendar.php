@@ -766,6 +766,7 @@ while ($a = $resAgencias->fetch_assoc()) {
 
                     <input type="hidden" id="idCita"     name="id">
                     <input type="hidden" id="estadoCita" name="estado">
+                    <input type="hidden" id="motivoCancel" name="motivo">
                 </div>
                 <div class="modal-footer" id="modalFooterBtns">
                     <button id="btnAtender" class="btn btn-primary" type="button" onclick="irAConsulta()">
@@ -1005,6 +1006,8 @@ const TC = <?php echo json_encode(array(
     'noPatientId'     => t('cal.js.noPatientId'),
     'patientUpdatedOk'=> t('cal.js.patientUpdatedOk'),
     'formIncomplete'  => t('cal.js.formIncomplete'),
+    'cancelReasonPrompt'   => t('cal.js.cancelReasonPrompt'),
+    'cancelReasonRequired' => t('cal.js.cancelReasonRequired'),
     'completeFields'  => t('cal.js.completeFields'),
     'timeRange'       => t('cal.js.timeRange'),
     'apptGone'        => t('cal.js.apptGone'),
@@ -1209,6 +1212,11 @@ async function eliminarCita() {
 
     if (!confirm(TC.confirmDelete)) return;
 
+    // Motivo de cancelación obligatorio.
+    const motivo = prompt(TC.cancelReasonPrompt);
+    if (motivo === null) return;                       // canceló el diálogo
+    if (motivo.trim() === '') { alert(TC.cancelReasonRequired); return; }
+
     // Si es serie, preguntar alcance
     let alcance = 'solo';
     if (citaActual && citaActual.idserie) {
@@ -1216,7 +1224,7 @@ async function eliminarCita() {
         if (!alcance) return;
     }
 
-    $.post('eliminar_cita.php', { idCita: id, alcance: alcance }, function(res) {
+    $.post('eliminar_cita.php', { idCita: id, alcance: alcance, motivo: motivo.trim() }, function(res) {
         res = res.trim();
         if (res === 'OK') {
             alert(TC.deletedOk);
@@ -1311,12 +1319,23 @@ function guardarPacienteCita() {
     });
 }
 
+const ESTADOS_CANCELACION = ['Cancelada','Cancelado','Cancelación Tardía','Cancelado por Profesional','No Asistió'];
+
 function validarFormulario() {
     const id     = document.getElementById('idCita').value;
     const estado = document.getElementById('estadoCita').value;
     if (!id || !estado) {
         alert(TC.formIncomplete);
         return false;
+    }
+    // Al cancelar, pedir obligatoriamente el motivo de cancelación.
+    if (ESTADOS_CANCELACION.indexOf(estado) !== -1) {
+        const motivo = prompt(TC.cancelReasonPrompt);
+        if (motivo === null) return false;            // canceló el diálogo
+        if (motivo.trim() === '') { alert(TC.cancelReasonRequired); return false; }
+        document.getElementById('motivoCancel').value = motivo.trim();
+    } else {
+        document.getElementById('motivoCancel').value = '';
     }
     return true;
 }
