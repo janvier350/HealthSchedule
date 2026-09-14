@@ -187,18 +187,6 @@ while ($a = $resAgencias->fetch_assoc()) {
         'nombre' => $a['DESCRIPCION'],
     );
 }
-
-// Ubicación predeterminada: "SRoss Nutrition PLLC at Telehealth Nutrition Services"
-// (coincidencia exacta y, si no, cualquiera que contenga "Telehealth Nutrition Services").
-$idAgenciaDefault = 0;
-foreach ($agenciasActivas as $a) {
-    if (trim($a['nombre']) === 'SRoss Nutrition PLLC at Telehealth Nutrition Services') { $idAgenciaDefault = (int)$a['id']; break; }
-}
-if (!$idAgenciaDefault) {
-    foreach ($agenciasActivas as $a) {
-        if (stripos($a['nombre'], 'Telehealth Nutrition Services') !== false) { $idAgenciaDefault = (int)$a['id']; break; }
-    }
-}
 ?>
 <!doctype html>
 <html lang="<?php echo current_lang(); ?>">
@@ -630,7 +618,7 @@ if (!$idAgenciaDefault) {
                         <select class="form-select select-busqueda" name="IdAgencia" required>
                             <option value=""><?php te('cal.selectLocation'); ?></option>
                             <?php foreach ($agenciasActivas as $v): ?>
-                            <option value="<?php echo $v['id']; ?>" <?php echo ((int)$v['id'] === $idAgenciaDefault) ? 'selected' : ''; ?>><?php echo htmlspecialchars($v['nombre']); ?></option>
+                            <option value="<?php echo $v['id']; ?>"><?php echo htmlspecialchars($v['nombre']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -1144,7 +1132,7 @@ function toggleEditar() {
         document.getElementById('editHora').value         = citaActual.hora;
         document.getElementById('editTipoConsulta').value = citaActual.idtipoconsulta || '';
         document.getElementById('editDoctor').value       = citaActual.iddoctor || '';
-        document.getElementById('editAgencia').value      = citaActual.idagencia || '<?php echo (int)$idAgenciaDefault; ?>';
+        document.getElementById('editAgencia').value      = citaActual.idagencia || '0';
     }
 }
 
