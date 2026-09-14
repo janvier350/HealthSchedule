@@ -34,10 +34,19 @@ $conexion->query("CREATE TABLE IF NOT EXISTS estado_cita_colores (
     clave VARCHAR(40) NOT NULL,
     etiqueta VARCHAR(80) NOT NULL,
     color VARCHAR(7) NOT NULL,
+    text_color VARCHAR(7) NOT NULL DEFAULT '#ffffff',
     orden INT NOT NULL DEFAULT 0,
     UNIQUE KEY uq_clave (clave)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
     ? $msgs[]=['OK','Tabla estado_cita_colores lista'] : $msgs[]=['ERR',$conexion->error];
+
+// Asegurar columna text_color si la tabla ya existía sin ella
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneTxt = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='".$conexion->real_escape_string($dbName)."' AND TABLE_NAME='estado_cita_colores' AND COLUMN_NAME='text_color'")->fetch_assoc()['c']>0;
+if (!$tieneTxt) {
+    $conexion->query("ALTER TABLE estado_cita_colores ADD COLUMN text_color VARCHAR(7) NOT NULL DEFAULT '#ffffff' AFTER color")
+        ? $msgs[]=['NEW','Columna text_color agregada'] : $msgs[]=['ERR','text_color: '.$conexion->error];
+}
 
 // clave, etiqueta, color por defecto, orden
 $defaults = [
