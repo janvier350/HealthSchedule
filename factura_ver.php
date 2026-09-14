@@ -10,13 +10,15 @@ require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
-if (!isset($_SESSION["rol"]) || strtoupper($_SESSION["rol"]) !== 'SISTEMA') {
+// SISTEMA y ASISTENTE pueden ver la factura; sólo SISTEMA registra/anula pagos.
+if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE'], true)) {
     header("Location: break.php"); exit();
 }
+$esSistemaFV = (strtoupper($_SESSION["rol"]) === 'SISTEMA');
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
-// Eliminar un pago (recalcula)
-if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['accion']??'')==='del_pago') {
+// Eliminar un pago (recalcula) — sólo SISTEMA
+if ($esSistemaFV && $_SERVER['REQUEST_METHOD']==='POST' && ($_POST['accion']??'')==='del_pago') {
     $idp=(int)($_POST['id_pago']??0); $idf=(int)($_POST['id_factura']??0);
     if ($idp>0 && $idf>0) {
         $conexion->query("DELETE FROM factura_pagos WHERE id=".$idp." AND id_factura=".$idf);
@@ -118,7 +120,7 @@ $metodos = ['Cash'=>'Efectivo','Credit Card'=>'Tarjeta de crédito','Debit'=>'D�
                         <div class="d-flex justify-content-between h5"><span>Saldo</span><span class="<?php echo $saldo>0.001?'text-danger':'text-success'; ?>">$<?php echo number_format($saldo,2); ?></span></div>
                     </div></div>
 
-                    <?php if ($saldo > 0.001): ?>
+                    <?php if ($esSistemaFV && $saldo > 0.001): ?>
                     <div class="card shadow-sm mb-3"><div class="card-body">
                         <h6><i class="bi bi-cash-coin"></i> Registrar pago</h6>
                         <form method="POST" action="factura_pago_guardar.php">
@@ -144,13 +146,14 @@ $metodos = ['Cash'=>'Efectivo','Credit Card'=>'Tarjeta de crédito','Debit'=>'D�
                         <h6><i class="bi bi-clock-history"></i> Pagos</h6>
                         <?php if($pagos): ?>
                         <table class="table table-sm">
-                            <thead class="table-light"><tr><th>Fecha</th><th>Método</th><th class="text-end">Monto</th><th></th></tr></thead>
+                            <thead class="table-light"><tr><th>Fecha</th><th>Método</th><th class="text-end">Monto</th><?php if($esSistemaFV): ?><th></th><?php endif; ?></tr></thead>
                             <tbody>
                             <?php foreach($pagos as $pg): ?>
                                 <tr>
                                     <td><small><?php echo $pg['fecha']?date('d/m/Y',strtotime($pg['fecha'])):'—'; ?></small></td>
                                     <td><small><?php echo h($metodos[$pg['metodo']]??$pg['metodo']); ?><?php echo $pg['referencia']?' · '.h($pg['referencia']):''; ?></small></td>
                                     <td class="text-end">$<?php echo number_format($pg['monto'],2); ?></td>
+                                    <?php if($esSistemaFV): ?>
                                     <td>
                                         <form method="POST" onsubmit="return confirm('¿Eliminar este pago?');" style="display:inline;">
                                             <input type="hidden" name="accion" value="del_pago">
@@ -159,6 +162,7 @@ $metodos = ['Cash'=>'Efectivo','Credit Card'=>'Tarjeta de crédito','Debit'=>'D�
                                             <button class="btn btn-sm btn-outline-danger py-0 px-1" title="Eliminar"><i class="bi bi-x"></i></button>
                                         </form>
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                             </tbody>

@@ -11,7 +11,8 @@ require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
-if (!isset($_SESSION["rol"]) || strtoupper($_SESSION["rol"]) !== 'SISTEMA') {
+// SISTEMA y ASISTENTE pueden ver Cuentas por Cobrar.
+if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE'], true)) {
     header("Location: break.php"); exit();
 }
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }

@@ -2,9 +2,10 @@
 require_once(__DIR__ . '/../lang/i18n.php');
 
 $rol       = $_SESSION['rol'] ?? '';
-$esSistema = ($rol === 'SISTEMA');
-$esDoctor  = ($rol === 'DOCTOR');
-$esUsuario = ($rol === 'USUARIO');
+$esSistema   = ($rol === 'SISTEMA');
+$esDoctor    = ($rol === 'DOCTOR');
+$esUsuario   = ($rol === 'USUARIO');
+$esAsistente = ($rol === 'ASISTENTE');
 
 $paginaActual = basename($_SERVER['PHP_SELF'] ?? '');
 function menuActivo($paginas, $actual) {
@@ -122,7 +123,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-palette2"></i> <?php te('menu.statusColors'); ?>
                 </a>
             </li>
-            <?php if ($esSistema || $esUsuario): ?>
+            <?php if ($esSistema || $esUsuario || $esAsistente): ?>
             <li>
                 <a href="Agenda_Pendientes.php" class="<?php echo menuActivo('Agenda_Pendientes.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-calendar-check"></i> <?php te('menu.pending'); ?>
@@ -245,8 +246,8 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
-            <!-- ══ BILLS (solo SISTEMA) ════════════════════════════════ -->
-            <?php if ($esSistema): ?>
+            <!-- ══ BILLS (SISTEMA completo; ASISTENTE: crear + ver) ═════ -->
+            <?php if ($esSistema || $esAsistente): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.billing'); ?></li>
             <li>
                 <a href="#">
@@ -255,6 +256,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
+                    <?php if ($esSistema): ?>
                     <li>
                         <a href="bill_items_admin.php" class="<?php echo menuActivo('bill_items_admin.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Bill Items
@@ -270,6 +272,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> <?php te('menu.registerPayments'); ?>
                         </a>
                     </li>
+                    <?php endif; ?>
                     <li>
                         <a href="crear_factura.php" class="<?php echo menuActivo('crear_factura.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Crear Factura
@@ -280,6 +283,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> Cuentas por Cobrar
                         </a>
                     </li>
+                    <?php if ($esSistema): ?>
                     <li>
                         <a href="importar_facturas_kalix.php" class="<?php echo menuActivo('importar_facturas_kalix.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Importar Facturas (Kalix)
@@ -290,8 +294,10 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> <?php te('menu.reports'); ?>
                         </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </li>
+            <?php if ($esSistema): ?>
             <li>
                 <a href="gestionar_seguros.php" class="<?php echo menuActivo('gestionar_seguros.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-shield-check"></i> <?php te('menu.insurance'); ?>
@@ -302,6 +308,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-bookmark-star"></i> <?php te('menu.insuranceTypes'); ?>
                 </a>
             </li>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- ══ REPORTES ════════════════════════════════════════════ -->
