@@ -626,11 +626,11 @@ if ($queryRoles) {
                     <div class="row g-2">
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><?php te('ucreate.npi'); ?></label>
-                            <input type="text" class="form-control" id="npi" name="npi" maxlength="20" placeholder="1114420973">
+                            <input type="text" class="form-control" id="npi" name="npi" maxlength="20" placeholder="<?php te('ucreate.npiPh'); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><?php te('ucreate.license'); ?></label>
-                            <input type="text" class="form-control" id="licenseId" name="license_id" maxlength="60" placeholder="008982-1ok">
+                            <input type="text" class="form-control" id="licenseId" name="license_id" maxlength="60" placeholder="<?php te('ucreate.licensePh'); ?>">
                         </div>
                     </div>
 

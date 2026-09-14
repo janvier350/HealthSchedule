@@ -638,6 +638,8 @@ return array(
     'ucreate.registerBtn'      => 'Registrar Usuario',
     'ucreate.credentials'      => 'Credenciales profesionales',
     'ucreate.npi'              => 'NPI',
+    'ucreate.npiPh'           => 'Ej: 10 dígitos',
+    'ucreate.licensePh'       => 'Ej: número de licencia',
     'ucreate.license'          => 'License ID',
     'ucreate.th.name'          => 'Nombre',
     'ucreate.th.contact'       => 'Contacto',

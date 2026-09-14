@@ -212,13 +212,13 @@ $grupos = array_slice($grupos, 0, 100, true); // cap de despliegue
                 echo '<form method="POST" class="card dup-card shadow-sm mb-3" onsubmit="return confirm(\'¿Fusionar los seleccionados en el paciente marcado como CONSERVAR? Esta acción reasigna sus datos.\');">';
                 echo '<input type="hidden" name="accion" value="fusionar">';
                 echo '<div class="card-body">';
-                echo '<div class="row g-2">';
+                echo '<div class="row g-2 align-items-start">';
                 // el keeper por defecto: el que más registros ligados tenga
                 $best=null;$bestC=-1;
                 foreach($miembros as $m){ $tot=array_sum($m['_ligados']); if($tot>$bestC){$bestC=$tot;$best=(int)$m['IDPACIENTE'];} }
                 foreach ($miembros as $m){
                     $id=(int)$m['IDPACIENTE'];
-                    echo '<div class="col-md-6"><div class="pac-opt h-100" data-id="'.$id.'">';
+                    echo '<div class="col-md-6"><div class="pac-opt" data-id="'.$id.'">';
                     echo '<div class="form-check mb-1"><input class="form-check-input keeper-radio" type="radio" name="keeper" value="'.$id.'" id="k'.$id.'" '.($id===$best?'checked':'').'>';
                     echo '<label class="form-check-label fw-semibold" for="k'.$id.'">'.h(trim($m['APELLIDOS'].', '.$m['NOMBRES'])).' <span class="text-muted">#'.$id.'</span></label></div>';
                     echo '<div class="small text-muted mb-2">';

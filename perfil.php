@@ -185,13 +185,13 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                                     <?php if ($tieneNpi): ?>
                                     <div class="mb-2">
                                         <div class="info-label"><?php te('ucreate.npi'); ?></div>
-                                        <input type="text" id="perfNpi" class="form-control" maxlength="20" value="<?php echo htmlspecialchars($u['NPI'] ?? ''); ?>" placeholder="1114420973">
+                                        <input type="text" id="perfNpi" class="form-control" maxlength="20" value="<?php echo htmlspecialchars($u['NPI'] ?? ''); ?>" placeholder="<?php te('ucreate.npiPh'); ?>">
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($tieneLicense): ?>
                                     <div class="mb-2">
                                         <div class="info-label"><?php te('ucreate.license'); ?></div>
-                                        <input type="text" id="perfLicense" class="form-control" maxlength="60" value="<?php echo htmlspecialchars($u['LICENSE_ID'] ?? ''); ?>" placeholder="008982-1ok">
+                                        <input type="text" id="perfLicense" class="form-control" maxlength="60" value="<?php echo htmlspecialchars($u['LICENSE_ID'] ?? ''); ?>" placeholder="<?php te('ucreate.licensePh'); ?>">
                                     </div>
                                     <?php endif; ?>
                                     <?php endif; ?>
