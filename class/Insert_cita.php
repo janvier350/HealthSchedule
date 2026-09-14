@@ -18,6 +18,7 @@ $IdPaciente   = (int)($_POST['IdPaciente'] ?? 0);
 $timeIni      = $conexion->real_escape_string($_POST['timeIni']      ?? '');
 $Idconsulta   = (int)($_POST['Idconsulta'] ?? 0);
 $IdDoctor     = (int)($_POST['IdDoctor']   ?? 0);
+$IdAgencia    = (int)($_POST['IdAgencia']  ?? 0);   // Ubicación (Location)
 
 // Recurrencia (opcional)
 $recurrencia   = strtolower(trim($_POST['recurrencia']   ?? 'none'));
@@ -86,8 +87,8 @@ $stmt_valida = $conexion->prepare(
 );
 $stmt_insert = $conexion->prepare(
     "INSERT INTO AG_CITA (IDPACIENTE, IDTIPOCONSULTA, IDDOCTOR, IDUSUARIO,
-                          FECHA_CITA, HORA_INICIO, HORA_FIN, ESTADO_CITA, ESTADO, COMENTARIO)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente', 'A', '')"
+                          FECHA_CITA, HORA_INICIO, HORA_FIN, IDAGENCIA, ESTADO_CITA, ESTADO, COMENTARIO)
+     VALUES (?, ?, ?, ?, ?, ?, ?, NULLIF(?, 0), 'Pendiente', 'A', '')"
 );
 
 $primeraIdCita     = 0;
@@ -107,9 +108,9 @@ foreach ($fechasSerie as $f) {
     }
     $stmt_valida->free_result();
 
-    $stmt_insert->bind_param("iiiisss",
+    $stmt_insert->bind_param("iiiisssi",
         $IdPaciente, $Idconsulta, $IdDoctor, $idUsuario,
-        $f, $timeIni, $timeFin
+        $f, $timeIni, $timeFin, $IdAgencia
     );
     if (!$stmt_insert->execute()) {
         continue;
