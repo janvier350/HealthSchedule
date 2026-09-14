@@ -245,13 +245,27 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
                 <div class="att-tile">
                     <span class="att-tile-label"><i class="bi bi-rulers me-1"></i><?php te('att.heightLbl'); ?></span>
                     <div class="medicion-group">
+                        <!-- Talla en un solo número (cm / m) -->
                         <input type="number" id="talla" class="form-control" step="0.1"
                                placeholder="0.0" oninput="calcularIMC()">
+                        <!-- Talla en pies + pulgadas (se muestra al elegir ft/in) -->
+                        <div id="grpFtIn" class="d-flex gap-1" style="display:none!important;">
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="tallaFt" class="form-control" step="1" min="0" placeholder="0" oninput="calcularIMC()">
+                                <span class="input-group-text">ft</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="tallaIn" class="form-control" step="0.1" min="0" placeholder="0" oninput="calcularIMC()">
+                                <span class="input-group-text">in</span>
+                            </div>
+                        </div>
                         <div class="btn-group unit-toggle" role="group">
-                            <input type="radio" class="btn-check" name="unidadTalla" id="uCm" value="cm" checked onchange="calcularIMC()">
+                            <input type="radio" class="btn-check" name="unidadTalla" id="uCm" value="cm" checked onchange="toggleTallaUnidad()">
                             <label class="btn btn-outline-secondary" for="uCm">cm</label>
-                            <input type="radio" class="btn-check" name="unidadTalla" id="uM" value="m" onchange="calcularIMC()">
+                            <input type="radio" class="btn-check" name="unidadTalla" id="uM" value="m" onchange="toggleTallaUnidad()">
                             <label class="btn btn-outline-secondary" for="uM">m</label>
+                            <input type="radio" class="btn-check" name="unidadTalla" id="uFtIn" value="ftin" onchange="toggleTallaUnidad()">
+                            <label class="btn btn-outline-secondary" for="uFtIn">ft/in</label>
                         </div>
                     </div>
                 </div>
@@ -592,19 +606,53 @@ function insertarTablaPediatrica() {
     }
 }
 
+// ── Talla: helpers centralizados (soportan cm / m / ft+in) ───────────
+function getTallaCm(){
+    const u = $('input[name="unidadTalla"]:checked').val();
+    if (u === 'ftin') {
+        const ft   = parseFloat($('#tallaFt').val()) || 0;
+        const inch = parseFloat($('#tallaIn').val()) || 0;
+        return (ft * 12 + inch) * 2.54;
+    }
+    const v = parseFloat($('#talla').val()) || 0;
+    return u === 'm' ? v * 100 : v;   // cm
+}
+function getTallaDisplay(){
+    const u = $('input[name="unidadTalla"]:checked').val();
+    if (u === 'ftin') {
+        const ft   = parseFloat($('#tallaFt').val()) || 0;
+        const inch = parseFloat($('#tallaIn').val()) || 0;
+        if (!ft && !inch) return { text: '---', unit: '' };
+        return { text: ft + "' " + inch + '"', unit: '' };
+    }
+    return { text: ($('#talla').val() || '---'), unit: u };
+}
+// Muestra/oculta los inputs según la unidad elegida
+function toggleTallaUnidad(){
+    const u = $('input[name="unidadTalla"]:checked').val();
+    if (u === 'ftin') {
+        document.getElementById('talla').style.display = 'none';
+        document.getElementById('grpFtIn').style.setProperty('display','flex','important');
+    } else {
+        document.getElementById('talla').style.display = '';
+        document.getElementById('grpFtIn').style.setProperty('display','none','important');
+    }
+    calcularIMC();
+}
+
 function calcularIMC(){
     const pesoInput  = parseFloat($('#peso').val());
-    const tallaInput = parseFloat($('#talla').val());
     const uPeso  = $('input[name="unidadPeso"]:checked').val();
     const uTalla = $('input[name="unidadTalla"]:checked').val();
+    const tallaCmVal = getTallaCm();
 
     var meses = edadPacienteMeses();
     var sexIdx = (typeof DATOS_CITA.pacienteSexIdx === 'number') ? DATOS_CITA.pacienteSexIdx : -1;
 
-    if(!pesoInput || !tallaInput) { renderPediatricAssessment(sexIdx, meses, 0, 0); return; }
+    if(!pesoInput || !tallaCmVal) { renderPediatricAssessment(sexIdx, meses, 0, 0); return; }
     const pesoKg  = uPeso  === 'lbs' ? pesoInput  * 0.453592 : pesoInput;
-    const tallaM  = uTalla === 'cm'  ? tallaInput / 100       : tallaInput;
-    const tallaCm = tallaM * 100;
+    const tallaM  = tallaCmVal / 100;
+    const tallaCm = tallaCmVal;
     const imcNum  = pesoKg / (tallaM * tallaM);
     const imc     = imcNum.toFixed(2);
     $('#imc').val(imc);
@@ -680,7 +728,9 @@ function cargarPlantilla(id){
     const uPeso  = $('input[name="unidadPeso"]:checked').val()  || 'kg';
     const uTalla = $('input[name="unidadTalla"]:checked').val() || 'cm';
     const pesoVal  = $('#peso').val()  || '---';
-    const tallaVal = $('#talla').val() || '---';
+    const _tallaDisp = getTallaDisplay();
+    const tallaVal  = _tallaDisp.text;   // "170.0" (cm/m) o "5' 7\"" (ft/in)
+    const tallaUnit = _tallaDisp.unit;   // "cm"/"m" o "" (ft/in ya incluye símbolos)
     const imcVal   = $('#imc').val()   || '---';
     const fechaNacJS = new Date(DATOS_CITA.pacienteDOB + 'T00:00:00');
     const dobFormateada = fechaNacJS.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
@@ -758,9 +808,9 @@ function cargarPlantilla(id){
                 '{{tipo_consulta}}': DATOS_CITA.tipoConsulta,
                 '{{diagnostico_referencia}}': DATOS_CITA.tipoConsulta,
                 '{{peso}}': `${pesoVal} ${uPeso}`,
-                '{{talla}}': `${tallaVal} ${uTalla}`,
+                '{{talla}}': `${tallaVal} ${tallaUnit}`.trim(),
                 '{{imc}}': imcVal,
-                '{{antropometria}}': `<?php echo t('att.weight'); ?>: ${pesoVal} ${uPeso}, <?php echo t('att.heightLbl'); ?>: ${tallaVal} ${uTalla}, <?php echo t('common.bmi'); ?>: ${imcVal}`,
+                '{{antropometria}}': `<?php echo t('att.weight'); ?>: ${pesoVal} ${uPeso}, <?php echo t('att.heightLbl'); ?>: ${tallaVal} ${tallaUnit}, <?php echo t('common.bmi'); ?>: ${imcVal}`,
                 '{{bioquimica}}': ATT.ph.biochem,
                 '{{hallazgos_fisicos}}': ATT.ph.physical,
                 '{{historial_cliente}}': ATT.ph.clientHistory,
@@ -773,7 +823,7 @@ function cargarPlantilla(id){
                 '{{intervencion}}': ATT.ph.intervention,
                 '{{monitoreo}}': ATT.ph.monitoring,
                 '{{historial_nutricional_seguimiento}}': ATT.ph.nutritionHistory,
-                '{{datos_seguimiento}}': `<?php echo t('att.weight'); ?>: ${pesoVal} ${uPeso}, <?php echo t('att.heightLbl'); ?>: ${tallaVal} ${uTalla}, <?php echo t('common.bmi'); ?>: ${imcVal}`,
+                '{{datos_seguimiento}}': `<?php echo t('att.weight'); ?>: ${pesoVal} ${uPeso}, <?php echo t('att.heightLbl'); ?>: ${tallaVal} ${tallaUnit}, <?php echo t('common.bmi'); ?>: ${imcVal}`,
                 '{{diagnostico_pes_seguimiento}}': ATT.ph.pesDiagnosis,
                 '{{prescripcion_nutricional}}': ATT.ph.prescription,
                 '{{plan_accion_seguimiento}}': ATT.ph.actionPlan,
@@ -802,7 +852,7 @@ function cargarPlantilla(id){
             // en pacientes de 2 a 20 años. Se insertan justo antes del bloque de firma.
             var esPediatric = /pediatric|pediátric/i.test(html);
             var pesoKg  = uPeso  === 'lbs' ? (parseFloat(pesoVal)  || 0) * 0.453592 : (parseFloat(pesoVal)  || 0);
-            var tallaCm = uTalla === 'm'   ? (parseFloat(tallaVal) || 0) * 100      : (parseFloat(tallaVal) || 0);
+            var tallaCm = getTallaCm();
             var imcNum  = (tallaCm > 0) ? (pesoKg / ((tallaCm/100)*(tallaCm/100))) : 0;
             if (esPediatric && window.CDC_GROWTH && _meses !== null && _meses >= 24 && _meses <= 240
                 && (DATOS_CITA.pacienteSexIdx === 0 || DATOS_CITA.pacienteSexIdx === 1)) {
@@ -841,11 +891,9 @@ function guardarAtencion(){
         return;
     }
     const uPeso  = $('input[name="unidadPeso"]:checked').val()  || 'kg';
-    const uTalla = $('input[name="unidadTalla"]:checked').val() || 'cm';
     let pesoVal  = parseFloat($('#peso').val())  || 0;
-    let tallaVal = parseFloat($('#talla').val()) || 0;
     const pesoKg  = uPeso  === 'lbs' ? pesoVal  * 0.453592 : pesoVal;
-    const tallaCm = uTalla === 'm'   ? tallaVal * 100       : tallaVal;
+    const tallaCm = getTallaCm();   // canónico en cm (soporta cm/m/ft+in)
     const imcVal  = parseFloat($('#imc').val()) || 0;
     if(!confirm(ATT.confirmFinish)) return;
     $.ajax({
@@ -961,11 +1009,9 @@ function abrirCalculadora(){
     }
     // Prefill con datos del paciente actual
     var uPeso  = $('input[name="unidadPeso"]:checked').val()  || 'kg';
-    var uTalla = $('input[name="unidadTalla"]:checked').val() || 'cm';
     var pesoV  = parseFloat($('#peso').val())  || 0;
-    var tallaV = parseFloat($('#talla').val()) || 0;
     var pesoKg  = uPeso  === 'lbs' ? pesoV  * 0.453592 : pesoV;
-    var tallaCm = uTalla === 'm'   ? tallaV * 100      : tallaV;
+    var tallaCm = getTallaCm();   // soporta cm/m/ft+in
     // Edad en años (desde meses)
     var meses = edadPacienteMeses();
     var ageYrs = meses != null ? Math.floor(meses / 12) : 0;
