@@ -708,6 +708,7 @@ return array(
     'menu.createPatient'       => 'Crear Paciente',
     'menu.registerPatientInsurance' => 'Registrar Paciente/Seguros',
     'menu.patientsCrud'        => 'Gestionar Pacientes',
+    'menu.patientsDeleted'     => 'Pacientes Eliminados',
     'pcrud.title'             => 'Gestionar Pacientes',
     'pcrud.subtitle'          => 'Pacientes registrados — editar y eliminar.',
     'pcrud.js.confirmDelete'  => '¿Eliminar al paciente "%s"? Puede revertirse con soporte.',
