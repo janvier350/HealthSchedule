@@ -344,6 +344,24 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
     </div>
 </div>
 
+<!-- Modal eliminar paciente (motivo obligatorio) -->
+<div class="modal fade" id="modalEliminar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header py-2" style="background:#dc3545;">
+        <h6 class="modal-title text-white mb-0"><i class="bi bi-trash me-2"></i>Eliminar paciente</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <p class="mb-2">Vas a eliminar a: <strong id="delNombre"></strong></p>
+        <label class="form-label small fw-semibold text-danger">Motivo de la eliminación (obligatorio) *</label>
+        <textarea id="delMotivo" class="form-control" rows="3" placeholder="Explica por qué se elimina este paciente…"></textarea>
+        <div class="form-text">Quedará registrado quién y cuándo lo eliminó. Se puede recuperar desde "Pacientes eliminados".</div>
+    </div>
+    <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger btn-sm" id="delBtn" onclick="confirmarEliminar()"><i class="bi bi-trash"></i> Eliminar</button>
+    </div>
+</div></div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
@@ -516,17 +534,32 @@ function guardarPaciente() {
     }).fail(function(){ alert(T.connError); btn.disabled = false; });
 }
 
+let delId = 0;
+let delModal = null;
 function eliminarPaciente(id, nombre) {
-    if (!confirm(T.delConfirm.replace('%s', nombre))) return;
-    $.post('paciente_eliminar_crud.php', { idPaciente: id }, function(res){
+    delId = id;
+    document.getElementById('delNombre').textContent = nombre;
+    document.getElementById('delMotivo').value = '';
+    if (!delModal) delModal = new bootstrap.Modal(document.getElementById('modalEliminar'));
+    delModal.show();
+}
+function confirmarEliminar() {
+    var motivo = document.getElementById('delMotivo').value.trim();
+    if (motivo === '') { alert('Debes indicar el motivo de la eliminación.'); return; }
+    var btn = document.getElementById('delBtn'); btn.disabled = true;
+    $.post('paciente_eliminar_crud.php', { idPaciente: delId, motivo: motivo }, function(res){
+        btn.disabled = false;
         res = (res || '').trim();
         if (res === 'OK' || res === 'NO_CAMBIO') {
-            var row = document.getElementById('row-' + id);
+            var row = document.getElementById('row-' + delId);
             if (row) row.remove();
+            if (delModal) delModal.hide();
+        } else if (res === 'MOTIVO_REQUERIDO') {
+            alert('Debes indicar el motivo de la eliminación.');
         } else {
             alert(T.delError + res);
         }
-    }).fail(function(){ alert(T.connError); });
+    }).fail(function(){ btn.disabled=false; alert(T.connError); });
 }
 </script>
 </body>

@@ -708,6 +708,7 @@ return array(
     'menu.createPatient'       => 'Create Patient',
     'menu.registerPatientInsurance' => 'Register Patient/Insurance',
     'menu.patientsCrud'        => 'Manage Patients',
+    'menu.patientsDeleted'     => 'Deleted Patients',
     'pcrud.title'             => 'Manage Patients',
     'pcrud.subtitle'          => 'Registered patients — edit and delete.',
     'pcrud.js.confirmDelete'  => 'Delete patient "%s"? This can be reversed by support.',
