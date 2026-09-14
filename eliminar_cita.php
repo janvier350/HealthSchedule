@@ -19,7 +19,9 @@ if (!isset($_SESSION["rol"])) {
 
 $idCita  = isset($_POST['idCita'])  ? (int)$_POST['idCita']  : 0;
 $alcance = isset($_POST['alcance']) ? trim($_POST['alcance']) : 'solo';
+$motivo  = isset($_POST['motivo'])  ? trim($_POST['motivo'])  : '';
 if ($alcance !== 'todas') $alcance = 'solo';
+$idUser  = (int)($_SESSION['iduser'] ?? 0);
 
 if (!$idCita) {
     echo 'DATOS_INCOMPLETOS';
@@ -32,6 +34,15 @@ $tieneSerie = (int)$conexion->query(
     "SELECT COUNT(*) c FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='IDSERIE'"
 )->fetch_assoc()['c'] > 0;
+
+// ¿Existen las columnas de auditoría de cancelación?
+$tieneAuditCancel = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='MOTIVO_CANCELACION'"
+)->fetch_assoc()['c'] > 0;
+$setCancel = $tieneAuditCancel
+    ? ", MOTIVO_CANCELACION = ?, FECHA_CANCELACION = NOW(), CANCELADO_POR = ?"
+    : "";
 
 // Obtener los datos de la cita ANTES de eliminarla (para el correo de cancelación)
 $colSerie = $tieneSerie ? ', A.IDSERIE' : '';
@@ -64,12 +75,16 @@ $canceladasEx = 0;
 if ($alcance === 'todas' && $idSerie > 0) {
     // Cancelar esta + todas las futuras de la serie (borrado lógico).
     $stmt = $conexion->prepare(
-        "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'
+        "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'$setCancel
          WHERE (IDSERIE = ? OR IDCITA = ?)
            AND ESTADO = 'A'
            AND FECHA_CITA >= ?"
     );
-    $stmt->bind_param("iis", $idSerie, $idCita, $fechaOrig);
+    if ($tieneAuditCancel) {
+        $stmt->bind_param("siiis", $motivo, $idUser, $idSerie, $idCita, $fechaOrig);
+    } else {
+        $stmt->bind_param("iis", $idSerie, $idCita, $fechaOrig);
+    }
     if (!$stmt->execute()) {
         echo 'ERROR: ' . $stmt->error;
         $stmt->close();
@@ -80,10 +95,14 @@ if ($alcance === 'todas' && $idSerie > 0) {
 } else {
     // Cancelar solo esta cita (borrado lógico).
     $stmt = $conexion->prepare(
-        "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'
+        "UPDATE AG_CITA SET ESTADO = 'I', ESTADO_CITA = 'Cancelado'$setCancel
          WHERE IDCITA = ? AND ESTADO = 'A'"
     );
-    $stmt->bind_param("i", $idCita);
+    if ($tieneAuditCancel) {
+        $stmt->bind_param("sii", $motivo, $idUser, $idCita);
+    } else {
+        $stmt->bind_param("i", $idCita);
+    }
     if (!$stmt->execute()) {
         echo 'ERROR: ' . $stmt->error;
         $stmt->close();

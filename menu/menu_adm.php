@@ -124,6 +124,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
             </li>
             <?php endif; ?>
+            <li>
+                <a href="citas_canceladas.php" class="<?php echo menuActivo('citas_canceladas.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-calendar-x"></i> <?php te('menu.cancelled'); ?>
+                </a>
+            </li>
             <?php if ($esSistema || $esDoctor): ?>
             <li>
                 <a href="historial_atenciones.php" class="<?php echo menuActivo('historial_atenciones.php', $paginaActual); ?>">

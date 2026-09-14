@@ -8,6 +8,10 @@ session_start();
 
 $id = isset($_POST['id']) ? $_POST['id'] : null;
 $estado = isset($_POST['estado']) ? $_POST['estado'] : null;
+$motivo = isset($_POST['motivo']) ? trim($_POST['motivo']) : '';
+
+// Estados que representan una cancelación (guardan motivo/auditoría).
+$estadosCancelacion = ['Cancelada','Cancelado','Cancelación Tardía','Cancelado por Profesional','No Asistió'];
 
 if ($id === null || $estado === null) {
     echo json_encode([
@@ -34,9 +38,29 @@ if ($resultado->num_rows === 0) {
     exit();
 }
 
+// ¿Existen las columnas de auditoría de cancelación?
+$dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
+$tieneAuditCancel = (int)$conexion->query(
+    "SELECT COUNT(*) c FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA='".$conexion->real_escape_string($dbName)."'
+       AND TABLE_NAME='AG_CITA' AND COLUMN_NAME='MOTIVO_CANCELACION'"
+)->fetch_assoc()['c'] > 0;
+
+$esCancelacion = in_array($estado, $estadosCancelacion, true);
+
 // Intentar actualizar el estado de la cita
-$stmt = $conexion->prepare("UPDATE AG_CITA SET ESTADO_CITA = ? WHERE IDCITA = ?");
-$stmt->bind_param("si", $estado, $id);
+if ($esCancelacion && $tieneAuditCancel) {
+    $idUser = (int)($_SESSION['iduser'] ?? 0);
+    $stmt = $conexion->prepare(
+        "UPDATE AG_CITA
+            SET ESTADO_CITA = ?, MOTIVO_CANCELACION = ?, FECHA_CANCELACION = NOW(), CANCELADO_POR = ?
+          WHERE IDCITA = ?"
+    );
+    $stmt->bind_param("ssii", $estado, $motivo, $idUser, $id);
+} else {
+    $stmt = $conexion->prepare("UPDATE AG_CITA SET ESTADO_CITA = ? WHERE IDCITA = ?");
+    $stmt->bind_param("si", $estado, $id);
+}
 
 if ($stmt->execute()) {
     echo json_encode([
