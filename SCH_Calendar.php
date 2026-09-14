@@ -71,8 +71,34 @@ $colDefault = [
 ];
 $colEstado = $colDefault;
 $txtEstado = [];  // clave => color de letra
-if (($conexion->query("SHOW TABLES LIKE 'estado_cita_colores'")->num_rows ?? 0) > 0) {
-    // ¿existe la columna text_color?
+
+// 1) Paleta elegida por el usuario actual (sistema de paletas por usuario)
+$paletaCargada = false;
+if (($conexion->query("SHOW TABLES LIKE 'paletas_estado'")->num_rows ?? 0) > 0) {
+    $idUserCal = (int)($_SESSION['iduser'] ?? 0);
+    $idPal = 0;
+    if ($idUserCal > 0) {
+        $rq = $conexion->query("SELECT IDPALETA_ESTADO FROM ADM_USUARIO WHERE IDADM_USUARIO=$idUserCal LIMIT 1");
+        if ($rq && ($rr=$rq->fetch_assoc())) $idPal = (int)($rr['IDPALETA_ESTADO'] ?? 0);
+    }
+    // Si el usuario no eligió, usar la paleta de sistema "Profesional"
+    if ($idPal <= 0) {
+        $rq = $conexion->query("SELECT id FROM paletas_estado WHERE es_sistema=1 AND nombre='Profesional' LIMIT 1");
+        if ($rq && ($rr=$rq->fetch_assoc())) $idPal = (int)$rr['id'];
+    }
+    if ($idPal > 0) {
+        $rc = $conexion->query("SELECT clave, color, text_color FROM paleta_estado_colores WHERE id_paleta=$idPal");
+        if ($rc && $rc->num_rows > 0) {
+            while ($x = $rc->fetch_assoc()) {
+                $colEstado[$x['clave']] = $x['color'];
+                if (!empty($x['text_color'])) $txtEstado[$x['clave']] = $x['text_color'];
+            }
+            $paletaCargada = true;
+        }
+    }
+}
+// 2) Fallback: tabla global estado_cita_colores (compatibilidad)
+if (!$paletaCargada && ($conexion->query("SHOW TABLES LIKE 'estado_cita_colores'")->num_rows ?? 0) > 0) {
     $hayTxt = ($conexion->query("SHOW COLUMNS FROM estado_cita_colores LIKE 'text_color'")->num_rows ?? 0) > 0;
     $rc = $conexion->query("SELECT clave, color".($hayTxt?", text_color":"")." FROM estado_cita_colores");
     if ($rc) while ($x = $rc->fetch_assoc()) {
@@ -1810,6 +1836,7 @@ function renderVistaPorDoctor() {
         div.style.width  = (CV_COL_WIDTH - 4) + 'px';
         div.style.height = height + 'px';
         div.style.background  = ev.backgroundColor;
+        div.style.color       = ev.textColor || '#ffffff';
         div.style.borderLeft  = '5px solid ' + (ev.borderColor || '#333');
         div.innerHTML = `<b>${inicio.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b>${cvEscapeHtml(ev.title)}`;
         div.addEventListener('click', function () {
@@ -1859,7 +1886,7 @@ function renderVistaPorDoctorLista(doctores, weekEnd) {
             card.className = 'cv-list-card';
             card.innerHTML =
                 `<div class="cv-list-color" style="background:${ev.borderColor || '#333'}"></div>` +
-                `<div class="cv-list-body" style="background:${ev.backgroundColor}">` +
+                `<div class="cv-list-body" style="background:${ev.backgroundColor};color:${ev.textColor || '#ffffff'}">` +
                     `<div class="hora">${fmt(inicio)} - ${fmt(fin)}</div>` +
                     `<div class="pac">${cvEscapeHtml(ev.title)}</div>` +
                     `<div class="sub">${cvEscapeHtml(ev.extendedProps.consulta || '')} — Dr. ${cvEscapeHtml(ev.extendedProps.medico || '')}</div>` +
