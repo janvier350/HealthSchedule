@@ -16,6 +16,8 @@ $fecNac    = trim($_POST['fecNac']    ?? '');
 $sex       = trim($_POST['sex']       ?? '');
 $gender    = trim($_POST['gender']    ?? '');
 $address   = trim($_POST['address']   ?? '');
+$city      = trim($_POST['city']      ?? '');
+$state     = trim($_POST['state']     ?? '');
 $alerta    = trim($_POST['alerta']    ?? '');   // Nota de Alerta
 $notes     = trim($_POST['notes']     ?? '');   // Notas Importantes
 $addNotes  = trim($_POST['addNotes']  ?? '');   // Notas de Facturación
@@ -43,6 +45,8 @@ $colExiste = function ($col) use ($conexion, $dbName) {
 $tieneAlerta = $colExiste('ALERTA');
 $tieneIdioma = $colExiste('IDIOMA');
 $tieneIcd10  = $colExiste('IDICD10');
+$tieneCity   = $colExiste('CITY');
+$tieneState  = $colExiste('STATE');
 
 $idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
@@ -54,6 +58,8 @@ $tipos  = "sssssssssss";
 $vals   = [$nombres, $apellidos, $cedula, $telefono, $email,
            $fecNacParam, $sex, $gender, $address, $notes, $addNotes];
 
+if ($tieneCity)   { $campos[] = "CITY = ?";  $tipos .= "s"; $vals[] = $city; }
+if ($tieneState)  { $campos[] = "STATE = ?"; $tipos .= "s"; $vals[] = $state; }
 if ($tieneAlerta) { $campos[] = "ALERTA = ?"; $tipos .= "s"; $vals[] = $alerta; }
 if ($tieneIdioma && $idioma !== '') { $campos[] = "IDIOMA = ?"; $tipos .= "s"; $vals[] = $idioma; }
 if ($tieneIcd10)  { $campos[] = "IDICD10 = ?"; $tipos .= "i"; $vals[] = $idicd10 > 0 ? $idicd10 : null; }
