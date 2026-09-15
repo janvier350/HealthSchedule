@@ -1398,11 +1398,14 @@ function abrirCalculadora(){
     var pesoV  = parseFloat($('#peso').val())  || 0;
     var pesoKg  = uPeso  === 'lbs' ? pesoV  * 0.453592 : pesoV;
     var tallaCm = getTallaCm();   // soporta cm/m/ft+in
-    // Edad en años (desde meses)
+    // Edad en años (desde meses). Para pediatría se conserva la fracción
+    // (ej. 6 meses = 0.5 años) y se activa el modo pediátrico automáticamente.
     var meses = edadPacienteMeses();
-    var ageYrs = meses != null ? Math.floor(meses / 12) : 0;
+    var ageExact = meses != null ? (meses / 12) : 0;
+    var isPed = ageExact > 0 && ageExact < 18;
+    var ageOut = isPed ? (Math.round(ageExact * 10) / 10) : Math.floor(ageExact);
     var sex = (DATOS_CITA.pacienteSexIdx === 1) ? 'F' : 'M';
-    NutriCalcUI.prefill({ sex: sex, age: ageYrs, weightKg: pesoKg, heightCm: tallaCm });
+    NutriCalcUI.prefill({ sex: sex, age: ageOut, weightKg: pesoKg, heightCm: tallaCm, mode: isPed ? 'ped' : 'adult' });
 }
 // Handler global que la calculadora invoca al pulsar "Insertar en el informe"
 window._nutriInsertHandler = function(html){
