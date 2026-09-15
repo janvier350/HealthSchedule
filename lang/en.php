@@ -509,6 +509,7 @@ return array(
     'pf.address'               => 'Address',
     'pf.city'                  => 'City',
     'pf.state'                 => 'State',
+    'pf.zip'                   => 'ZIP',
     'pf.language'              => 'Preferred language (for emails)',
     'pf.notes'                 => 'Notes',
     'pf.alert'                 => 'Alert',

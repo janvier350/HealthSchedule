@@ -18,6 +18,7 @@ $gender    = trim($_POST['gender']    ?? '');
 $address   = trim($_POST['address']   ?? '');
 $city      = trim($_POST['city']      ?? '');
 $state     = trim($_POST['state']     ?? '');
+$zip       = trim($_POST['zip']       ?? '');
 $alerta    = trim($_POST['alerta']    ?? '');   // Nota de Alerta
 $notes     = trim($_POST['notes']     ?? '');   // Notas Importantes
 $addNotes  = trim($_POST['addNotes']  ?? '');   // Notas de Facturación
@@ -47,6 +48,7 @@ $tieneIdioma = $colExiste('IDIOMA');
 $tieneIcd10  = $colExiste('IDICD10');
 $tieneCity   = $colExiste('CITY');
 $tieneState  = $colExiste('STATE');
+$tieneZip    = $colExiste('ZIP');
 
 $idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
@@ -60,6 +62,7 @@ $vals   = [$nombres, $apellidos, $cedula, $telefono, $email,
 
 if ($tieneCity)   { $campos[] = "CITY = ?";  $tipos .= "s"; $vals[] = $city; }
 if ($tieneState)  { $campos[] = "STATE = ?"; $tipos .= "s"; $vals[] = $state; }
+if ($tieneZip)    { $campos[] = "ZIP = ?";   $tipos .= "s"; $vals[] = $zip; }
 if ($tieneAlerta) { $campos[] = "ALERTA = ?"; $tipos .= "s"; $vals[] = $alerta; }
 if ($tieneIdioma && $idioma !== '') { $campos[] = "IDIOMA = ?"; $tipos .= "s"; $vals[] = $idioma; }
 if ($tieneIcd10)  { $campos[] = "IDICD10 = ?"; $tipos .= "i"; $vals[] = $idicd10 > 0 ? $idicd10 : null; }

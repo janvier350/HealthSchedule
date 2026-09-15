@@ -24,13 +24,15 @@ $tieneIdioma = $colExiste('IDIOMA');
 $tieneIcd10  = $colExiste('IDICD10');
 $tieneCity   = $colExiste('CITY');
 $tieneState  = $colExiste('STATE');
+$tieneZip    = $colExiste('ZIP');
 
 $cols = "NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, TITLE, ADDRESS, NOTES, ADDNOTES"
       . ($tieneAlerta ? ", ALERTA"  : "")
       . ($tieneIdioma ? ", IDIOMA"  : "")
       . ($tieneIcd10  ? ", IDICD10" : "")
       . ($tieneCity   ? ", CITY"    : "")
-      . ($tieneState  ? ", STATE"   : "");
+      . ($tieneState  ? ", STATE"   : "")
+      . ($tieneZip    ? ", ZIP"     : "");
 
 $stmt = $conexion->prepare("SELECT $cols FROM AG_PACIENTE WHERE IDPACIENTE = ? AND ESTADO = 'A' LIMIT 1");
 $stmt->bind_param("i", $id);

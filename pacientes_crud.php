@@ -281,13 +281,17 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                             <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
                             <input type="text" id="epAddress" name="address" class="form-control">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold"><?php te('pf.city'); ?></label>
                             <input type="text" id="epCity" name="city" class="form-control">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold"><?php te('pf.state'); ?></label>
                             <input type="text" id="epState" name="state" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold"><?php te('pf.zip'); ?></label>
+                            <input type="text" id="epZip" name="zip" class="form-control" maxlength="15">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-semibold"><i class="bi bi-translate"></i> <?php te('pf.language'); ?></label>
@@ -479,6 +483,7 @@ function editarPaciente(id) {
             document.getElementById('epAddress').value   = p.ADDRESS   || '';
             document.getElementById('epCity').value      = p.CITY      || '';
             document.getElementById('epState').value     = p.STATE     || '';
+            document.getElementById('epZip').value       = p.ZIP       || '';
             document.getElementById('epIdioma').value    = (p.IDIOMA === 'en') ? 'en' : 'es';
             document.getElementById('epNotes').value     = p.NOTES     || '';
             document.getElementById('epAddNotes').value  = p.ADDNOTES  || '';
