@@ -10,7 +10,7 @@
 (function(global){
 
     var CFG = { lang: 'en' };
-    var STATE = { sex: 'M', age: 0, weightKg: 0, heightCm: 0, activityKey: 'sedentary', conditionId: 'baseline', subgroupId: null };
+    var STATE = { mode: 'adult', sex: 'M', age: 0, weightKg: 0, heightCm: 0, activityKey: 'sedentary', conditionId: 'baseline', subgroupId: null };
 
     function L(en, es){ return (CFG.lang === 'es') ? es : en; }
 
@@ -144,15 +144,98 @@
         $('#ncCondResult').html(html);
     }
 
-    function _buildDropdowns(){
-        // Actividad
+    // ── Pediatría ────────────────────────────────────────────────────────
+    function _renderPed(){
+        var eer   = NutriCalc.eerPediatric(STATE.sex, STATE.weightKg, STATE.heightCm, STATE.age, STATE.activityKey);
+        var pKg   = NutriCalc.proteinPerKgPediatric(STATE.age);
+        var protG = (pKg != null && STATE.weightKg > 0) ? pKg * STATE.weightKg : null;
+        var hs    = NutriCalc.hollidaySegar(STATE.weightKg);
+        var fiber = NutriCalc.fiberPediatric(STATE.age);
+        var quick = NutriCalc.kcalPerKgQuickPediatric(STATE.age);
+        var bmi   = _bmi();
+
+        $('#ncPedEer').html((eer.kcal > 0 ? _fmt(eer.kcal) : '—') + '<small>kcal/día</small>');
+        $('#ncPedProt').html((protG != null ? _fmt(protG) : '—') + '<small>g/día</small>');
+        $('#ncPedFluid').html((hs > 0 ? _fmt(hs) : '—') + '<small>mL/día</small>');
+        $('#ncPedFiber').html((fiber != null ? _fmt(fiber) : '—') + '<small>g/día</small>');
+        $('#ncPedKcalKg').html((quick ? _range(quick.min, quick.max) : '—') + '<small>kcal/kg</small>');
+        $('#ncPedBmi').html(_fmt(bmi, 1) + '<small>kg/m²</small>');
+
+        // Detalle
+        var rows = [];
+        // Energía
+        var eLbl = L('Energy (EER)', 'Energía (EER)');
+        var eForm = _pedFormulaLabel(eer.formula);
+        var eLine = (eer.kcal > 0) ? '<b>' + _fmt(eer.kcal) + ' kcal/día</b>' : '—';
+        if (quick && STATE.weightKg > 0) {
+            eLine += ' · <span class="text-muted">' + L('quick', 'rápido') + ': ' + _range(quick.min, quick.max) + ' kcal/kg → <b>'
+                   + _range(quick.min * STATE.weightKg, quick.max * STATE.weightKg) + ' kcal/día</b></span>';
+        }
+        rows.push('<div class="mb-2"><div class="small fw-semibold text-uppercase text-muted mb-1">' + eLbl + '</div>'
+                + '<div>' + eLine + (eForm ? ' <span class="badge bg-light text-dark badge-basis">' + eForm + '</span>' : '') + '</div></div>');
+        // Proteínas
+        rows.push('<div class="mb-2"><div class="small fw-semibold text-uppercase text-muted mb-1">' + L('Protein', 'Proteínas') + '</div>'
+                + '<div>' + (pKg != null ? '<b>' + pKg.toFixed(2) + ' g/kg</b>' + (protG != null ? ' → <b>' + _fmt(protG) + ' g/día</b>' : '') : '—') + '</div></div>');
+        // Líquidos
+        rows.push('<div class="mb-2"><div class="small fw-semibold text-uppercase text-muted mb-1">' + L('Fluid (Holliday-Segar)', 'Líquidos (Holliday-Segar)') + '</div>'
+                + '<div>' + (hs > 0 ? '<b>' + _fmt(hs) + ' mL/día</b>' : '—') + '</div></div>');
+        // Fibra
+        rows.push('<div><div class="small fw-semibold text-uppercase text-muted mb-1">' + L('Fiber', 'Fibra') + '</div>'
+                + '<div>' + (fiber != null ? '<b>' + fiber + ' g/día</b> <span class="text-muted small">(' + L('Age + 5 rule', 'regla Edad + 5') + ')</span>' : '—') + '</div></div>');
+
+        $('#ncPedDetail').html(rows.join(''));
+    }
+
+    function _pedFormulaLabel(formula){
+        switch (formula) {
+            case 'infant_0_3':    return L('0–3 mo (IOM)', '0–3 meses (IOM)');
+            case 'infant_4_6':    return L('4–6 mo (IOM)', '4–6 meses (IOM)');
+            case 'infant_7_12':   return L('7–12 mo (IOM)', '7–12 meses (IOM)');
+            case 'toddler_13_35': return L('13–35 mo (IOM)', '13–35 meses (IOM)');
+            case 'child_3_8':     return L('3–8 yr (IOM)', '3–8 años (IOM)');
+            case 'child_9_18':    return L('9–18 yr (IOM)', '9–18 años (IOM)');
+            default:              return '';
+        }
+    }
+
+    function _applyMode(){
+        var isPed = (STATE.mode === 'ped');
+        $('#ncAdultResults').toggle(!isPed);
+        $('#ncPedResults').toggle(isPed);
+        $('#ncAdultInputs').toggle(!isPed);
+        if (isPed) { $('#ncSubgroupWrap').hide(); }
+        $('#ncAgeHint').toggleClass('d-none', !isPed);
+        _buildActivity();
+    }
+
+    function _buildActivity(){
         var $act = $('#ncActivity').empty();
-        Object.keys(NutriCalc.ACTIVITY).forEach(function(k){
-            var a = NutriCalc.ACTIVITY[k];
-            $act.append('<option value="' + k + '">' + L(a.en, a.es) + ' (×' + a.factor + ')</option>');
-        });
+        if (STATE.mode === 'ped') {
+            Object.keys(NutriCalc.PED_ACTIVITY).forEach(function(k){
+                var a = NutriCalc.PED_ACTIVITY[k];
+                var f = (STATE.sex === 'F' || STATE.sex === 'f') ? a.F : a.M;
+                $act.append('<option value="' + k + '">' + L(a.en, a.es) + ' (PA ×' + f.toFixed(2) + ')</option>');
+            });
+            if (!NutriCalc.PED_ACTIVITY[STATE.activityKey]) STATE.activityKey = 'sedentary';
+        } else {
+            Object.keys(NutriCalc.ACTIVITY).forEach(function(k){
+                var a = NutriCalc.ACTIVITY[k];
+                $act.append('<option value="' + k + '">' + L(a.en, a.es) + ' (×' + a.factor + ')</option>');
+            });
+            if (!NutriCalc.ACTIVITY[STATE.activityKey]) STATE.activityKey = 'sedentary';
+        }
         $act.val(STATE.activityKey);
-        // Condición
+    }
+
+    function _render(){
+        if (STATE.mode === 'ped') { _renderPed(); }
+        else { _renderBase(); _renderCondition(); }
+    }
+
+    function _buildDropdowns(){
+        // Actividad (según modo)
+        _buildActivity();
+        // Condición (adulto)
         var $c = $('#ncCondition').empty();
         NutriCalc.CONDITIONS.forEach(function(c){ $c.append('<option value="' + c.id + '">' + L(c.en, c.es) + '</option>'); });
         $c.val(STATE.conditionId);
@@ -174,6 +257,7 @@
     }
 
     function _readInputs(){
+        STATE.mode       = ($('input[name="ncMode"]:checked').val() === 'ped') ? 'ped' : 'adult';
         STATE.sex        = $('#ncSex').val();
         STATE.age        = parseFloat($('#ncAge').val()) || 0;
         STATE.weightKg   = parseFloat($('#ncWeight').val()) || 0;
@@ -184,13 +268,62 @@
     }
 
     function _wire(){
-        $('#ncSex, #ncAge, #ncWeight, #ncHeight, #ncActivity').on('input change', function(){ _readInputs(); _renderBase(); _renderCondition(); });
+        $('input[name="ncMode"]').on('change', function(){
+            STATE.mode = ($(this).val() === 'ped') ? 'ped' : 'adult';
+            _applyMode(); _readInputs(); _render();
+        });
+        // Cambiar sexo re-arma los factores PA pediátricos
+        $('#ncSex').on('change', function(){ STATE.sex = $(this).val(); if (STATE.mode === 'ped') _buildActivity(); _readInputs(); _render(); });
+        $('#ncAge, #ncWeight, #ncHeight, #ncActivity').on('input change', function(){ _readInputs(); _render(); });
         $('#ncCondition').on('change', function(){ STATE.conditionId = $(this).val(); STATE.subgroupId = null; _buildSubgroups(); _readInputs(); _renderCondition(); });
         $('#ncSubgroup').on('change', function(){ STATE.subgroupId = $(this).val(); _renderCondition(); });
     }
 
+    function _pedReportHtml(){
+        var eer   = NutriCalc.eerPediatric(STATE.sex, STATE.weightKg, STATE.heightCm, STATE.age, STATE.activityKey);
+        var pKg   = NutriCalc.proteinPerKgPediatric(STATE.age);
+        var protG = (pKg != null && STATE.weightKg > 0) ? pKg * STATE.weightKg : null;
+        var hs    = NutriCalc.hollidaySegar(STATE.weightKg);
+        var fiber = NutriCalc.fiberPediatric(STATE.age);
+        var quick = NutriCalc.kcalPerKgQuickPediatric(STATE.age);
+        var bmi   = _bmi();
+        var eForm = _pedFormulaLabel(eer.formula);
+        var actLbl = '';
+        if (NutriCalc.PED_ACTIVITY[STATE.activityKey]) {
+            var a = NutriCalc.PED_ACTIVITY[STATE.activityKey];
+            actLbl = L(a.en, a.es);
+        }
+
+        var html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#2b2b2b;margin:14px 0;padding:12px;border:1px solid #e5e7eb;border-radius:6px;">'
+            + '<h5 style="color:#5a2d82;margin:0 0 8px 0;">' + L('Pediatric Nutrition Requirements', 'Requerimientos Nutricionales Pediátricos') + '</h5>'
+            + '<div style="font-size:12px;color:#5a6172;margin-bottom:8px;">'
+              + '<b>' + L('Age', 'Edad') + ':</b> ' + _fmt(STATE.age, 1) + ' ' + L('yr', 'años')
+              + ' &nbsp;·&nbsp; <b>' + L('Weight', 'Peso') + ':</b> ' + _fmt(STATE.weightKg, 1) + ' kg'
+              + (STATE.heightCm ? ' &nbsp;·&nbsp; <b>' + L('Height', 'Talla') + ':</b> ' + _fmt(STATE.heightCm, 1) + ' cm' : '')
+              + (actLbl ? ' &nbsp;·&nbsp; <b>' + L('Activity', 'Actividad') + ':</b> ' + actLbl : '')
+            + '</div>'
+            + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+            + '<tr>'
+              + '<td style="padding:4px 8px;"><b>EER:</b> ' + (eer.kcal > 0 ? _fmt(eer.kcal) + ' kcal/día' : '—') + (eForm ? ' (' + eForm + ')' : '') + '</td>'
+              + '<td style="padding:4px 8px;"><b>' + L('Protein', 'Proteínas') + ':</b> ' + (pKg != null ? pKg.toFixed(2) + ' g/kg' + (protG != null ? ' → ' + _fmt(protG) + ' g/día' : '') : '—') + '</td>'
+            + '</tr>'
+            + '<tr>'
+              + '<td style="padding:4px 8px;"><b>' + L('Fluid (Holliday-Segar)', 'Líquidos (Holliday-Segar)') + ':</b> ' + (hs > 0 ? _fmt(hs) + ' mL/día' : '—') + '</td>'
+              + '<td style="padding:4px 8px;"><b>' + L('Fiber', 'Fibra') + ':</b> ' + (fiber != null ? fiber + ' g/día (' + L('Age + 5', 'Edad + 5') + ')' : '—') + '</td>'
+            + '</tr>'
+            + '<tr>'
+              + '<td style="padding:4px 8px;"><b>' + L('Quick estimate', 'Estimación rápida') + ':</b> ' + (quick ? _range(quick.min, quick.max) + ' kcal/kg' + (STATE.weightKg > 0 ? ' → ' + _range(quick.min*STATE.weightKg, quick.max*STATE.weightKg) + ' kcal/día' : '') : '—') + '</td>'
+              + '<td style="padding:4px 8px;"><b>BMI:</b> ' + _fmt(bmi, 1) + ' kg/m²</td>'
+            + '</tr>'
+            + '</table>'
+            + '<div style="font-size:11px;color:#8a8f98;margin-top:6px;">' + L('IOM/DRI equations. Pediatric BMI interpreted with CDC/WHO percentiles.', 'Ecuaciones IOM/DRI. El IMC pediátrico se interpreta con percentiles CDC/OMS.') + '</div>'
+            + '</div>';
+        return html;
+    }
+
     function getReportHtml(){
         _readInputs();
+        if (STATE.mode === 'ped') return _pedReportHtml();
         var cond = _findCondition(STATE.conditionId);
         var subgroup = _findSubgroup(cond, STATE.subgroupId);
         var bmrV = NutriCalc.bmr(STATE.sex, STATE.weightKg, STATE.heightCm, STATE.age);
@@ -247,20 +380,27 @@
         CFG.lang = (opts && opts.lang === 'es') ? 'es' : 'en';
         _buildDropdowns();
         _wire();
+        _applyMode();
         _readInputs();
-        _renderBase();
-        _renderCondition();
+        _render();
     }
 
     function prefill(data){
         if (!data) return;
         if (data.sex)      $('#ncSex').val(data.sex === 'F' || data.sex === 'f' ? 'F' : 'M');
-        if (data.age)      $('#ncAge').val(data.age);
+        if (data.age != null && data.age !== '')      $('#ncAge').val(data.age);
         if (data.weightKg) $('#ncWeight').val(data.weightKg);
         if (data.heightCm) $('#ncHeight').val(data.heightCm);
+        // Selección de modo automática por edad (si no la fija el llamador)
+        if (data.mode === 'ped' || data.mode === 'adult') {
+            $('#ncMode' + (data.mode === 'ped' ? 'Ped' : 'Adult')).prop('checked', true);
+        } else if (data.age != null && data.age !== '' && parseFloat(data.age) > 0 && parseFloat(data.age) < 18) {
+            $('#ncModePed').prop('checked', true);
+        }
+        STATE.sex = $('#ncSex').val();
+        _applyMode();
         _readInputs();
-        _renderBase();
-        _renderCondition();
+        _render();
     }
 
     global.NutriCalcUI = { mount: mount, prefill: prefill, getReportHtml: getReportHtml, insertInReport: insertInReport };

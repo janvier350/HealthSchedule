@@ -348,6 +348,72 @@
         }
     ];
 
+    // ── Pediatría (IOM / DRI) ────────────────────────────────────────────
+    // Coeficientes de Actividad Física (PA) del IOM, específicos por sexo.
+    var PED_ACTIVITY = {
+        sedentary:   { en: 'Sedentary',   es: 'Sedentario',  M: 1.00, F: 1.00 },
+        low_active:  { en: 'Low active',  es: 'Poco activo', M: 1.13, F: 1.16 },
+        active:      { en: 'Active',      es: 'Activo',      M: 1.26, F: 1.31 },
+        very_active: { en: 'Very active', es: 'Muy activo',  M: 1.42, F: 1.56 }
+    };
+
+    function pedPaFactor(sex, activityKey) {
+        var a = PED_ACTIVITY[activityKey] || PED_ACTIVITY.sedentary;
+        return (sex === 'F' || sex === 'f') ? a.F : a.M;
+    }
+
+    /**
+     * EER pediátrico (Estimated Energy Requirement, IOM/DRI).
+     * Devuelve { kcal, formula, pa, dep }.
+     *   Lactantes/niños pequeños (0–35 meses): (89·kg − 100) + depósito de energía.
+     *   Niños/adolescentes 3–18 años: ecuación por sexo con factor PA.
+     */
+    function eerPediatric(sex, weightKg, heightCm, ageYears, activityKey) {
+        if (!weightKg || ageYears == null) return { kcal: 0, formula: '' };
+        var months = ageYears * 12;
+        if (months < 3)   return { kcal: (89 * weightKg - 100) + 175, formula: 'infant_0_3' };
+        if (months <= 6)  return { kcal: (89 * weightKg - 100) + 56,  formula: 'infant_4_6' };
+        if (months <= 12) return { kcal: (89 * weightKg - 100) + 22,  formula: 'infant_7_12' };
+        if (months <= 35) return { kcal: (89 * weightKg - 100) + 20,  formula: 'toddler_13_35' };
+        // 3–18 años
+        var htM = (heightCm || 0) / 100;
+        var pa  = pedPaFactor(sex, activityKey);
+        var dep = ageYears < 9 ? 20 : 25;   // depósito de energía (crecimiento)
+        var kcal;
+        if (sex === 'F' || sex === 'f') {
+            kcal = 135.3 - 30.8 * ageYears + pa * (10.0 * weightKg + 934 * htM) + dep;
+        } else {
+            kcal = 88.5 - 61.9 * ageYears + pa * (26.7 * weightKg + 903 * htM) + dep;
+        }
+        return { kcal: kcal, formula: ageYears < 9 ? 'child_3_8' : 'child_9_18', pa: pa, dep: dep };
+    }
+
+    /** Proteínas pediátricas (g/kg/día) según edad (DRI). */
+    function proteinPerKgPediatric(ageYears) {
+        if (ageYears == null) return null;
+        var months = ageYears * 12;
+        if (months <= 6)   return 1.52;   // 0–6 meses
+        if (months <= 12)  return 1.20;   // 7–12 meses
+        if (ageYears <= 3) return 1.05;   // 1–3 años
+        if (ageYears <= 13) return 0.95;  // 4–13 años
+        if (ageYears <= 18) return 0.85;  // 14–18 años
+        return 0.80;
+    }
+
+    /** Estimación rápida kcal/kg/día para lactantes y niños pequeños. */
+    function kcalPerKgQuickPediatric(ageYears) {
+        if (ageYears == null) return null;
+        if (ageYears < 1)  return { min: 80, max: 100 };   // 0–12 meses
+        if (ageYears <= 3) return { min: 80, max: 90 };    // 1–3 años
+        return null;   // mayores: usar EER
+    }
+
+    /** Fibra pediátrica (g/día) — regla Edad + 5 (≈ ≥2 años). */
+    function fiberPediatric(ageYears) {
+        if (ageYears == null || ageYears < 1) return null;
+        return Math.round(ageYears) + 5;
+    }
+
     global.NutriCalc = {
         idealWeightKg: idealWeightKg,
         adjustedBodyWeight: adjustedBodyWeight,
@@ -356,6 +422,13 @@
         hollidaySegar: hollidaySegar,
         ACTIVITY: ACTIVITY,
         CONDITIONS: CONDITIONS,
-        weightForBasis: weightForBasis
+        weightForBasis: weightForBasis,
+        // Pediatría
+        PED_ACTIVITY: PED_ACTIVITY,
+        pedPaFactor: pedPaFactor,
+        eerPediatric: eerPediatric,
+        proteinPerKgPediatric: proteinPerKgPediatric,
+        kcalPerKgQuickPediatric: kcalPerKgQuickPediatric,
+        fiberPediatric: fiberPediatric
     };
 })(typeof window !== 'undefined' ? window : this);
