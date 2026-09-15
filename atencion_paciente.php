@@ -286,7 +286,7 @@ $dobRaw  = $d['FECHANACIMIENTO'] ?? '';
 $dobTxt  = ''; $edadTxt = '';
 if ($dobRaw && $dobRaw !== '0000-00-00') {
     $ts = strtotime($dobRaw);
-    if ($ts) { $dobTxt = date('d/m/Y', $ts); $edadTxt = (string)(new DateTime($dobRaw))->diff(new DateTime('today'))->y; }
+    if ($ts) { $dobTxt = date('m/d/Y', $ts); $edadTxt = (string)(new DateTime($dobRaw))->diff(new DateTime('today'))->y; }
 }
 ?>
 <div class="app-page-title">
@@ -641,14 +641,14 @@ const DATOS_CITA = {
     agenciaDirec:    "<?php echo addslashes($d['AGENCIA_DIRECCION']); ?>",
     agenciaTel:      "<?php echo addslashes($d['AGENCIA_TEL']); ?>",
     tipoConsulta:    "<?php echo addslashes($d['TIPO_CONSULTA']); ?>",
-    fechaCita:       "<?php echo $d['FECHA_CITA']; ?>",
-    fechaHoy:        "<?php echo date('d/m/Y'); ?>",
+    fechaCita:       "<?php echo $d['FECHA_CITA'] ? date('m/d/Y', strtotime($d['FECHA_CITA'])) : ''; ?>",
+    fechaHoy:        "<?php echo date('m/d/Y'); ?>",
     firmaNpi:        "<?php echo addslashes($firmaNpi); ?>",
     firmaLicense:    "<?php echo addslashes($firmaLicense); ?>",
     firmaImg:        <?php echo json_encode($firmaImg ?: ''); ?>,
     informeActual:   <?php echo json_encode($informeActual); ?>,
     prevInforme:     <?php echo json_encode($prevInforme); ?>,
-    prevFecha:       <?php echo json_encode($prevFecha ? date('d/m/Y', strtotime($prevFecha)) : ''); ?>,
+    prevFecha:       <?php echo json_encode($prevFecha ? date('m/d/Y', strtotime($prevFecha)) : ''); ?>,
     prevTipo:        <?php echo json_encode($prevTipo); ?>
 };
 
@@ -1117,7 +1117,9 @@ function cargarPlantilla(id){
     const tallaUnit = _tallaDisp.unit;   // "cm"/"m" o "" (ft/in ya incluye símbolos)
     const imcVal   = $('#imc').val()   || '---';
     const fechaNacJS = new Date(DATOS_CITA.pacienteDOB + 'T00:00:00');
-    const dobFormateada = fechaNacJS.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const _pad2 = function(n){ return String(n).padStart(2,'0'); };
+    const dobFormateada = isNaN(fechaNacJS.getTime()) ? ''
+        : (_pad2(fechaNacJS.getMonth()+1) + '/' + _pad2(fechaNacJS.getDate()) + '/' + fechaNacJS.getFullYear());
     // Firma: nombre del profesional + credenciales (NPI, License ID)
     const credsLines = [];
     if (DATOS_CITA.firmaNpi)     credsLines.push('NPI: '        + DATOS_CITA.firmaNpi);
