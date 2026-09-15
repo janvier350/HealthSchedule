@@ -949,6 +949,7 @@ return array(
     'att.icd10.saveError'    => 'No se pudo guardar: ',
     'att.icd10.needMig'      => 'Falta preparar los diagnósticos múltiples.',
     'att.icd10.needMigLink'  => 'Ejecútalo aquí',
+    'att.years'              => 'años',
     'att.ncp.insert'         => 'Insertar diagnóstico NCP/PES',
     'att.ncp.modalTitle'     => 'Diagnóstico nutricional (NCP/PES)',
     'att.ncp.select'         => 'Enfermedad / caso',

@@ -949,6 +949,7 @@ return array(
     'att.icd10.saveError'    => 'Could not save: ',
     'att.icd10.needMig'      => 'Multiple-diagnosis support is not set up yet.',
     'att.icd10.needMigLink'  => 'Run it here',
+    'att.years'              => 'years',
     'att.ncp.insert'         => 'Insert NCP/PES diagnosis',
     'att.ncp.modalTitle'     => 'Nutrition diagnosis (NCP/PES)',
     'att.ncp.select'         => 'Disease / case',

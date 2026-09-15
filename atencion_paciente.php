@@ -279,6 +279,16 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
         <div class="app-main__outer">
             <div class="app-main__inner">
 
+<?php
+if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
+// Datos de cabecera del paciente: fecha de nacimiento + edad
+$dobRaw  = $d['FECHANACIMIENTO'] ?? '';
+$dobTxt  = ''; $edadTxt = '';
+if ($dobRaw && $dobRaw !== '0000-00-00') {
+    $ts = strtotime($dobRaw);
+    if ($ts) { $dobTxt = date('d/m/Y', $ts); $edadTxt = (string)(new DateTime($dobRaw))->diff(new DateTime('today'))->y; }
+}
+?>
 <div class="app-page-title">
     <div class="page-title-wrapper">
         <div class="page-title-heading">
@@ -290,6 +300,16 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
                 <div class="page-title-subheading">
                     <i class="bi bi-person-lines-fill me-1"></i>
                     <?php te('att.title'); ?> &nbsp;·&nbsp; <?php te('att.appt'); ?> #<?php echo $idCita; ?>
+                </div>
+                <div class="page-title-subheading att-pac-info mt-1" style="opacity:1;">
+                    <span class="me-3" title="<?php te('pf.id'); ?>"><i class="bi bi-card-text me-1"></i><?php echo h($d['CEDULA'] ?: '—'); ?></span>
+                    <span class="me-3" title="<?php te('pf.dob'); ?>"><i class="bi bi-calendar-heart me-1"></i><?php echo $dobTxt ?: '—'; ?><?php echo $edadTxt !== '' ? ' ('.$edadTxt.' '.t('att.years').')' : ''; ?></span>
+                    <span class="me-3" title="<?php te('pf.sex'); ?>"><i class="bi bi-gender-ambiguous me-1"></i><?php echo h($d['SEX'] ?: '—'); ?></span>
+                    <span class="me-3" title="<?php te('pf.phone'); ?>"><i class="bi bi-telephone me-1"></i><?php echo h($d['TELEFONO'] ?: '—'); ?></span>
+                    <span class="me-3" title="<?php te('pf.email'); ?>"><i class="bi bi-envelope me-1"></i><?php echo h($d['EMAIL'] ?: '—'); ?></span>
+                    <?php if (!empty($d['ADDRESS'])): ?>
+                    <span class="me-3" title="<?php te('pf.address'); ?>"><i class="bi bi-geo-alt me-1"></i><?php echo h($d['ADDRESS']); ?></span>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
