@@ -240,6 +240,9 @@ while ($a = $resAgencias->fetch_assoc()) {
         .select2-search__field { border: 1px solid #ced4da !important; border-radius: .375rem; padding: .4rem .6rem; }
         .select2-results__option { padding: .5rem .75rem; }
         .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: #1976d2; }
+        /* Limita la altura de la lista y habilita el scroll interno (evita que
+           la lista larga de horarios se salga de la pantalla sin poder bajar). */
+        .select2-results__options { max-height: 40vh !important; overflow-y: auto !important; }
 
         .fc-event { cursor: pointer; font-size: 0.85em; padding: 2px 5px; }
         #eventModal .btn { transition: all 0.3s ease; white-space: nowrap; }
