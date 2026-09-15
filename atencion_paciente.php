@@ -116,6 +116,19 @@ if ($tieneTablaIcd) {
     }
 }
 
+// ── Catálogo de diagnósticos NCP/PES (en el idioma actual) ────────────────
+$ncpDiag = [];
+$tieneNcp = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ncp_diagnosticos'")->fetch_assoc()['c'] > 0;
+if ($tieneNcp) {
+    $L = (current_lang() === 'en') ? 'en' : 'es';
+    $q = $conexion->query("SELECT id, codigo,
+                                  enfermedad_$L AS enfermedad, problema_$L AS problema,
+                                  etiologia_$L AS etiologia, signos_$L AS signos,
+                                  intervencion_$L AS intervencion, monitoreo_$L AS monitoreo
+                             FROM ncp_diagnosticos WHERE activo=1 ORDER BY orden, enfermedad_$L");
+    if ($q) while ($x = $q->fetch_assoc()) $ncpDiag[] = $x;
+}
+
 $sessionNombres   = $_SESSION['nombres']   ?? '';
 $sessionApellidos = $_SESSION['apellidos'] ?? '';
 $docNombreCompleto = trim($d['DOC_NOMBRES'] . ' ' . $d['DOC_APELLIDOS']);
@@ -471,7 +484,12 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
         </div>
 
         <!-- ── EDITOR ──────────────────────────────────────────────── -->
-        <div class="mb-1 d-flex justify-content-end">
+        <div class="mb-1 d-flex justify-content-end flex-wrap gap-2">
+            <?php if (!empty($ncpDiag)): ?>
+            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalNcp">
+                <i class="bi bi-clipboard2-plus"></i> <?php te('att.ncp.insert'); ?>
+            </button>
+            <?php endif; ?>
             <button type="button" id="btnCargarPrevia" class="btn btn-sm btn-outline-primary d-none" onclick="cargarConsultaAnterior()">
                 <i class="bi bi-arrow-clockwise"></i> <?php te('att.prev.load'); ?>
             </button>
@@ -610,6 +628,11 @@ const ATT = {
         saveError:  <?php echo json_encode(t('att.icd10.saveError')); ?>,
         connError:  <?php echo json_encode(t('common.js.connError')); ?>
     },
+    ncp: {
+        heading:     <?php echo json_encode(t('att.ncp.heading')); ?>,
+        intervLabel: <?php echo json_encode(t('att.ncp.intervLabel')); ?>,
+        monitLabel:  <?php echo json_encode(t('att.ncp.monitLabel')); ?>
+    },
     templateLoadError: <?php echo json_encode(t('att.js.templateLoadError')); ?>,
     emptyReport:       <?php echo json_encode(t('att.js.emptyReport')); ?>,
     confirmFinish:     <?php echo json_encode(t('att.js.confirmFinish')); ?>,
@@ -668,6 +691,40 @@ const ATT = {
 };
 </script>
 
+<?php if (!empty($ncpDiag)): ?>
+<!-- ── MODAL: Insertar diagnóstico NCP/PES ─────────────────────────── -->
+<div class="modal fade" id="modalNcp" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i><?php te('att.ncp.modalTitle'); ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label small fw-semibold"><?php te('att.ncp.select'); ?></label>
+        <select id="ncpSelect" class="form-select mb-3" onchange="ncpPreview()">
+          <option value=""><?php te('att.ncp.selectPh'); ?></option>
+          <?php foreach ($ncpDiag as $n): ?>
+          <option value="<?php echo (int)$n['id']; ?>"><?php echo h($n['enfermedad'].($n['codigo']?' ('.$n['codigo'].')':'')); ?></option>
+          <?php endforeach; ?>
+        </select>
+        <div class="d-flex flex-wrap gap-3 mb-3">
+          <div class="form-check"><input class="form-check-input" type="checkbox" id="ncpPES" checked onchange="ncpPreview()"><label class="form-check-label" for="ncpPES"><?php te('att.ncp.partPES'); ?></label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" id="ncpInterv" onchange="ncpPreview()"><label class="form-check-label" for="ncpInterv"><?php te('att.ncp.partInterv'); ?></label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" id="ncpMonit" onchange="ncpPreview()"><label class="form-check-label" for="ncpMonit"><?php te('att.ncp.partMonit'); ?></label></div>
+        </div>
+        <label class="form-label small fw-semibold"><?php te('att.ncp.preview'); ?></label>
+        <div id="ncpPreview" class="border rounded p-2 bg-light" style="min-height:80px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
+        <button type="button" class="btn btn-success" onclick="insertarNcp()"><i class="bi bi-check-lg"></i> <?php te('att.ncp.doInsert'); ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -718,6 +775,36 @@ function eliminarIcd10(id){
         if (res && res.ok){ renderIcd10Chips(res.lista); }
         else { alert(ATT.icd10.saveError + (res && res.error ? res.error : '')); }
     }, 'json').fail(function(){ alert(ATT.icd10.connError); });
+}
+
+// ── DIAGNÓSTICOS NCP/PES (insertar en la nota) ───────────────────────
+var NCP_LIST = <?php echo json_encode($ncpDiag); ?>;
+var NCP_DATA = {}; NCP_LIST.forEach(function(n){ NCP_DATA[n.id] = n; });
+function ncpEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ncpBuildHtml(){
+    var sel = document.getElementById('ncpSelect'); if(!sel) return '';
+    var n = NCP_DATA[sel.value]; if(!n) return '';
+    var html = '';
+    if (document.getElementById('ncpPES').checked){
+        var titulo = ATT.ncp.heading + ' — ' + n.enfermedad + (n.codigo ? ' ('+n.codigo+')' : '');
+        html += '<p><strong>'+ncpEsc(titulo)+'</strong></p><ul>';
+        if(n.problema)  html += '<li><strong>P:</strong> '+ncpEsc(n.problema)+'</li>';
+        if(n.etiologia) html += '<li><strong>E:</strong> '+ncpEsc(n.etiologia)+'</li>';
+        if(n.signos)    html += '<li><strong>S:</strong> '+ncpEsc(n.signos)+'</li>';
+        html += '</ul>';
+    }
+    if (document.getElementById('ncpInterv').checked && n.intervencion)
+        html += '<p><strong>'+ncpEsc(ATT.ncp.intervLabel)+':</strong> '+ncpEsc(n.intervencion)+'</p>';
+    if (document.getElementById('ncpMonit').checked && n.monitoreo)
+        html += '<p><strong>'+ncpEsc(ATT.ncp.monitLabel)+':</strong> '+ncpEsc(n.monitoreo)+'</p>';
+    return html;
+}
+function ncpPreview(){ var p=document.getElementById('ncpPreview'); if(p) p.innerHTML = ncpBuildHtml() || '<span class="text-muted small">—</span>'; }
+function insertarNcp(){
+    var html = ncpBuildHtml(); if(!html) return;
+    $('#editorInforme').summernote('pasteHTML', html);
+    var el = document.getElementById('modalNcp');
+    var m = el ? bootstrap.Modal.getInstance(el) : null; if(m) m.hide();
 }
 </script>
 <script>
