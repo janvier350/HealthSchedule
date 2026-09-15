@@ -976,6 +976,8 @@ return array(
     'att.ncp.needMig'        => 'Falta activar la biblioteca de diagnósticos NCP/PES.',
     'att.ncp.needMigLink'    => 'Actívala aquí',
     'att.ncp.needMigUser'    => 'La biblioteca NCP/PES aún no está activada. Pídele al administrador que la active.',
+    'att.ncp.howto'          => '¿Cómo se usa?',
+    'att.ncp.howtoTitle'     => 'Cómo usar el diagnóstico NCP/PES',
     'att.ncp.modalTitle'     => 'Diagnóstico nutricional (NCP/PES)',
     'att.ncp.select'         => 'Enfermedad / caso',
     'att.ncp.selectPh'       => 'Selecciona…',

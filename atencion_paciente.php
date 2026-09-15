@@ -436,7 +436,12 @@ if ($dobRaw && $dobRaw !== '0000-00-00') {
 
                 <!-- Diagnóstico nutricional NCP/PES: insertar en la nota -->
                 <hr class="my-3">
-                <div class="att-tile-label mb-2"><i class="bi bi-card-checklist me-1"></i><?php te('att.ncp.diagTitle'); ?></div>
+                <div class="att-tile-label mb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <span><i class="bi bi-card-checklist me-1"></i><?php te('att.ncp.diagTitle'); ?></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-bs-toggle="modal" data-bs-target="#modalNcpAyuda">
+                        <i class="bi bi-question-circle"></i> <?php te('att.ncp.howto'); ?>
+                    </button>
+                </div>
                 <?php if (!empty($ncpDiag)): ?>
                     <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalNcp">
                         <i class="bi bi-clipboard2-plus"></i> <?php te('att.ncp.insert'); ?>
@@ -727,6 +732,50 @@ const ATT = {
     }
 };
 </script>
+
+<!-- ── MODAL: ¿Cómo se usa el diagnóstico NCP/PES? ─────────────────── -->
+<div class="modal fade" id="modalNcpAyuda" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i><?php te('att.ncp.howtoTitle'); ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <?php if (current_lang() === 'en'): ?>
+          <p class="text-muted">Add a nutrition diagnosis (NCP/PES) to the note without memorizing the format.</p>
+          <ol class="mb-3" style="line-height:1.8;">
+            <li>In the <b>Diagnoses</b> card, click <b>Insert NCP/PES diagnosis</b>.</li>
+            <li>Pick the <b>disease / case</b> (e.g. Obesity/MASLD, Type 2 Diabetes, CKD…).</li>
+            <li>Check which parts to include: <b>PES statement</b> (Problem / related to / as evidenced by), <b>Intervention</b>, <b>Monitoring</b>.</li>
+            <li>Check the <b>Preview</b>.</li>
+            <li>Click <b>Insert into note</b> — the text drops into the report.</li>
+            <li><b>Edit it in the note</b>: adjust the numbers and add the patient's details.</li>
+            <li><b>Save the visit</b> as usual. The diagnosis stays in the patient's record.</li>
+          </ol>
+          <div class="alert alert-info py-2 mb-2"><b>ICD-10:</b> above, you can also search and <b>Add</b> one or more ICD-10 codes to the patient.</div>
+          <div class="text-muted small"><b>Admin:</b> to add more diseases to the library, go to menu → <b>NCP/PES Diagnoses</b>.</div>
+        <?php else: ?>
+          <p class="text-muted">Añade un diagnóstico nutricional (NCP/PES) a la nota sin tener que memorizar el formato.</p>
+          <ol class="mb-3" style="line-height:1.8;">
+            <li>En la tarjeta de <b>Diagnósticos</b>, pulsa <b>Insertar diagnóstico NCP/PES</b>.</li>
+            <li>Elige la <b>enfermedad / caso</b> (ej. Obesidad/MASLD, Diabetes tipo 2, ERC…).</li>
+            <li>Marca qué partes incluir: <b>Enunciado PES</b> (Problema / relacionado con / evidenciado por), <b>Intervención</b>, <b>Monitoreo</b>.</li>
+            <li>Revisa la <b>Vista previa</b>.</li>
+            <li>Pulsa <b>Insertar en la nota</b> — el texto entra en el informe.</li>
+            <li><b>Edítalo en la nota</b>: ajusta las cifras y agrega los datos del paciente.</li>
+            <li><b>Guarda la atención</b> como siempre. El diagnóstico queda en la información del paciente.</li>
+          </ol>
+          <div class="alert alert-info py-2 mb-2"><b>ICD-10:</b> arriba también puedes buscar y <b>Añadir</b> uno o varios códigos ICD-10 al paciente.</div>
+          <div class="text-muted small"><b>Admin:</b> para agregar más enfermedades a la biblioteca, ve al menú → <b>Diagnósticos NCP/PES</b>.</div>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <?php if (!empty($ncpDiag)): ?>
 <!-- ── MODAL: Insertar diagnóstico NCP/PES ─────────────────────────── -->
