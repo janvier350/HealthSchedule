@@ -242,6 +242,11 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-palette"></i> <?php te('menu.consultTypes'); ?>
                 </a>
             </li>
+            <li>
+                <a href="ncp_diagnosticos_admin.php" class="<?php echo menuActivo('ncp_diagnosticos_admin.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-clipboard2-pulse"></i> <?php te('menu.ncpCatalog'); ?>
+                </a>
+            </li>
             <?php endif; ?>
             <?php if ($esDoctor): ?>
             <li>
