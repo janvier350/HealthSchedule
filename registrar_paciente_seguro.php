@@ -233,13 +233,17 @@ $errMsg = trim($_GET['err'] ?? '');
                                     <label class="form-label"><?php te('pf.address'); ?></label>
                                     <input type="text" class="form-control" name="address">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label"><?php te('pf.city'); ?></label>
                                     <input type="text" class="form-control" name="city">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label"><?php te('pf.state'); ?></label>
                                     <input type="text" class="form-control" name="state" value="NY">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label"><?php te('pf.zip'); ?></label>
+                                    <input type="text" class="form-control" name="zip" maxlength="15">
                                 </div>
                             </div>
                             <div class="row g-3 mt-0">
