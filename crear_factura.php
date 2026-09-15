@@ -11,10 +11,9 @@ require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
-// SISTEMA y ASISTENTE pueden crear facturas.
-if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE','DOCTOR'], true)) {
-    header("Location: break.php"); exit();
-}
+// Acceso por permisos por usuario (default: SISTEMA, DOCTOR, ASISTENTE).
+require_once("class/permisos.php");
+requerir('fact.crear');
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 $tablaOk = ($conexion->query("SHOW TABLES LIKE 'facturas'")->num_rows ?? 0) > 0;

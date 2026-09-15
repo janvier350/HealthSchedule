@@ -9,9 +9,8 @@ require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
-if (!isset($_SESSION["rol"]) || strtoupper($_SESSION["rol"]) !== 'SISTEMA') {
-    http_response_code(403); exit('Acceso restringido.');
-}
+require_once("class/permisos.php");
+if (!puede('fact.pagos')) { http_response_code(403); exit('Acceso restringido.'); }
 
 $idFactura = (int)($_POST['id_factura'] ?? 0);
 $monto     = (float)($_POST['monto'] ?? 0);

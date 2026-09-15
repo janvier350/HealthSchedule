@@ -15,7 +15,8 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
     header("Location: expirada.php");
     exit();
 }
-if ($_SESSION['rol'] !== 'SISTEMA') {
+require_once("class/permisos.php");
+if (!puede('fact.aseguradoras')) {
     die('<p style="color:red;font-family:sans-serif;padding:2rem;">'.htmlspecialchars(t('common.accessRestricted')).'</p>');
 }
 
