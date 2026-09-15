@@ -256,8 +256,8 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
-            <!-- ══ BILLS (SISTEMA completo; ASISTENTE: crear + ver) ═════ -->
-            <?php if ($esSistema || $esAsistente): ?>
+            <!-- ══ BILLS (SISTEMA completo; ASISTENTE y DOCTOR: crear + ver) ═ -->
+            <?php if ($esSistema || $esAsistente || $esDoctor): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.billing'); ?></li>
             <li>
                 <a href="#">
@@ -275,11 +275,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <li>
                         <a href="BILLS_FacturaCrear.php">
                             <i class="metismenu-icon"></i> <?php te('menu.registerBills'); ?>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="BILLS_FacturaAbonos.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.registerPayments'); ?>
                         </a>
                     </li>
                     <?php endif; ?>

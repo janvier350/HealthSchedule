@@ -12,7 +12,7 @@ require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 // SISTEMA y ASISTENTE pueden crear facturas.
-if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE'], true)) {
+if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE','DOCTOR'], true)) {
     header("Location: break.php"); exit();
 }
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
