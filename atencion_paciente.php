@@ -433,6 +433,23 @@ if ($dobRaw && $dobRaw !== '0000-00-00') {
                     </div>
                     <div class="form-text"><?php te('att.icd10.help'); ?></div>
                 <?php endif; ?>
+
+                <!-- Diagnóstico nutricional NCP/PES: insertar en la nota -->
+                <hr class="my-3">
+                <div class="att-tile-label mb-2"><i class="bi bi-card-checklist me-1"></i><?php te('att.ncp.diagTitle'); ?></div>
+                <?php if (!empty($ncpDiag)): ?>
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalNcp">
+                        <i class="bi bi-clipboard2-plus"></i> <?php te('att.ncp.insert'); ?>
+                    </button>
+                    <div class="form-text"><?php te('att.ncp.help'); ?></div>
+                <?php elseif (strtoupper($_SESSION['rol'] ?? '') === 'SISTEMA'): ?>
+                    <div class="alert alert-warning py-2 mb-0">
+                        <?php te('att.ncp.needMig'); ?>
+                        <a href="migrar_ncp_diagnosticos.php" class="alert-link"><?php te('att.ncp.needMigLink'); ?></a>.
+                    </div>
+                <?php else: ?>
+                    <div class="text-muted small"><?php te('att.ncp.needMigUser'); ?></div>
+                <?php endif; ?>
             </div>
         </div>
 
