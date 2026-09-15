@@ -11,7 +11,7 @@ require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 // SISTEMA y ASISTENTE pueden ver la factura; sólo SISTEMA registra/anula pagos.
-if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE'], true)) {
+if (!isset($_SESSION["rol"]) || !in_array(strtoupper($_SESSION["rol"]), ['SISTEMA','ASISTENTE','DOCTOR'], true)) {
     header("Location: break.php"); exit();
 }
 $esSistemaFV = (strtoupper($_SESSION["rol"]) === 'SISTEMA');
