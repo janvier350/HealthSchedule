@@ -99,6 +99,23 @@ if ($sp = $conexion->prepare(
     if ($rp) { $prevInforme = (string)$rp['CONTENIDO_INFORME']; $prevFecha = (string)$rp['FECHA_CITA']; $prevTipo = (string)($rp['TIPO'] ?? ''); }
 }
 
+// ── Diagnósticos ICD-10: catálogo + los ya asignados al paciente ──────────
+$catIcd10 = [];
+$rc = $conexion->query("SELECT ID_ENFE_DIAG_COD AS id, CODIGO AS codigo, DESCRIPCION AS descripcion FROM ENFE_DIAG_COD ORDER BY CODIGO");
+if ($rc) while ($x = $rc->fetch_assoc()) $catIcd10[] = $x;
+
+$icd10Paciente = [];
+$tieneTablaIcd = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='paciente_icd10'")->fetch_assoc()['c'] > 0;
+if ($tieneTablaIcd) {
+    if ($si = $conexion->prepare("SELECT C.ID_ENFE_DIAG_COD AS id, C.CODIGO AS codigo, C.DESCRIPCION AS descripcion
+                                    FROM paciente_icd10 R
+                                    INNER JOIN ENFE_DIAG_COD C ON C.ID_ENFE_DIAG_COD = R.ID_ENFE_DIAG_COD
+                                   WHERE R.IDPACIENTE = ? ORDER BY R.id ASC")) {
+        $si->bind_param('i', $idPacienteA); $si->execute();
+        $rs = $si->get_result(); while ($x = $rs->fetch_assoc()) $icd10Paciente[] = $x; $si->close();
+    }
+}
+
 $sessionNombres   = $_SESSION['nombres']   ?? '';
 $sessionApellidos = $_SESSION['apellidos'] ?? '';
 $docNombreCompleto = trim($d['DOC_NOMBRES'] . ' ' . $d['DOC_APELLIDOS']);
@@ -131,6 +148,7 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="main.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
     <style>
@@ -152,6 +170,16 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
         }
 
         /* ── Tarjetas de medición (acorde a la plantilla de la app) ── */
+        /* select2 a la altura de los inputs de Bootstrap 5 */
+        .select2-container .select2-selection--single { height: calc(2.375rem + 2px); display:flex; align-items:center; }
+        .select2-container--default .select2-selection--single { border:1px solid #ced4da; border-radius:.375rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height:1.5; padding-left:.75rem; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: calc(2.375rem); }
+        .select2-container { width: 100% !important; }
+        /* Chips de diagnósticos ICD-10 */
+        .icd10-chip{ display:inline-flex; align-items:center; gap:6px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:16px; padding:3px 6px 3px 10px; font-size:.82rem; }
+        .icd10-chip .code{ font-weight:700; }
+        .icd10-chip button{ border:0; background:transparent; color:#4338ca; line-height:1; padding:0 2px; cursor:pointer; }
         .att-metrics .att-tile {
             background:#fff; border:1px solid #e6e9f0; border-radius:12px;
             padding:12px 14px; height:100%; box-shadow:0 1px 2px rgba(16,31,85,.04);
@@ -344,6 +372,37 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
             </div>
         </div>
 
+        <!-- ── DIAGNÓSTICOS ICD-10 (asignables en la consulta) ─────── -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="att-tile-label mb-2"><i class="bi bi-clipboard2-pulse me-1"></i><?php te('att.icd10.title'); ?></div>
+                <?php if (!$tieneTablaIcd): ?>
+                    <div class="alert alert-warning py-2 mb-0">
+                        <?php te('att.icd10.needMig'); ?>
+                        <a href="migrar_icd10_paciente_multi.php" class="alert-link"><?php te('att.icd10.needMigLink'); ?></a>.
+                    </div>
+                <?php else: ?>
+                    <div id="icd10Chips" class="d-flex flex-wrap gap-2 mb-2"></div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-9">
+                            <select id="icd10Select" class="form-select">
+                                <option value=""></option>
+                                <?php foreach ($catIcd10 as $c): ?>
+                                <option value="<?php echo (int)$c['id']; ?>"><?php echo htmlspecialchars($c['codigo'].' — '.$c['descripcion']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-grid">
+                            <button type="button" class="btn btn-outline-primary" onclick="agregarIcd10()">
+                                <i class="bi bi-plus-lg"></i> <?php te('att.icd10.add'); ?>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-text"><?php te('att.icd10.help'); ?></div>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <!-- ── VALORACIÓN PEDIÁTRICA (auto, WHO 2-19 años) ───────── -->
         <div id="pedAssess" class="mb-3 d-none">
             <div class="card border-0" style="background:#e8f4f4;">
@@ -504,6 +563,7 @@ $firmaImg     = trim($d['USR_FIRMA_IMG'] ?? '') !== '' ? $d['USR_FIRMA_IMG'] : (
 <script>
 const DATOS_CITA = {
     idCita:          "<?php echo $idCita; ?>",
+    idPaciente:      <?php echo (int)$idPacienteA; ?>,
     pacienteNombre:  "<?php echo addslashes(htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS'])); ?>",
     pacienteDOB:     "<?php echo $d['FECHANACIMIENTO']; ?>",
     pacienteEmail:   "<?php echo addslashes($d['EMAIL']); ?>",
@@ -540,6 +600,15 @@ const ATT = {
         loadedMsg:      <?php echo json_encode(t('att.prev.loadedMsg')); ?>,
         confirmReplace: <?php echo json_encode(t('att.prev.confirmReplace')); ?>,
         confirmBlank:   <?php echo json_encode(t('att.prev.confirmBlank')); ?>
+    },
+    icd10: {
+        searchPh:   <?php echo json_encode(t('att.icd10.searchPh')); ?>,
+        noResults:  <?php echo json_encode(t('att.icd10.noResults')); ?>,
+        none:       <?php echo json_encode(t('att.icd10.none')); ?>,
+        remove:     <?php echo json_encode(t('att.icd10.remove')); ?>,
+        confirmDel: <?php echo json_encode(t('att.icd10.confirmDel')); ?>,
+        saveError:  <?php echo json_encode(t('att.icd10.saveError')); ?>,
+        connError:  <?php echo json_encode(t('common.js.connError')); ?>
     },
     templateLoadError: <?php echo json_encode(t('att.js.templateLoadError')); ?>,
     emptyReport:       <?php echo json_encode(t('att.js.emptyReport')); ?>,
@@ -600,12 +669,57 @@ const ATT = {
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script src="js/who_growth.js"></script>
 <script src="js/cdc_growth.js"></script>
 <script src="js/nutri_calc.js"></script>
 <script src="js/nutri_calc_ui.js"></script>
+<script>
+// ── DIAGNÓSTICOS ICD-10 (asignar/quitar en la consulta) ──────────────
+$(function(){
+    if (!document.getElementById('icd10Select')) return; // migración no ejecutada
+    $('#icd10Select').select2({
+        placeholder: ATT.icd10.searchPh,
+        allowClear: true,
+        width: '100%',
+        language: { noResults: function(){ return ATT.icd10.noResults; } }
+    });
+    renderIcd10Chips(<?php echo json_encode($icd10Paciente); ?>);
+});
+
+function renderIcd10Chips(list){
+    var $c = $('#icd10Chips'); if(!$c.length) return; $c.empty();
+    if (!list || !list.length){ $c.append($('<span class="text-muted small"></span>').text(ATT.icd10.none)); return; }
+    list.forEach(function(it){
+        var chip = $('<span class="icd10-chip"></span>');
+        chip.append($('<span class="code"></span>').text(it.codigo));
+        chip.append(document.createTextNode(' ' + (it.descripcion || '')));
+        var btn = $('<button type="button">&times;</button>').attr('title', ATT.icd10.remove);
+        btn.on('click', function(){ eliminarIcd10(it.id); });
+        chip.append(btn);
+        $c.append(chip);
+    });
+}
+
+function agregarIcd10(){
+    var id = parseInt($('#icd10Select').val() || '0', 10);
+    if (!id) return;
+    $.post('paciente_icd10.php', { accion:'agregar', idPaciente: DATOS_CITA.idPaciente, idIcd10: id }, function(res){
+        if (res && res.ok){ renderIcd10Chips(res.lista); $('#icd10Select').val('').trigger('change'); }
+        else { alert(ATT.icd10.saveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(ATT.icd10.connError); });
+}
+
+function eliminarIcd10(id){
+    if (!confirm(ATT.icd10.confirmDel)) return;
+    $.post('paciente_icd10.php', { accion:'eliminar', idPaciente: DATOS_CITA.idPaciente, idIcd10: id }, function(res){
+        if (res && res.ok){ renderIcd10Chips(res.lista); }
+        else { alert(ATT.icd10.saveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(ATT.icd10.connError); });
+}
+</script>
 <script>
 
 // ── INICIALIZAR EDITOR ───────────────────────────────────────────────
