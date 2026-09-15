@@ -212,9 +212,10 @@ while ($a = $resAgencias->fetch_assoc()) {
         #editModal .form-control,
         #editModal .form-select { min-height: 46px; border: 1px solid #ced4da; border-radius: .5rem; }
 
-        /* Select2: garantizar apariencia aunque el tema del CDN no cargue */
-        #editModal .select2-container { width: 100% !important; }
-        #editModal .select2-container .select2-selection--single {
+        /* Select2: garantizar apariencia aunque el tema del CDN no cargue
+           (aplica a todos los modales: agendar y detalle de la cita). */
+        .select2-container { width: 100% !important; }
+        .select2-container .select2-selection--single {
             height: 46px;
             display: flex;
             align-items: center;
@@ -223,18 +224,18 @@ while ($a = $resAgencias->fetch_assoc()) {
             background-color: #fff;
             padding: 0 .75rem;
         }
-        #editModal .select2-container--open .select2-selection--single {
+        .select2-container--open .select2-selection--single {
             border-color: #86b7fe;
             box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
         }
-        #editModal .select2-selection--single .select2-selection__rendered {
+        .select2-selection--single .select2-selection__rendered {
             line-height: 44px !important;
             padding: 0 !important;
             color: #212529;
             font-size: 1rem;
         }
-        #editModal .select2-selection__placeholder { color: #6c757d; }
-        #editModal .select2-selection--single .select2-selection__arrow { height: 44px !important; right: 10px; }
+        .select2-selection__placeholder { color: #6c757d; }
+        .select2-selection--single .select2-selection__arrow { height: 44px !important; right: 10px; }
         /* Dropdown de búsqueda */
         .select2-dropdown { border: 1px solid #ced4da; border-radius: .5rem; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
         .select2-search__field { border: 1px solid #ced4da !important; border-radius: .375rem; padding: .4rem .6rem; }
@@ -696,9 +697,9 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <div id="citaDiagWrap" class="border rounded p-2 mb-2" style="background:#f8f9ff;position:relative;">
                         <div class="fw-semibold small mb-1"><i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?></div>
                         <div id="citaDiagLista" class="d-flex flex-wrap gap-2 mb-2"></div>
-                        <div class="input-group input-group-sm">
-                            <select id="citaDiagSelect" class="form-select form-select-sm"><option value=""></option></select>
-                            <button type="button" class="btn btn-outline-primary" onclick="agregarDiagCita()"><i class="bi bi-plus-lg"></i> <?php te('cal.diag.add'); ?></button>
+                        <select id="citaDiagSelect" class="form-select"><option value=""></option></select>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="agregarDiagCita()"><i class="bi bi-plus-lg"></i> <?php te('cal.diag.add'); ?></button>
                         </div>
                     </div>
 
