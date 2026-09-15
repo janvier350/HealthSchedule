@@ -31,6 +31,8 @@ $sex       = trim($_POST['sex']       ?? '');
 $gender    = trim($_POST['gender']    ?? '');
 $feNac     = trim($_POST['feNac']     ?? '');
 $address   = trim($_POST['address']   ?? '');
+$city      = trim($_POST['city']      ?? '');
+$state     = trim($_POST['state']     ?? '');
 $notes     = trim($_POST['notes']     ?? '');
 $addNotes  = trim($_POST['addNotes']  ?? '');
 
@@ -52,6 +54,8 @@ $colExiste = function($col) use ($conexion, $dbName) {
 };
 $tieneIdioma = $colExiste('IDIOMA');
 $tieneIcd10  = $colExiste('IDICD10');
+$tieneCity   = $colExiste('CITY');
+$tieneState  = $colExiste('STATE');
 $idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
 // Duplicado por teléfono: sólo bloquea si NO se marcó "registrar de todas formas".
@@ -75,6 +79,8 @@ $types = str_repeat('s', count($vals));
 
 if ($tieneIdioma) { $cols[] = 'IDIOMA'; $vals[] = $idioma; $types .= 's'; }
 if ($tieneIcd10 && $idicd10 > 0) { $cols[] = 'IDICD10'; $vals[] = $idicd10; $types .= 'i'; }
+if ($tieneCity)  { $cols[] = 'CITY';  $vals[] = $city;  $types .= 's'; }
+if ($tieneState) { $cols[] = 'STATE'; $vals[] = $state; $types .= 's'; }
 
 $placeholders = implode(', ', array_fill(0, count($cols), '?'));
 $sqlIns = "INSERT INTO AG_PACIENTE (" . implode(', ', $cols) . ") VALUES ($placeholders)";

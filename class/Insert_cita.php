@@ -44,13 +44,22 @@ if ($numDiag === 0 && (int)$conexion->query("SELECT COUNT(*) c FROM information_
     $q = $conexion->query("SELECT IDICD10 FROM AG_PACIENTE WHERE IDPACIENTE=".(int)$IdPaciente." LIMIT 1");
     if ($q && ($r = $q->fetch_assoc()) && (int)($r['IDICD10'] ?? 0) > 0) $numDiag = 1;
 }
-$dir = '';
-$q = $conexion->query("SELECT ADDRESS FROM AG_PACIENTE WHERE IDPACIENTE=".(int)$IdPaciente." LIMIT 1");
-if ($q && ($r = $q->fetch_assoc())) $dir = trim((string)($r['ADDRESS'] ?? ''));
+$tieneCity  = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEscC' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='CITY'")->fetch_assoc()['c'] > 0;
+$tieneState = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEscC' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='STATE'")->fetch_assoc()['c'] > 0;
+$selDir = "ADDRESS" . ($tieneCity ? ", CITY" : "") . ($tieneState ? ", STATE" : "");
+$dir = ''; $city = ''; $state = '';
+$q = $conexion->query("SELECT $selDir FROM AG_PACIENTE WHERE IDPACIENTE=".(int)$IdPaciente." LIMIT 1");
+if ($q && ($r = $q->fetch_assoc())) {
+    $dir   = trim((string)($r['ADDRESS'] ?? ''));
+    $city  = trim((string)($r['CITY']  ?? ''));
+    $state = trim((string)($r['STATE'] ?? ''));
+}
+// Dirección "completa" = tiene ADDRESS, o bien ciudad y estado.
+$dirCompleta = ($dir !== '') || ($city !== '' && $state !== '');
 
 $faltantes = [];
-if ($numDiag === 0) $faltantes[] = 'un diagnóstico (ICD-10)';
-if ($dir === '')    $faltantes[] = 'la dirección';
+if ($numDiag === 0)  $faltantes[] = 'un diagnóstico (ICD-10)';
+if (!$dirCompleta)   $faltantes[] = 'la dirección (calle o ciudad y estado)';
 if ($faltantes) {
     $msg = "No se puede agendar: al paciente le falta ".implode(' y ', $faltantes).
            ". Complétalo en la ficha del paciente (Gestionar Pacientes) y vuelve a intentar.";

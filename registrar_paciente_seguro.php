@@ -234,6 +234,16 @@ $errMsg = trim($_GET['err'] ?? '');
                                     <input type="text" class="form-control" name="address">
                                 </div>
                                 <div class="col-md-3">
+                                    <label class="form-label"><?php te('pf.city'); ?></label>
+                                    <input type="text" class="form-control" name="city">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><?php te('pf.state'); ?></label>
+                                    <input type="text" class="form-control" name="state" value="NY">
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-0">
+                                <div class="col-md-3">
                                     <label class="form-label"><?php te('pf.language'); ?></label>
                                     <select name="idioma" class="form-select js-select2">
                                         <option value="es"><?php te('lang.spanish'); ?></option>

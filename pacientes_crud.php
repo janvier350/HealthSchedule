@@ -277,9 +277,17 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                                 <option value="Decline to answer">Decline to answer</option>
                             </select>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
                             <input type="text" id="epAddress" name="address" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold"><?php te('pf.city'); ?></label>
+                            <input type="text" id="epCity" name="city" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold"><?php te('pf.state'); ?></label>
+                            <input type="text" id="epState" name="state" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-semibold"><i class="bi bi-translate"></i> <?php te('pf.language'); ?></label>
@@ -288,7 +296,7 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                                 <option value="en"><?php te('lang.english'); ?></option>
                             </select>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-8">
                             <label class="form-label small fw-semibold"><i class="bi bi-clipboard2-pulse"></i> ICD-10</label>
                             <select id="epIcd10" name="idicd10" class="form-select"><option value="">—</option></select>
                         </div>
@@ -469,6 +477,8 @@ function editarPaciente(id) {
             _setSelectSafe('epSex',    p.SEX);
             _setSelectSafe('epGender', p.GENDER);
             document.getElementById('epAddress').value   = p.ADDRESS   || '';
+            document.getElementById('epCity').value      = p.CITY      || '';
+            document.getElementById('epState').value     = p.STATE     || '';
             document.getElementById('epIdioma').value    = (p.IDIOMA === 'en') ? 'en' : 'es';
             document.getElementById('epNotes').value     = p.NOTES     || '';
             document.getElementById('epAddNotes').value  = p.ADDNOTES  || '';
