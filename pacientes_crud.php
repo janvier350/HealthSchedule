@@ -303,6 +303,31 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                     </div>
                 </form>
 
+                <!-- 📞 Contactos adicionales: teléfonos/correos extra -->
+                <hr class="my-3">
+                <h6 class="text-muted mb-2"><i class="bi bi-telephone-plus"></i> <?php te('pcreate.extraContacts'); ?></h6>
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1"><?php te('pcreate.ct.type'); ?></label>
+                        <select id="pcTipo" class="form-select form-select-sm">
+                            <option value="telefono"><?php te('pf.phone'); ?></option>
+                            <option value="email"><?php te('pf.email'); ?></option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1"><?php te('pcreate.ct.value'); ?></label>
+                        <input type="text" id="pcValor" class="form-control form-control-sm" maxlength="160">
+                    </div>
+                    <div class="col-8 col-md-3">
+                        <label class="form-label small mb-1"><?php te('pcreate.ct.label'); ?></label>
+                        <input type="text" id="pcEtiqueta" class="form-control form-control-sm" maxlength="60" placeholder="<?php te('pcreate.ct.labelPh'); ?>">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <button type="button" class="btn btn-sm btn-success w-100" onclick="agregarContacto()"><?php te('pcreate.addBtn'); ?></button>
+                    </div>
+                </div>
+                <div id="pcLista"><div class="text-muted small">—</div></div>
+
                 <!-- 🛡️ Seguros del paciente: agregar / quitar / fotos -->
                 <hr class="my-3">
                 <h6 class="text-muted mb-2">🛡️ <?php te('pcreate.insurance'); ?></h6>
@@ -381,7 +406,14 @@ var T = {
     insAddError:  <?php echo json_encode(t('pcreate.js.insAddError')); ?>,
     insRemoveConf:<?php echo json_encode(t('pcreate.js.insRemoveConf')); ?>,
     insRemoveErr: <?php echo json_encode(t('pcreate.js.insRemoveErr')); ?>,
-    imgUploadErr: <?php echo json_encode(t('pcreate.js.imgUploadErr')); ?>
+    imgUploadErr: <?php echo json_encode(t('pcreate.js.imgUploadErr')); ?>,
+    ctNone:       <?php echo json_encode(t('pcreate.ct.none')); ?>,
+    ctRemove:     <?php echo json_encode(t('pcreate.ct.remove')); ?>,
+    ctConfirmDel: <?php echo json_encode(t('pcreate.ct.confirmDel')); ?>,
+    ctValueReq:   <?php echo json_encode(t('pcreate.ct.valueReq')); ?>,
+    ctSaveError:  <?php echo json_encode(t('pcreate.ct.saveError')); ?>,
+    ctPhone:      <?php echo json_encode(t('pf.phone')); ?>,
+    ctEmail:      <?php echo json_encode(t('pf.email')); ?>
 };
 
 let epModal = null;
@@ -446,9 +478,57 @@ function editarPaciente(id) {
             document.getElementById('psPoliza').value = '';
             document.getElementById('psPrioridad').value = 'Primario';
             cargarSegurosPaciente(id);
+            document.getElementById('pcValor').value = '';
+            document.getElementById('pcEtiqueta').value = '';
+            cargarContactos(id);
             epModal.show();
         })
         .fail(function(xhr){ alert(T.loadHttp + xhr.status + ').'); });
+}
+
+// ── Contactos adicionales (teléfonos / correos extra) ────────────────
+function _ctEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderContactos(list){
+    const cont = document.getElementById('pcLista'); if(!cont) return;
+    if(!list || !list.length){ cont.innerHTML = '<div class="text-muted small">'+_ctEsc(T.ctNone)+'</div>'; return; }
+    let html = '<ul class="list-group list-group-flush">';
+    list.forEach(function(c){
+        const icon = c.tipo === 'email' ? 'bi-envelope' : 'bi-telephone';
+        const etq  = c.etiqueta ? ' <span class="badge bg-light text-dark border ms-1">'+_ctEsc(c.etiqueta)+'</span>' : '';
+        html += '<li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">'
+             +  '<span><i class="bi '+icon+' me-2 text-muted"></i>'+_ctEsc(c.valor)+etq+'</span>'
+             +  '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="'+_ctEsc(T.ctRemove)+'" onclick="eliminarContacto('+parseInt(c.id,10)+')"><i class="bi bi-x"></i></button>'
+             +  '</li>';
+    });
+    html += '</ul>';
+    cont.innerHTML = html;
+}
+function cargarContactos(idPaciente){
+    const cont = document.getElementById('pcLista'); if(!cont) return;
+    cont.innerHTML = '<div class="text-muted small">'+_ctEsc(T.loading)+'</div>';
+    $.getJSON('paciente_contactos.php', { accion:'listar', idPaciente: idPaciente })
+        .done(function(res){ if(res && res.ok) renderContactos(res.lista); else cont.innerHTML = '<div class="text-muted small">—</div>'; })
+        .fail(function(){ cont.innerHTML = '<div class="text-danger small">'+_ctEsc(T.connError)+'</div>'; });
+}
+function agregarContacto(){
+    const idPaciente = document.getElementById('epId').value;
+    const tipo  = document.getElementById('pcTipo').value;
+    const valor = document.getElementById('pcValor').value.trim();
+    const etiqueta = document.getElementById('pcEtiqueta').value.trim();
+    if(!idPaciente) return;
+    if(valor === ''){ alert(T.ctValueReq); return; }
+    $.post('paciente_contactos.php', { accion:'agregar', idPaciente: idPaciente, tipo: tipo, valor: valor, etiqueta: etiqueta }, function(res){
+        if(res && res.ok){ renderContactos(res.lista); document.getElementById('pcValor').value=''; document.getElementById('pcEtiqueta').value=''; }
+        else { alert(T.ctSaveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(T.connError); });
+}
+function eliminarContacto(id){
+    const idPaciente = document.getElementById('epId').value;
+    if(!confirm(T.ctConfirmDel)) return;
+    $.post('paciente_contactos.php', { accion:'eliminar', idPaciente: idPaciente, id: id }, function(res){
+        if(res && res.ok){ renderContactos(res.lista); }
+        else { alert(T.ctSaveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(T.connError); });
 }
 
 // ── Seguros del paciente (agregar / quitar / fotos) ──────────────────
