@@ -976,6 +976,8 @@ return array(
     'att.ncp.needMig'        => 'The NCP/PES diagnosis library is not activated yet.',
     'att.ncp.needMigLink'    => 'Activate it here',
     'att.ncp.needMigUser'    => 'The NCP/PES library is not activated yet. Ask the administrator to activate it.',
+    'att.ncp.howto'          => 'How to use?',
+    'att.ncp.howtoTitle'     => 'How to use the NCP/PES diagnosis',
     'att.ncp.modalTitle'     => 'Nutrition diagnosis (NCP/PES)',
     'att.ncp.select'         => 'Disease / case',
     'att.ncp.selectPh'       => 'Select…',
