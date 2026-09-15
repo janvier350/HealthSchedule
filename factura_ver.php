@@ -88,8 +88,8 @@ $metodos = ['Cash'=>'Efectivo','Credit Card'=>'Tarjeta de crédito','Debit'=>'D�
                     <div class="card shadow-sm mb-3"><div class="card-body">
                         <div class="row">
                             <div class="col-6"><small class="text-muted">Paciente</small><div class="fw-semibold"><?php echo h($nombre); ?></div></div>
-                            <div class="col-3"><small class="text-muted">Fecha</small><div><?php echo $f['fecha']?date('d/m/Y',strtotime($f['fecha'])):'—'; ?></div></div>
-                            <div class="col-3"><small class="text-muted">Vence</small><div><?php echo $f['fecha_vencimiento']?date('d/m/Y',strtotime($f['fecha_vencimiento'])):'—'; ?></div></div>
+                            <div class="col-3"><small class="text-muted">Fecha</small><div><?php echo $f['fecha']?date('m/d/Y',strtotime($f['fecha'])):'—'; ?></div></div>
+                            <div class="col-3"><small class="text-muted">Vence</small><div><?php echo $f['fecha_vencimiento']?date('m/d/Y',strtotime($f['fecha_vencimiento'])):'—'; ?></div></div>
                             <div class="col-6 mt-2"><small class="text-muted">Facturar a</small><div><?php echo h($f['status']?:'—'); ?></div></div>
                             <div class="col-6 mt-2"><small class="text-muted">Origen</small><div><?php echo h($f['origen']); ?></div></div>
                         </div>
@@ -149,7 +149,7 @@ $metodos = ['Cash'=>'Efectivo','Credit Card'=>'Tarjeta de crédito','Debit'=>'D�
                             <tbody>
                             <?php foreach($pagos as $pg): ?>
                                 <tr>
-                                    <td><small><?php echo $pg['fecha']?date('d/m/Y',strtotime($pg['fecha'])):'—'; ?></small></td>
+                                    <td><small><?php echo $pg['fecha']?date('m/d/Y',strtotime($pg['fecha'])):'—'; ?></small></td>
                                     <td><small><?php echo h($metodos[$pg['metodo']]??$pg['metodo']); ?><?php echo $pg['referencia']?' · '.h($pg['referencia']):''; ?></small></td>
                                     <td class="text-end">$<?php echo number_format($pg['monto'],2); ?></td>
                                     <?php if($esSistemaFV): ?>

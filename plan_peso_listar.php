@@ -62,7 +62,7 @@ function fmtPeso($kg, $unidades, $lbPerKg) {
 function fmtFecha($f) {
     if (!$f || $f === '0000-00-00') return '—';
     $ts = strtotime($f);
-    return $ts ? date('d/m/Y', $ts) : htmlspecialchars($f);
+    return $ts ? date('m/d/Y', $ts) : htmlspecialchars($f);
 }
 ?>
 <div class="table-responsive">

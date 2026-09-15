@@ -250,7 +250,7 @@ $totalRows = $result ? $result->num_rows : 0;
                                         </td>
                                         <td>
                                             <?php if ($p['ULTIMA_CITA']): ?>
-                                                <small><?php echo date('d/m/Y', strtotime($p['ULTIMA_CITA'])); ?></small>
+                                                <small><?php echo date('m/d/Y', strtotime($p['ULTIMA_CITA'])); ?></small>
                                             <?php else: ?>
                                                 <small class="text-muted"><?php te('plist.noAppointments'); ?></small>
                                             <?php endif; ?>

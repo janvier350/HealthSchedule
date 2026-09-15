@@ -182,7 +182,7 @@ function imcColor($imc) {
 </style>
 
 <!-- ── INFO DEL PACIENTE ─────────────────────────────────────── -->
-<div class="px-4 pt-3 pb-2 border-bottom" style="background:#f8f9fa;">
+<div class="px-4 pt-3 pb-2 border-bottom" style="background:#f8f9fa;" data-edad="<?php echo $edad !== null ? (int)$edad : ''; ?>" data-edad-lbl="<?php echo htmlspecialchars(t('hp.years')); ?>" data-paciente="<?php echo htmlspecialchars($pac['NOMBRES'] . ' ' . $pac['APELLIDOS']); ?>">
     <div class="row g-3 align-items-start">
         <div class="col-md-7">
             <div class="d-flex gap-3 align-items-center mb-2">
@@ -217,7 +217,7 @@ function imcColor($imc) {
                 <span><i class="bi bi-telephone text-muted me-1"></i><?php echo htmlspecialchars($pac['TELEFONO'] ?? '—'); ?></span>
                 <span><i class="bi bi-envelope text-muted me-1"></i><?php echo htmlspecialchars($pac['EMAIL'] ?? '—'); ?></span>
                 <?php if (!empty($pac['FECHA_REGISTRO'])): ?>
-                    <span><i class="bi bi-calendar-plus text-muted me-1"></i><?php te('hp.registered'); ?>: <?php echo date('d/m/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
+                    <span><i class="bi bi-calendar-plus text-muted me-1"></i><?php te('hp.registered'); ?>: <?php echo date('m/d/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
                 <?php endif; ?>
             </div>
             <?php if ($icd10Codigo !== ''): ?>
@@ -320,9 +320,9 @@ function imcColor($imc) {
                     $pm   = $esUS ? ($pl['PESO_META']    * 2.2) : $pl['PESO_META'];
                 ?>
                     <tr>
-                        <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($pl['FECHA_REGISTRO']))); ?></td>
+                        <td><?php echo htmlspecialchars(date('m/d/Y', strtotime($pl['FECHA_REGISTRO']))); ?></td>
                         <td><?php echo number_format($pi, 1) . ' → ' . number_format($pm, 1) . ' ' . $u; ?></td>
-                        <td><?php echo $pl['FECHA_META'] ? htmlspecialchars(date('d/m/Y', strtotime($pl['FECHA_META']))) : '—'; ?></td>
+                        <td><?php echo $pl['FECHA_META'] ? htmlspecialchars(date('m/d/Y', strtotime($pl['FECHA_META']))) : '—'; ?></td>
                         <td class="text-center"><?php echo number_format($pl['CAL_MANTENER_ACTUAL']); ?></td>
                         <td class="text-center"><strong><?php echo number_format($pl['CAL_ALCANZAR']); ?></strong></td>
                         <td class="text-center"><?php echo number_format($pl['CAL_MANTENER_META']); ?></td>
@@ -364,7 +364,7 @@ function imcColor($imc) {
             $bc       = badgeClass($est);
         ?>
         <tr>
-            <td><?php echo date('d/m/Y', strtotime($c['FECHA_CITA'])); ?></td>
+            <td><?php echo date('m/d/Y', strtotime($c['FECHA_CITA'])); ?></td>
             <td>
                 <?php echo substr($c['HORA_INICIO'],0,5); ?>
                 <?php if ($c['HORA_FIN']): ?>
@@ -416,9 +416,9 @@ function imcColor($imc) {
             <div>
                 <strong><?php echo htmlspecialchars($doc['titulo']); ?></strong><br>
                 <small class="text-muted">
-                    <?php te('hp.sent'); ?>: <?php echo $doc['fecha_envio'] ? date('d/m/Y', strtotime($doc['fecha_envio'])) : '—'; ?>
+                    <?php te('hp.sent'); ?>: <?php echo $doc['fecha_envio'] ? date('m/d/Y', strtotime($doc['fecha_envio'])) : '—'; ?>
                     <?php if ($doc['estado'] === 'Firmado' && $doc['fecha_firma']): ?>
-                        &nbsp;·&nbsp; <?php te('hp.signed'); ?>: <?php echo date('d/m/Y', strtotime($doc['fecha_firma'])); ?>
+                        &nbsp;·&nbsp; <?php te('hp.signed'); ?>: <?php echo date('m/d/Y', strtotime($doc['fecha_firma'])); ?>
                     <?php endif; ?>
                 </small>
             </div>
