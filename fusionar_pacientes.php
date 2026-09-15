@@ -13,7 +13,7 @@ require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
-if (!isset($_SESSION["rol"]) || strtoupper($_SESSION["rol"]) !== 'SISTEMA') { header("Location: break.php"); exit(); }
+require_once("class/permisos.php"); requerir('pac.fusionar');
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 $dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];

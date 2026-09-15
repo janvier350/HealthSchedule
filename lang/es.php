@@ -787,6 +787,7 @@ return array(
     'menu.allAppointments'     => 'Citas Generales',
     'menu.users'               => 'Usuarios',
     'menu.list'                => 'Listado',
+    'menu.userPermissions'     => 'Permisos por Usuario',
     'menu.logout'              => 'Cerrar Sesión',
 
     // ── Planificador de Peso Corporal (body_weight_planner.php) ──

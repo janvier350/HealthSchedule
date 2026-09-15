@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../lang/i18n.php');
+require_once(__DIR__ . '/../class/permisos.php');
 
 $rol       = $_SESSION['rol'] ?? '';
 $esSistema   = ($rol === 'SISTEMA');
@@ -123,7 +124,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-palette2"></i> <?php te('menu.statusColors'); ?>
                 </a>
             </li>
-            <?php if ($esSistema || $esUsuario || $esAsistente): ?>
+            <?php if (puede('agenda.pendientes')): ?>
             <li>
                 <a href="Agenda_Pendientes.php" class="<?php echo menuActivo('Agenda_Pendientes.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-calendar-check"></i> <?php te('menu.pending'); ?>
@@ -135,19 +136,21 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-calendar-x"></i> <?php te('menu.cancelled'); ?>
                 </a>
             </li>
-            <?php if ($esSistema || $esDoctor): ?>
+            <?php if (puede('agenda.atendidas')): ?>
             <li>
                 <a href="historial_atenciones.php" class="<?php echo menuActivo('historial_atenciones.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-calendar-check"></i> <?php te('menu.attended'); ?>
                 </a>
             </li>
+            <?php endif; ?>
+            <?php if (puede('agenda.weightplanner')): ?>
             <li>
                 <a href="body_weight_planner.php" class="<?php echo menuActivo('body_weight_planner.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-graph-down-arrow"></i> <?php te('menu.weightPlanner'); ?>
                 </a>
             </li>
             <?php endif; ?>
-            <?php if ($esSistema): ?>
+            <?php if (puede('agenda.notificacion')): ?>
             <li>
                 <a href="Enviar_Notificacion.php" class="<?php echo menuActivo('Enviar_Notificacion.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-envelope"></i> <?php te('menu.sendNotification'); ?>
@@ -174,12 +177,14 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                             <i class="metismenu-icon"></i> <?php te('menu.patientsCrud'); ?>
                         </a>
                     </li>
-                    <?php if ($esSistema): ?>
+                    <?php if (puede('pac.eliminados')): ?>
                     <li>
                         <a href="pacientes_eliminados.php" class="<?php echo menuActivo('pacientes_eliminados.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> <?php te('menu.patientsDeleted'); ?>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (puede('pac.fusionar')): ?>
                     <li>
                         <a href="fusionar_pacientes.php" class="<?php echo menuActivo('fusionar_pacientes.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> <?php te('menu.mergePatients'); ?>
@@ -188,14 +193,14 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <?php endif; ?>
                 </ul>
             </li>
-            <?php if ($esSistema): ?>
+            <?php if (puede('pac.documentos')): ?>
             <li>
                 <a href="gestionar_documentos.php" class="<?php echo menuActivo('gestionar_documentos.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> <?php te('menu.documents'); ?>
                 </a>
             </li>
             <?php endif; ?>
-            <?php if ($esSistema || $esDoctor): ?>
+            <?php if (puede('pac.docenviados')): ?>
             <li>
                 <a href="documentos_enviados.php" class="<?php echo menuActivo('documentos_enviados.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-send-check"></i> <?php te('menu.sentDocuments'); ?>
@@ -203,8 +208,8 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
-            <!-- ══ SÓLO SISTEMA (Doctor management) ══════════════════════ -->
-            <?php if ($esSistema): ?>
+            <!-- ══ Catálogos / configuración ═══════════════════════════ -->
+            <?php if (puede('cfg.crear_doctor')): ?>
             <li>
                 <a href="#">
                     <i class="metismenu-icon bi bi-people"></i>
@@ -220,7 +225,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </ul>
             </li>
             <?php endif; ?>
-            <?php if ($esSistema || $esDoctor): ?>
+            <?php if (puede('cfg.icd10')): ?>
             <li>
                 <a href="#">
                     <i class="metismenu-icon bi bi-file-earmark-text"></i>
@@ -236,19 +241,21 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </ul>
             </li>
             <?php endif; ?>
-            <?php if ($esSistema): ?>
+            <?php if (puede('cfg.tiposconsulta')): ?>
             <li>
                 <a href="gestionar_tipos_consulta.php" class="<?php echo menuActivo('gestionar_tipos_consulta.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-palette"></i> <?php te('menu.consultTypes'); ?>
                 </a>
             </li>
+            <?php endif; ?>
+            <?php if (puede('cfg.ncp')): ?>
             <li>
                 <a href="ncp_diagnosticos_admin.php" class="<?php echo menuActivo('ncp_diagnosticos_admin.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-clipboard2-pulse"></i> <?php te('menu.ncpCatalog'); ?>
                 </a>
             </li>
             <?php endif; ?>
-            <?php if ($esDoctor): ?>
+            <?php if (puede('cfg.tiposseguro')): ?>
             <li>
                 <a href="gestionar_tipos_seguro.php" class="<?php echo menuActivo('gestionar_tipos_seguro.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-bookmark-star"></i> <?php te('menu.insuranceTypes'); ?>
@@ -256,8 +263,9 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
-            <!-- ══ BILLS (SISTEMA completo; ASISTENTE y DOCTOR: crear + ver) ═ -->
-            <?php if ($esSistema || $esAsistente || $esDoctor): ?>
+            <!-- ══ BILLS (por permisos por usuario) ════════════════════ -->
+            <?php $verBilling = puede('fact.crear') || puede('fact.cuentas') || puede('fact.billitems') || puede('fact.registerbills') || puede('fact.kalix') || puede('fact.reportes') || puede('fact.aseguradoras'); ?>
+            <?php if ($verBilling): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.billing'); ?></li>
             <li>
                 <a href="#">
@@ -266,34 +274,42 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
                 </a>
                 <ul>
-                    <?php if ($esSistema): ?>
+                    <?php if (puede('fact.billitems')): ?>
                     <li>
                         <a href="bill_items_admin.php" class="<?php echo menuActivo('bill_items_admin.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Bill Items
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (puede('fact.registerbills')): ?>
                     <li>
                         <a href="BILLS_FacturaCrear.php">
                             <i class="metismenu-icon"></i> <?php te('menu.registerBills'); ?>
                         </a>
                     </li>
                     <?php endif; ?>
+                    <?php if (puede('fact.crear')): ?>
                     <li>
                         <a href="crear_factura.php" class="<?php echo menuActivo('crear_factura.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Crear Factura
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (puede('fact.cuentas')): ?>
                     <li>
                         <a href="cuentas_por_cobrar.php" class="<?php echo menuActivo(['cuentas_por_cobrar.php','factura_ver.php'], $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Cuentas por Cobrar
                         </a>
                     </li>
-                    <?php if ($esSistema): ?>
+                    <?php endif; ?>
+                    <?php if (puede('fact.kalix')): ?>
                     <li>
                         <a href="importar_facturas_kalix.php" class="<?php echo menuActivo('importar_facturas_kalix.php', $paginaActual); ?>">
                             <i class="metismenu-icon"></i> Importar Facturas (Kalix)
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (puede('fact.reportes')): ?>
                     <li>
                         <a href="DashBoardReportesCuentasPorCobrar.php">
                             <i class="metismenu-icon"></i> <?php te('menu.reports'); ?>
@@ -302,37 +318,36 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <?php endif; ?>
                 </ul>
             </li>
-            <?php if ($esSistema): ?>
+            <?php if (puede('fact.aseguradoras')): ?>
             <li>
                 <a href="gestionar_seguros.php" class="<?php echo menuActivo('gestionar_seguros.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-shield-check"></i> <?php te('menu.insurance'); ?>
-                </a>
-            </li>
-            <li>
-                <a href="gestionar_tipos_seguro.php" class="<?php echo menuActivo('gestionar_tipos_seguro.php', $paginaActual); ?>">
-                    <i class="metismenu-icon bi bi-bookmark-star"></i> <?php te('menu.insuranceTypes'); ?>
                 </a>
             </li>
             <?php endif; ?>
             <?php endif; ?>
 
             <!-- ══ REPORTES ════════════════════════════════════════════ -->
-            <?php if ($esSistema || $esDoctor): ?>
+            <?php if (puede('rep.plantillas') || puede('rep.calculadora')): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.reports'); ?></li>
+            <?php if (puede('rep.plantillas')): ?>
             <li>
                 <a href="plantillas_admin.php" class="<?php echo menuActivo('plantillas_admin.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-file-earmark-text"></i> <?php te('menu.templates'); ?>
                 </a>
             </li>
+            <?php endif; ?>
+            <?php if (puede('rep.calculadora')): ?>
             <li>
                 <a href="calculadora_nutricional.php" class="<?php echo menuActivo('calculadora_nutricional.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-calculator"></i> <?php te('menu.nutricalc'); ?>
                 </a>
             </li>
             <?php endif; ?>
+            <?php endif; ?>
 
             <!-- ══ PANEL DE CONTROL (solo SISTEMA) ═══════════════════ -->
-            <?php if ($esSistema): ?>
+            <?php if (puede('panel.usuarios')): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.controlPanel'); ?></li>
             <li>
                 <a href="#">
@@ -353,6 +368,13 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     </li>
                 </ul>
             </li>
+            <?php if ($esSistema): ?>
+            <li>
+                <a href="permisos_usuarios.php" class="<?php echo menuActivo('permisos_usuarios.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-shield-lock"></i> <?php te('menu.userPermissions'); ?>
+                </a>
+            </li>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- ══ PIE: idioma + cerrar sesión (dentro de la lista, siempre al final) ══ -->

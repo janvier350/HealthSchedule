@@ -16,9 +16,8 @@ require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
-if (!isset($_SESSION["rol"]) || strtoupper($_SESSION["rol"]) !== 'SISTEMA') {
-    http_response_code(403); exit('Acceso restringido: sólo SISTEMA.');
-}
+require_once("class/permisos.php");
+if (!puede('fact.kalix')) { http_response_code(403); exit('Acceso restringido.'); }
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 // ¿Existe el esquema?

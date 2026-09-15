@@ -787,6 +787,7 @@ return array(
     'menu.allAppointments'     => 'All Appointments',
     'menu.users'               => 'Users',
     'menu.list'                => 'List',
+    'menu.userPermissions'     => 'User Permissions',
     'menu.logout'              => 'Log Out',
 
     // ── Body Weight Planner (body_weight_planner.php) ──
