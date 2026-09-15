@@ -692,6 +692,16 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <!-- Datos del paciente (edad, estatura, IMC, etc.) cargados por AJAX -->
                     <div id="citaPacienteInfo" class="mb-2"></div>
 
+                    <!-- Diagnósticos ICD-10 del paciente (para el biller): ver y añadir -->
+                    <div id="citaDiagWrap" class="border rounded p-2 mb-2" style="background:#f8f9ff;">
+                        <div class="fw-semibold small mb-1"><i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?></div>
+                        <div id="citaDiagLista" class="d-flex flex-wrap gap-2 mb-2"></div>
+                        <div class="input-group input-group-sm">
+                            <select id="citaDiagSelect" class="form-select form-select-sm"><option value=""></option></select>
+                            <button type="button" class="btn btn-outline-primary" onclick="agregarDiagCita()"><i class="bi bi-plus-lg"></i> <?php te('cal.diag.add'); ?></button>
+                        </div>
+                    </div>
+
                     <!-- Panel Reagendar (oculto por defecto) -->
                     <div id="reagendarSection" class="d-none border rounded p-3 bg-light mt-2">
                         <h6 class="mb-3"><i class="bi bi-calendar2-event"></i> <?php te('cal.newDateTime'); ?></h6>
@@ -1017,6 +1027,10 @@ const TC = <?php echo json_encode(array(
     'editAppt'        => t('cal.editAppt'),
     'deleteLabel'     => t('cal.delete'),
     'connError'       => t('common.js.connError'),
+    'diagNone'        => t('cal.diag.none'),
+    'diagRemove'      => t('cal.diag.remove'),
+    'diagSearchPh'    => t('cal.diag.searchPh'),
+    'diagSaveError'   => t('cal.diag.saveError'),
     'loadError'       => t('plist.js.loadError'),
     'loadHttp'        => t('plist.js.loadHttp'),
     'nameRequired'    => t('plist.js.nameRequired'),
@@ -1445,8 +1459,73 @@ function abrirModalCita(id, title, startDate, p) {
 
     // Cargar datos del paciente (edad, estatura, IMC, estadísticas) reusando el endpoint de informes
     cargarInfoPacienteCita(p.idpaciente);
+    // Diagnósticos ICD-10 del paciente (ver/añadir en la cita)
+    cargarDiagnosticosCita(p.idpaciente);
 
     new bootstrap.Modal(document.getElementById('eventModal')).show();
+}
+
+// ── Diagnósticos ICD-10 en el modal de la cita (para el biller) ──────
+function escHtml(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+var _icd10Cat = null;           // catálogo cargado una sola vez
+function _pintaDiagChips(list){
+    var c = document.getElementById('citaDiagLista'); if(!c) return;
+    c.innerHTML = '';
+    if(!list || !list.length){ c.innerHTML = '<span class="text-muted small">'+TC.diagNone+'</span>'; return; }
+    list.forEach(function(it){
+        var chip = document.createElement('span');
+        chip.className = 'badge bg-primary-subtle text-primary-emphasis border d-inline-flex align-items-center';
+        chip.style.cssText = 'gap:6px;padding:5px 6px 5px 10px;font-size:.82rem;';
+        chip.innerHTML = '<span><strong>'+escHtml(it.codigo)+'</strong> '+escHtml(it.descripcion||'')+'</span>';
+        var b = document.createElement('button');
+        b.type='button'; b.className='btn btn-sm p-0 px-1 text-danger'; b.style.lineHeight='1';
+        b.innerHTML='&times;'; b.title=TC.diagRemove;
+        b.onclick=function(){ eliminarDiagCita(it.id); };
+        chip.appendChild(b); c.appendChild(chip);
+    });
+}
+function _cargaCatalogoIcd10(cb){
+    if (_icd10Cat){ cb(); return; }
+    fetch('get_icd10_list.php').then(function(r){return r.json();}).then(function(rows){
+        _icd10Cat = rows || [];
+        var sel = document.getElementById('citaDiagSelect');
+        if (sel){
+            var opts = '<option value=""></option>';
+            _icd10Cat.forEach(function(r){ opts += '<option value="'+parseInt(r.id,10)+'">'+escHtml(r.codigo+' — '+r.descripcion)+'</option>'; });
+            sel.innerHTML = opts;
+            if (window.jQuery && $(sel).select2){ $(sel).select2({ theme:'bootstrap-5', dropdownParent: $('#eventModal'), width:'100%', placeholder: TC.diagSearchPh }); }
+        }
+        cb();
+    }).catch(function(){ cb(); });
+}
+function cargarDiagnosticosCita(idPaciente){
+    document.getElementById('citaDiagWrap').dataset.idpac = idPaciente || '';
+    _pintaDiagChips([]);
+    _cargaCatalogoIcd10(function(){
+        if(window.jQuery){ $('#citaDiagSelect').val('').trigger('change'); }
+    });
+    if(!idPaciente) return;
+    fetch('paciente_icd10.php?accion=listar&idPaciente=' + encodeURIComponent(idPaciente))
+        .then(function(r){return r.json();})
+        .then(function(res){ if(res && res.ok) _pintaDiagChips(res.lista); })
+        .catch(function(){});
+}
+function agregarDiagCita(){
+    var idPac = document.getElementById('citaDiagWrap').dataset.idpac;
+    var idIcd = parseInt(document.getElementById('citaDiagSelect').value||'0',10);
+    if(!idPac || !idIcd) return;
+    $.post('paciente_icd10.php', { accion:'agregar', idPaciente:idPac, idIcd10:idIcd }, function(res){
+        if(res && res.ok){ _pintaDiagChips(res.lista); $('#citaDiagSelect').val('').trigger('change'); }
+        else { alert(TC.diagSaveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(TC.connError); });
+}
+function eliminarDiagCita(idIcd){
+    var idPac = document.getElementById('citaDiagWrap').dataset.idpac;
+    if(!idPac) return;
+    $.post('paciente_icd10.php', { accion:'eliminar', idPaciente:idPac, idIcd10:idIcd }, function(res){
+        if(res && res.ok){ _pintaDiagChips(res.lista); }
+        else { alert(TC.diagSaveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(TC.connError); });
 }
 
 // Trae el bloque de datos del paciente desde get_historial_paciente.php (igual al de informes)
