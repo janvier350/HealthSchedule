@@ -693,7 +693,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <div id="citaPacienteInfo" class="mb-2"></div>
 
                     <!-- Diagnósticos ICD-10 del paciente (para el biller): ver y añadir -->
-                    <div id="citaDiagWrap" class="border rounded p-2 mb-2" style="background:#f8f9ff;">
+                    <div id="citaDiagWrap" class="border rounded p-2 mb-2" style="background:#f8f9ff;position:relative;">
                         <div class="fw-semibold small mb-1"><i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?></div>
                         <div id="citaDiagLista" class="d-flex flex-wrap gap-2 mb-2"></div>
                         <div class="input-group input-group-sm">
@@ -1493,7 +1493,7 @@ function _cargaCatalogoIcd10(cb){
             var opts = '<option value=""></option>';
             _icd10Cat.forEach(function(r){ opts += '<option value="'+parseInt(r.id,10)+'">'+escHtml(r.codigo+' — '+r.descripcion)+'</option>'; });
             sel.innerHTML = opts;
-            if (window.jQuery && $(sel).select2){ $(sel).select2({ theme:'bootstrap-5', dropdownParent: $('#eventModal'), width:'100%', placeholder: TC.diagSearchPh }); }
+            if (window.jQuery && $(sel).select2){ $(sel).select2({ theme:'bootstrap-5', dropdownParent: $('#citaDiagWrap'), width:'100%', placeholder: TC.diagSearchPh }); }
         }
         cb();
     }).catch(function(){ cb(); });
