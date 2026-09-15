@@ -164,7 +164,7 @@ $badge = [
                     ?>
                         <tr>
                             <td style="white-space:nowrap;">
-                                <?php echo h(date('d/m/Y', strtotime($c['FECHA_CITA']))); ?>
+                                <?php echo h(date('m/d/Y', strtotime($c['FECHA_CITA']))); ?>
                                 <div class="text-muted small"><?php echo h(substr($c['HORA_INICIO'],0,5)); ?><?php echo $c['HORA_FIN']?'–'.h(substr($c['HORA_FIN'],0,5)):''; ?></div>
                             </td>
                             <td class="fw-semibold"><?php echo h($c['PACIENTE']); ?>
@@ -175,7 +175,7 @@ $badge = [
                             <td><span class="badge" style="background:<?php echo $col; ?>;color:#fff;"><?php echo h(estado_label($c['ESTADO_CITA'])); ?></span></td>
                             <td style="max-width:340px;"><small><?php echo $motivo!==''?h($motivo):'<span class="text-muted">—</span>'; ?></small></td>
                             <td><small class="text-muted"><?php echo $tieneAudit ? h($c['CANCELADO_POR_NOMBRE']?:'—') : '—'; ?></small>
-                                <?php if($tieneAudit && !empty($c['FECHA_CANCELACION'])): ?><div class="text-muted small"><?php echo h(date('d/m/Y H:i', strtotime($c['FECHA_CANCELACION']))); ?></div><?php endif; ?>
+                                <?php if($tieneAudit && !empty($c['FECHA_CANCELACION'])): ?><div class="text-muted small"><?php echo h(date('m/d/Y H:i', strtotime($c['FECHA_CANCELACION']))); ?></div><?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; else: ?>

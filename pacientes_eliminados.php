@@ -91,7 +91,7 @@ if ($r) while($x=$r->fetch_assoc()) $rows[]=$x;
                             <td><small class="text-muted"><?php echo h($p['CEDULA']?:'—'); ?></small></td>
                             <td><small><?php echo h($p['TELEFONO']?:'—'); ?></small></td>
                             <td style="max-width:320px;"><small><?php echo $tieneAudit ? h(($p['MOTIVO_ELIMINACION']??'')?:'—') : '—'; ?></small></td>
-                            <td><small><?php echo ($tieneAudit && !empty($p['FECHA_ELIMINACION']))?date('d/m/Y H:i',strtotime($p['FECHA_ELIMINACION'])):'—'; ?></small></td>
+                            <td><small><?php echo ($tieneAudit && !empty($p['FECHA_ELIMINACION']))?date('m/d/Y H:i',strtotime($p['FECHA_ELIMINACION'])):'—'; ?></small></td>
                             <td><small class="text-muted"><?php echo $tieneAudit ? h(($p['ELIMINADO_POR_NOMBRE']??'')?:'—') : '—'; ?></small></td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="recuperar(<?php echo (int)$p['IDPACIENTE']; ?>)">

@@ -29,9 +29,9 @@ $firmado = $e && $e['estado'] === 'Firmado';
 // Reemplaza los campos {{...}} del documento con los datos reales
 function aplicarCampos($html, $d) {
     $fnac = (!empty($d['FECHANACIMIENTO']) && $d['FECHANACIMIENTO'] !== '0000-00-00')
-        ? date('d/m/Y', strtotime($d['FECHANACIMIENTO'])) : '';
-    $fecha  = !empty($d['fecha_envio']) ? date('d/m/Y', strtotime($d['fecha_envio'])) : date('d/m/Y');
-    $ffirma = !empty($d['fecha_firma']) ? date('d/m/Y', strtotime($d['fecha_firma'])) : '';
+        ? date('m/d/Y', strtotime($d['FECHANACIMIENTO'])) : '';
+    $fecha  = !empty($d['fecha_envio']) ? date('m/d/Y', strtotime($d['fecha_envio'])) : date('m/d/Y');
+    $ffirma = !empty($d['fecha_firma']) ? date('m/d/Y', strtotime($d['fecha_firma'])) : '';
     return strtr($html, [
         '{{paciente}}'         => htmlspecialchars($d['paciente'] ?? ''),
         '{{nombre}}'           => htmlspecialchars($d['paciente'] ?? ''),
@@ -121,7 +121,7 @@ function aplicarCamposLlenados($html, $camposJsonStr) {
                     <?php else: ?>
                         <span class="badge bg-warning text-dark">Pendiente</span>
                     <?php endif; ?>
-                    · Enviado: <?php echo $e['fecha_envio'] ? date('d/m/Y H:i', strtotime($e['fecha_envio'])) : '—'; ?>
+                    · Enviado: <?php echo $e['fecha_envio'] ? date('m/d/Y H:i', strtotime($e['fecha_envio'])) : '—'; ?>
                 </p>
 
                 <h6 class="text-muted">Contenido del documento</h6>
@@ -145,7 +145,7 @@ function aplicarCamposLlenados($html, $camposJsonStr) {
                     </div>
                     <div class="small text-muted">
                         Firmado por <strong><?php echo htmlspecialchars($e['firmado_por'] ?: $e['paciente']); ?></strong>
-                        el <?php echo $e['fecha_firma'] ? date('d/m/Y H:i', strtotime($e['fecha_firma'])) : '—'; ?>
+                        el <?php echo $e['fecha_firma'] ? date('m/d/Y H:i', strtotime($e['fecha_firma'])) : '—'; ?>
                         <?php if (!empty($e['ip_firma'])): ?> · IP: <?php echo htmlspecialchars($e['ip_firma']); ?><?php endif; ?>
                     </div>
                 <?php else: ?>

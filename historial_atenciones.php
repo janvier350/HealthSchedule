@@ -194,7 +194,7 @@ $result = $conexion->query($sql);
                             </td>
                             <td><?php echo htmlspecialchars($h['CEDULA']); ?></td>
                             <td>
-                                <?php echo date('d/m/Y', strtotime($h['FECHA_CITA'])); ?><br>
+                                <?php echo date('m/d/Y', strtotime($h['FECHA_CITA'])); ?><br>
                                 <small class="text-muted"><?php echo substr($h['HORA_INICIO'],0,5); ?></small>
                             </td>
                             <td><?php echo htmlspecialchars($h['TIPO_CONSULTA'] ?? '—'); ?></td>
@@ -215,7 +215,7 @@ $result = $conexion->query($sql);
                                 <?php else: ?>—<?php endif; ?>
                             </td>
                             <td class="text-center">
-                                <small><?php echo date('d/m/Y H:i', strtotime($h['FECHA_REGISTRO'])); ?></small>
+                                <small><?php echo date('m/d/Y H:i', strtotime($h['FECHA_REGISTRO'])); ?></small>
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary"

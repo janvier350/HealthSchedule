@@ -40,7 +40,7 @@ $plantilla = $stmt->get_result()->fetch_assoc();
 $datos_demo = [
     // ... (mantén los campos anteriores)
 
-	'fecha_actual' => date('d/m/Y'),
+	'fecha_actual' => date('m/d/Y'),
     'estatura' => $talla_paciente . " cm",
     'peso' => round($peso_paciente * 2.204, 1), // Convertir a lbs para la plantilla
     'imc_valor' => $imc,
@@ -65,7 +65,7 @@ $datos_demo = [
     'paciente_nombre' => 'JUAN PÉREZ ARMENDÁRIZ',
     'paciente_dob' => '12/08/1990',
     'diagnostico_referencia' => 'Diabetes Mellitus Tipo 2',
-    'fecha_evaluacion' => date('d/m/Y'),
+    'fecha_evaluacion' => date('m/d/Y'),
     'antropometria' => 'Peso: 85kg, Talla: 1.75m, IMC: 27.7.',
     'bioquimica' => 'HbA1c: 7.2%.',
     'hallazgos_fisicos' => 'Sin edemas presentes.',

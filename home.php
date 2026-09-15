@@ -163,7 +163,7 @@ for ($i = 6; $i >= 0; $i--) {
                                     <?php echo htmlspecialchars($nombres); ?>
                                 </div>
                                 <div class="widget-subheading">
-                                    <?php echo htmlspecialchars($rol); ?> — <?php echo date('d/m/Y'); ?>
+                                    <?php echo htmlspecialchars($rol); ?> — <?php echo date('m/d/Y'); ?>
                                 </div>
                             </div>
                             <div class="widget-content-left ms-3">
@@ -328,7 +328,7 @@ for ($i = 6; $i >= 0; $i--) {
                                                 <?php echo htmlspecialchars($u['PACIENTE']); ?>
                                             </div>
                                             <div class="text-muted" style="font-size:.75rem;">
-                                                <?php echo date('d/m/Y H:i', strtotime($u['FECHA_REGISTRO'])); ?>
+                                                <?php echo date('m/d/Y H:i', strtotime($u['FECHA_REGISTRO'])); ?>
                                                 <?php if ($u['IMC']): ?>
                                                     &nbsp;· <?php te('common.bmi'); ?> <?php echo number_format($u['IMC'],1); ?>
                                                 <?php endif; ?>
@@ -354,7 +354,7 @@ for ($i = 6; $i >= 0; $i--) {
                             <div class="card-header d-flex justify-content-between align-items-center py-2">
                                 <span class="section-title mb-0">
                                     <i class="bi bi-calendar-check me-1"></i>
-                                    <?php te('home.todayAppointments'); ?> <?php echo date('d/m/Y'); ?>
+                                    <?php te('home.todayAppointments'); ?> <?php echo date('m/d/Y'); ?>
                                 </span>
                                 <a href="SCH_Calendar.php" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-calendar3"></i> <?php te('home.goCalendar'); ?>

@@ -428,7 +428,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                                     <?php echo htmlspecialchars($_SESSION["username"] ?? ''); ?>
                                 </div>
                                 <div class="widget-subheading">
-                                    <?php echo htmlspecialchars($_SESSION["rol"] ?? 'Usuario'); ?> — <?php echo date('d/m/Y'); ?>
+                                    <?php echo htmlspecialchars($_SESSION["rol"] ?? 'Usuario'); ?> — <?php echo date('m/d/Y'); ?>
                                 </div>
                             </div>
                         </div>
@@ -694,12 +694,16 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <div id="citaPacienteInfo" class="mb-2"></div>
 
                     <!-- Diagnósticos ICD-10 del paciente (para el biller): ver y añadir -->
-                    <div id="citaDiagWrap" class="border rounded p-2 mb-2" style="background:#f8f9ff;position:relative;">
-                        <div class="fw-semibold small mb-1"><i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?></div>
-                        <div id="citaDiagLista" class="d-flex flex-wrap gap-2 mb-2"></div>
-                        <select id="citaDiagSelect" class="form-select"><option value=""></option></select>
-                        <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="agregarDiagCita()"><i class="bi bi-plus-lg"></i> <?php te('cal.diag.add'); ?></button>
+                    <div id="citaDiagWrap" class="rounded mb-2" style="background:#fff;position:relative;border:2px solid #0d6efd;overflow:hidden;">
+                        <div class="fw-bold px-2 py-1" style="background:#0d6efd;color:#fff;font-size:.95rem;">
+                            <i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?>
+                        </div>
+                        <div class="p-2">
+                            <div id="citaDiagLista" class="d-flex flex-wrap gap-2 mb-2"></div>
+                            <select id="citaDiagSelect" class="form-select"><option value=""></option></select>
+                            <div class="d-flex justify-content-end mt-2">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="agregarDiagCita()"><i class="bi bi-plus-lg"></i> <?php te('cal.diag.add'); ?></button>
+                            </div>
                         </div>
                     </div>
 
@@ -1472,14 +1476,14 @@ var _icd10Cat = null;           // catálogo cargado una sola vez
 function _pintaDiagChips(list){
     var c = document.getElementById('citaDiagLista'); if(!c) return;
     c.innerHTML = '';
-    if(!list || !list.length){ c.innerHTML = '<span class="text-muted small">'+TC.diagNone+'</span>'; return; }
+    if(!list || !list.length){ c.innerHTML = '<span class="badge bg-secondary text-white" style="font-size:.85rem;font-weight:600;">'+TC.diagNone+'</span>'; return; }
     list.forEach(function(it){
         var chip = document.createElement('span');
-        chip.className = 'badge bg-primary-subtle text-primary-emphasis border d-inline-flex align-items-center';
-        chip.style.cssText = 'gap:6px;padding:5px 6px 5px 10px;font-size:.82rem;';
+        chip.className = 'badge bg-primary text-white d-inline-flex align-items-center';
+        chip.style.cssText = 'gap:6px;padding:7px 8px 7px 12px;font-size:.92rem;font-weight:600;';
         chip.innerHTML = '<span><strong>'+escHtml(it.codigo)+'</strong> '+escHtml(it.descripcion||'')+'</span>';
         var b = document.createElement('button');
-        b.type='button'; b.className='btn btn-sm p-0 px-1 text-danger'; b.style.lineHeight='1';
+        b.type='button'; b.className='btn btn-sm p-0 px-1 text-white'; b.style.cssText='line-height:1;font-size:1.05rem;opacity:.9;';
         b.innerHTML='&times;'; b.title=TC.diagRemove;
         b.onclick=function(){ eliminarDiagCita(it.id); };
         chip.appendChild(b); c.appendChild(chip);
@@ -1546,6 +1550,16 @@ function cargarInfoPacienteCita(idPaciente) {
 
             var out = '';
             if (info) {
+                // Edad del paciente destacada (para que se vea grande en la cita)
+                var _edad = info.getAttribute('data-edad');
+                var _edadLbl = info.getAttribute('data-edad-lbl') || '';
+                if (_edad) {
+                    out += '<div class="d-flex align-items-center gap-2 mb-2 px-3 py-2 rounded" style="background:#fff3cd;border:2px solid #ffda6a;">' +
+                               '<i class="bi bi-person-badge" style="font-size:1.5rem;color:#664d03;"></i>' +
+                               '<span style="font-size:1.6rem;font-weight:800;color:#664d03;line-height:1;">' + _edad + '</span>' +
+                               '<span style="font-size:1rem;font-weight:600;color:#664d03;">' + _edadLbl + '</span>' +
+                           '</div>';
+                }
                 out += '<div class="border rounded overflow-hidden">' + (style ? style.outerHTML : '') + info.outerHTML + '</div>';
             }
 

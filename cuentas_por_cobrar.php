@@ -179,13 +179,13 @@ $hoy = new DateTime('today');
                             if ($nombre==='') $nombre = $f['client_name'] ?: '—';
                             $venc=''; $overdue=0;
                             if (!empty($f['fecha_vencimiento'])) {
-                                $venc = date('d/m/Y', strtotime($f['fecha_vencimiento']));
+                                $venc = date('m/d/Y', strtotime($f['fecha_vencimiento']));
                                 $d = (new DateTime($f['fecha_vencimiento']))->diff($hoy);
                                 $overdue = ($hoy > new DateTime($f['fecha_vencimiento'])) ? $d->days : 0;
                             }
                         ?>
                             <tr>
-                                <td><small><?php echo $f['fecha']?date('d/m/Y',strtotime($f['fecha'])):'—'; ?></small></td>
+                                <td><small><?php echo $f['fecha']?date('m/d/Y',strtotime($f['fecha'])):'—'; ?></small></td>
                                 <td><small class="fw-semibold"><?php echo h($f['billing_number']?:('#'.$f['id'])); ?></small></td>
                                 <td><small><?php echo h($nombre); ?></small></td>
                                 <td style="max-width:340px;"><small class="text-muted"><?php echo h(mb_strimwidth((string)$f['descripcion'],0,60,'…')); ?></small></td>

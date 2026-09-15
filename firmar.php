@@ -40,9 +40,9 @@ if ($envio && $envio['estado'] !== 'Firmado'
 // Reemplaza los campos {{...}} del documento con los datos reales
 function aplicarCampos($html, $d) {
     $fnac = (!empty($d['FECHANACIMIENTO']) && $d['FECHANACIMIENTO'] !== '0000-00-00')
-        ? date('d/m/Y', strtotime($d['FECHANACIMIENTO'])) : '';
-    $fecha  = !empty($d['fecha_envio']) ? date('d/m/Y', strtotime($d['fecha_envio'])) : date('d/m/Y');
-    $ffirma = !empty($d['fecha_firma']) ? date('d/m/Y', strtotime($d['fecha_firma'])) : '';
+        ? date('m/d/Y', strtotime($d['FECHANACIMIENTO'])) : '';
+    $fecha  = !empty($d['fecha_envio']) ? date('m/d/Y', strtotime($d['fecha_envio'])) : date('m/d/Y');
+    $ffirma = !empty($d['fecha_firma']) ? date('m/d/Y', strtotime($d['fecha_firma'])) : '';
     return strtr($html, [
         '{{paciente}}'         => htmlspecialchars($d['paciente'] ?? ''),
         '{{nombre}}'           => htmlspecialchars($d['paciente'] ?? ''),
@@ -87,7 +87,7 @@ function aplicarCampos($html, $d) {
         <div class="alert alert-success mb-0">
             <i class="bi bi-check-circle"></i> Este documento ya fue firmado
             <?php if (!empty($envio['firmado_por'])): ?>por <strong><?php echo htmlspecialchars($envio['firmado_por']); ?></strong><?php endif; ?>
-            <?php if (!empty($envio['fecha_firma'])): ?> el <?php echo date('d/m/Y H:i', strtotime($envio['fecha_firma'])); ?><?php endif; ?>.
+            <?php if (!empty($envio['fecha_firma'])): ?> el <?php echo date('m/d/Y H:i', strtotime($envio['fecha_firma'])); ?><?php endif; ?>.
             <br>¡Gracias!
         </div>
 

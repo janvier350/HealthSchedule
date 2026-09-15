@@ -147,8 +147,8 @@ while ($res && $r = $res->fetch_assoc()) { $envios[] = $r; }
                                                 <span class="badge bg-warning text-dark"><?php echo estado_label('Pendiente'); ?></span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="small"><?php echo $e['fecha_envio'] ? date('d/m/Y H:i', strtotime($e['fecha_envio'])) : '—'; ?></td>
-                                        <td class="small"><?php echo $e['fecha_firma'] ? date('d/m/Y H:i', strtotime($e['fecha_firma'])) : '—'; ?></td>
+                                        <td class="small"><?php echo $e['fecha_envio'] ? date('m/d/Y H:i', strtotime($e['fecha_envio'])) : '—'; ?></td>
+                                        <td class="small"><?php echo $e['fecha_firma'] ? date('m/d/Y H:i', strtotime($e['fecha_firma'])) : '—'; ?></td>
                                         <td class="text-end">
                                             <a href="ver_documento_firmado.php?id=<?php echo (int)$e['id_envio']; ?>" target="_blank"
                                                class="btn btn-outline-primary btn-sm" title="<?php te('sent.view'); ?>">
