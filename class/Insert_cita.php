@@ -32,6 +32,32 @@ if (!$fechafactura || !$IdPaciente || !$timeIni || !$Idconsulta || !$IdDoctor) {
     exit;
 }
 
+// ── Regla: el paciente debe tener al menos un diagnóstico ICD-10 y dirección
+//     para poder agendar (evita fichas incompletas; útil para facturación). ──
+$dbEscC = $conexion->real_escape_string($conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db']);
+$numDiag = 0;
+if ((int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbEscC' AND TABLE_NAME='paciente_icd10'")->fetch_assoc()['c'] > 0) {
+    $q = $conexion->query("SELECT COUNT(*) c FROM paciente_icd10 WHERE IDPACIENTE=".(int)$IdPaciente);
+    $numDiag = $q ? (int)$q->fetch_assoc()['c'] : 0;
+}
+if ($numDiag === 0 && (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEscC' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='IDICD10'")->fetch_assoc()['c'] > 0) {
+    $q = $conexion->query("SELECT IDICD10 FROM AG_PACIENTE WHERE IDPACIENTE=".(int)$IdPaciente." LIMIT 1");
+    if ($q && ($r = $q->fetch_assoc()) && (int)($r['IDICD10'] ?? 0) > 0) $numDiag = 1;
+}
+$dir = '';
+$q = $conexion->query("SELECT ADDRESS FROM AG_PACIENTE WHERE IDPACIENTE=".(int)$IdPaciente." LIMIT 1");
+if ($q && ($r = $q->fetch_assoc())) $dir = trim((string)($r['ADDRESS'] ?? ''));
+
+$faltantes = [];
+if ($numDiag === 0) $faltantes[] = 'un diagnóstico (ICD-10)';
+if ($dir === '')    $faltantes[] = 'la dirección';
+if ($faltantes) {
+    $msg = "No se puede agendar: al paciente le falta ".implode(' y ', $faltantes).
+           ". Complétalo en la ficha del paciente (Gestionar Pacientes) y vuelve a intentar.";
+    echo "<script>alert(".json_encode($msg, JSON_UNESCAPED_UNICODE)."); history.back();</script>";
+    exit;
+}
+
 // Calcular hora final (+30 min)
 $timeFin = date("H:i", strtotime($timeIni) + 30 * 60);
 
