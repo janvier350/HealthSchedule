@@ -694,8 +694,8 @@ while ($a = $resAgencias->fetch_assoc()) {
                     <div id="citaPacienteInfo" class="mb-2"></div>
 
                     <!-- Diagnósticos ICD-10 del paciente (para el biller): ver y añadir -->
-                    <div id="citaDiagWrap" class="rounded mb-2" style="background:#fff;position:relative;border:2px solid #0d6efd;overflow:hidden;">
-                        <div class="fw-bold px-2 py-1" style="background:#0d6efd;color:#fff;font-size:.95rem;">
+                    <div id="citaDiagWrap" class="rounded mb-2" style="background:#fff;position:relative;border:2px solid #0d6efd;">
+                        <div class="fw-bold px-2 py-1" style="background:#0d6efd;color:#fff;font-size:.95rem;border-radius:.2rem .2rem 0 0;">
                             <i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?>
                         </div>
                         <div class="p-2">
