@@ -8,6 +8,8 @@ if (!isset($_SESSION["rol"])) {
     header("Location: break.php");
     exit();
 }
+require_once(__DIR__ . "/class/permisos.php");
+requerir('agenda.notificacion');
 ?>
 <!doctype html>
 <html lang="<?php echo current_lang(); ?>">
@@ -413,7 +415,7 @@ if (!isset($_SESSION["rol"])) {
                                                 <?php
                                                }else{ ?> 
                                                  <span class="badge badge-danger rounded-pill d-inline"><?php te('doc.inactive'); ?></span>
-                                                  <?  }?>
+                                                  <?php  }?>
                                               </td>
                                               <!-- <td>Senior</td> -->
                                               <td>
@@ -441,7 +443,7 @@ if (!isset($_SESSION["rol"])) {
                                                              <button class="btn-shadow btn btn-outline-info fa fa-check" 
                                                                 onclick="confirmarActivacion(<?php echo $valores['IDDOCTOR']; ?>)">
                                                             </button>
-                                                              <?  }?>
+                                                              <?php  }?>
                                                              
                                                 </td>
                                             </tr>
