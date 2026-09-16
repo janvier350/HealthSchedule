@@ -284,6 +284,9 @@ return array(
     'cal.js.timeRange'         => 'La hora debe estar entre las 07:00 y las 22:30.',
     'cal.js.apptGone'          => 'La cita ya no existe o fue eliminada.',
     'cal.js.slotTaken'         => 'El horario elegido se cruza con otra cita existente. Elija otra hora.',
+    'cal.js.recurConfirm'      => 'Vas a crear una serie recurrente ({tipo}): {n} citas. ¿Continuar?',
+    'cal.js.recurConfirmDate'  => 'Vas a crear una serie recurrente ({tipo}) hasta la fecha final. ¿Continuar?',
+    'cal.js.dragClosed'        => 'Esta cita está cerrada y no se puede mover.',
     'cal.js.apptGonePrev'      => 'La cita ya no existe o fue eliminada previamente.',
 
     // ── IMC / BMI categorías ───────────────────────────────────────────

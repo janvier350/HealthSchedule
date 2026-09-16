@@ -563,7 +563,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="insertCita" method="POST" action="class/Insert_cita.php">
+                <form id="insertCita" method="POST" action="class/Insert_cita.php" onsubmit="return confirmarRecurrencia();">
                     <div class="mb-3">
                         <label class="form-label"><?php te('cal.appDate'); ?></label>
                         <input type="date" class="form-control" name="fechafactura" id="fechafactura">
@@ -1031,6 +1031,9 @@ const TC = <?php echo json_encode(array(
     'reschedule'      => t('cal.reschedule'),
     'editAppt'        => t('cal.editAppt'),
     'deleteLabel'     => t('cal.delete'),
+    'recurConfirm'    => t('cal.js.recurConfirm'),
+    'recurConfirmDate'=> t('cal.js.recurConfirmDate'),
+    'dragClosed'      => t('cal.js.dragClosed'),
     'connError'       => t('common.js.connError'),
     'diagNone'        => t('cal.diag.none'),
     'diagRemove'      => t('cal.diag.remove'),
@@ -1113,9 +1116,9 @@ async function guardarReagenda() {
         return;
     }
 
-    // Formatear fecha para confirmar
+    // Formatear fecha para confirmar (formato EE. UU.: mes/día/año)
     const [y, mo, d] = fecha.split('-');
-    if (!confirm(`${TC.confirmReschedPre} ${d}/${mo}/${y} ${TC.at} ${hora}?`)) return;
+    if (!confirm(`${TC.confirmReschedPre} ${mo}/${d}/${y} ${TC.at} ${hora}?`)) return;
 
     // Si es serie, preguntar alcance
     let alcance = 'solo';
@@ -1140,6 +1143,51 @@ async function guardarReagenda() {
         }
     }).fail(function() {
         alert(TC.connError);
+    });
+}
+
+// ── Reagendar arrastrando la cita en el calendario ───────────────────
+async function reagendarPorArrastre(info) {
+    const ev    = info.event;
+    const start = ev.start;
+    if (!start) { info.revert(); return; }
+
+    const pad   = function (n) { return String(n).padStart(2, '0'); };
+    const fecha = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate());
+    const hora  = pad(start.getHours()) + ':' + pad(start.getMinutes());
+
+    // Confirmar el cambio (fecha en formato mes/día/año)
+    if (!confirm(`${TC.confirmReschedPre} ${pad(start.getMonth() + 1)}/${pad(start.getDate())}/${start.getFullYear()} ${TC.at} ${hora}?`)) {
+        info.revert();
+        return;
+    }
+
+    // Si la cita es parte de una serie, preguntar alcance
+    let alcance = 'solo';
+    const idserie = (ev.extendedProps || {}).idserie;
+    if (idserie) {
+        alcance = await askSerieScope(TC.reschedule);
+        if (!alcance) { info.revert(); return; }
+    }
+
+    $.post('reagendar_cita.php', { idCita: ev.id, fecha: fecha, hora: hora, alcance: alcance }, function (res) {
+        res = (res || '').trim();
+        if (res === 'OK') {
+            alert(TC.reschedOk);
+            location.reload();
+        } else if (res === 'OK_SIN_CORREO') {
+            alert(TC.reschedNoEmail);
+            location.reload();
+        } else if (res === 'NO_ENCONTRADA') {
+            alert(TC.apptGone);
+            location.reload();
+        } else {
+            alert(TC.reschedError + res);
+            info.revert();
+        }
+    }).fail(function () {
+        alert(TC.connError);
+        info.revert();
     });
 }
 
@@ -1704,7 +1752,21 @@ document.addEventListener('DOMContentLoaded', function () {
         slotMaxTime: '22:00:00',
         expandRows: true,
         nowIndicator: true,
+        // Arrastrar la cita a otro día/hora la reagenda (sin cambiar su duración).
+        editable: true,
+        eventDurationEditable: false,
         events: eventosAll,
+
+        // No permitir arrastrar citas ya cerradas (atendidas/canceladas).
+        eventAllow: function (dropInfo, draggedEvent) {
+            var est = (draggedEvent.extendedProps || {}).cita || 'Pendiente';
+            return ESTADOS_CERRADOS.indexOf(est) === -1;
+        },
+
+        // Reagendar por arrastre (misma lógica y correo que el botón "Reagendar").
+        eventDrop: function (info) {
+            reagendarPorArrastre(info);
+        },
 
         // Render personalizado en TODAS las vistas (mes, semana y día):
         // hora inicio-fin, paciente, doctor y location sin recortar
@@ -2041,6 +2103,23 @@ function toggleRecurrenciaUI() {
     document.getElementById('recurEndDateWrap').classList.toggle('d-none', mode !== 'date');
 }
 document.addEventListener('DOMContentLoaded', toggleRecurrenciaUI);
+
+// ── Confirmar antes de crear una serie recurrente ────────────────────
+function confirmarRecurrencia() {
+    var sel = document.getElementById('recurrenciaSel');
+    if (!sel || sel.value === 'none') return true;   // cita única: sin confirmación
+    var tipo = sel.options[sel.selectedIndex].text;
+    var modo = (document.getElementById('recurEndMode') || {}).value || 'count';
+    var msg;
+    if (modo === 'count') {
+        var n = parseInt((document.getElementById('recurCount') || {}).value || '1', 10);
+        n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 52));
+        msg = TC.recurConfirm.replace('{n}', n).replace('{tipo}', tipo);
+    } else {
+        msg = TC.recurConfirmDate.replace('{tipo}', tipo);
+    }
+    return confirm(msg);
+}
 </script>
 
 <!-- ── Buscador de pacientes (estilo Kalix) → abre el Historial de atenciones ── -->
