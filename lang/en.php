@@ -284,6 +284,9 @@ return array(
     'cal.js.timeRange'         => 'The time must be between 07:00 and 22:30.',
     'cal.js.apptGone'          => 'The appointment no longer exists or was deleted.',
     'cal.js.slotTaken'         => 'The chosen time overlaps another existing appointment. Choose a different time.',
+    'cal.js.recurConfirm'      => 'You are about to create a recurring series ({tipo}): {n} appointments. Continue?',
+    'cal.js.recurConfirmDate'  => 'You are about to create a recurring series ({tipo}) up to the end date. Continue?',
+    'cal.js.dragClosed'        => 'This appointment is closed and cannot be moved.',
     'cal.js.apptGonePrev'      => 'The appointment no longer exists or was already deleted.',
 
     // ── IMC / BMI categorías ───────────────────────────────────────────
