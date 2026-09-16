@@ -124,13 +124,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <i class="metismenu-icon bi bi-palette2"></i> <?php te('menu.statusColors'); ?>
                 </a>
             </li>
-            <?php if (puede('agenda.pendientes')): ?>
-            <li>
-                <a href="Agenda_Pendientes.php" class="<?php echo menuActivo('Agenda_Pendientes.php', $paginaActual); ?>">
-                    <i class="metismenu-icon bi bi-calendar-check"></i> <?php te('menu.pending'); ?>
-                </a>
-            </li>
-            <?php endif; ?>
             <li>
                 <a href="citas_canceladas.php" class="<?php echo menuActivo('citas_canceladas.php', $paginaActual); ?>">
                     <i class="metismenu-icon bi bi-calendar-x"></i> <?php te('menu.cancelled'); ?>
@@ -209,22 +202,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <?php endif; ?>
 
             <!-- ══ Catálogos / configuración ═══════════════════════════ -->
-            <?php if (puede('cfg.crear_doctor')): ?>
-            <li>
-                <a href="#">
-                    <i class="metismenu-icon bi bi-people"></i>
-                    <?php te('menu.doctor'); ?>
-                    <i class="metismenu-state-icon bi bi-chevron-down caret-left"></i>
-                </a>
-                <ul>
-                    <li>
-                        <a href="PNC_DoctorCrear.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.createNew'); ?>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <?php endif; ?>
             <?php if (puede('cfg.icd10')): ?>
             <li>
                 <a href="#">
@@ -264,7 +241,7 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <?php endif; ?>
 
             <!-- ══ BILLS (por permisos por usuario) ════════════════════ -->
-            <?php $verBilling = puede('fact.crear') || puede('fact.cuentas') || puede('fact.billitems') || puede('fact.registerbills') || puede('fact.kalix') || puede('fact.reportes') || puede('fact.aseguradoras'); ?>
+            <?php $verBilling = puede('fact.crear') || puede('fact.cuentas') || puede('fact.billitems') || puede('fact.kalix') || puede('fact.aseguradoras'); ?>
             <?php if ($verBilling): ?>
             <li class="app-sidebar__heading"><?php te('menu.heading.billing'); ?></li>
             <li>
@@ -281,38 +258,24 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (puede('fact.registerbills')): ?>
-                    <li>
-                        <a href="BILLS_FacturaCrear.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.registerBills'); ?>
-                        </a>
-                    </li>
-                    <?php endif; ?>
                     <?php if (puede('fact.crear')): ?>
                     <li>
                         <a href="crear_factura.php" class="<?php echo menuActivo('crear_factura.php', $paginaActual); ?>">
-                            <i class="metismenu-icon"></i> Crear Factura
+                            <i class="metismenu-icon"></i> <?php te('menu.createInvoice'); ?>
                         </a>
                     </li>
                     <?php endif; ?>
                     <?php if (puede('fact.cuentas')): ?>
                     <li>
                         <a href="cuentas_por_cobrar.php" class="<?php echo menuActivo(['cuentas_por_cobrar.php','factura_ver.php'], $paginaActual); ?>">
-                            <i class="metismenu-icon"></i> Cuentas por Cobrar
+                            <i class="metismenu-icon"></i> <?php te('menu.accountsReceivable'); ?>
                         </a>
                     </li>
                     <?php endif; ?>
                     <?php if (puede('fact.kalix')): ?>
                     <li>
                         <a href="importar_facturas_kalix.php" class="<?php echo menuActivo('importar_facturas_kalix.php', $paginaActual); ?>">
-                            <i class="metismenu-icon"></i> Importar Facturas (Kalix)
-                        </a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if (puede('fact.reportes')): ?>
-                    <li>
-                        <a href="DashBoardReportesCuentasPorCobrar.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.reports'); ?>
+                            <i class="metismenu-icon"></i> <?php te('menu.importKalix'); ?>
                         </a>
                     </li>
                     <?php endif; ?>
@@ -359,11 +322,6 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                     <li>
                         <a href="PNC_UsuarioCrear.php">
                             <i class="metismenu-icon"></i> <?php te('menu.createNew'); ?>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="PNC_UsuarioListado.php">
-                            <i class="metismenu-icon"></i> <?php te('menu.list'); ?>
                         </a>
                     </li>
                 </ul>

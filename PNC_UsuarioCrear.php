@@ -1,7 +1,21 @@
 <?php
+ob_start();
+session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
+require_once(__DIR__ . "/class/permisos.php");
+
+if (!isset($_SESSION["rol"], $_SESSION["iduser"])) {
+    header("Location: break.php");
+    exit();
+}
+if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
+    session_destroy();
+    header("Location: expirada.php");
+    exit();
+}
+requerir('panel.usuarios');
 $conexion=conectarse();
 
 $rolesHtml = '';
@@ -124,10 +138,10 @@ if ($queryRoles) {
                                         </div>
                                         <div class="widget-content-left  ml-3 header-user-info">
                                             <div class="widget-heading">
-                                                Admin
+                                                <?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?>
                                             </div>
                                             <div class="widget-subheading">
-                                                Administrator
+                                                <?php echo htmlspecialchars($_SESSION['rol'] ?? ''); ?>
                                             </div>
                                         </div>
                                     </div>
