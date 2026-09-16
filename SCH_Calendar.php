@@ -1382,7 +1382,7 @@ function abrirModalCita(id, title, startDate, p) {
 
     const msg = encodeURIComponent(
         `${TC.waPre} ${p.consulta} ${TC.waMid} ` +
-        `${startDate.toLocaleDateString()} ${TC.waAt} ` +
+        `${startDate.toLocaleDateString('en-US')} ${TC.waAt} ` +
         `${startDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}. ${TC.waEnd}`
     );
 

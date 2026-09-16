@@ -378,7 +378,7 @@ function previewDesdeEditor(){
 
 // Rellena los placeholders con datos de ejemplo (para el preview visual)
 function _rellenarDemo(html){
-    var hoy = new Date().toLocaleDateString();
+    var hoy = new Date().toLocaleDateString('en-US');
     var demo = {
         fecha_actual: hoy, fecha_evaluacion: hoy, fecha_cita: hoy,
         hora_inicio: '10:00', hora_fin: '10:30',
