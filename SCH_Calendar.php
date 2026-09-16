@@ -1034,6 +1034,7 @@ const TC = <?php echo json_encode(array(
     'recurConfirm'    => t('cal.js.recurConfirm'),
     'recurConfirmDate'=> t('cal.js.recurConfirmDate'),
     'dragClosed'      => t('cal.js.dragClosed'),
+    'saving'          => t('cal.js.saving'),
     'connError'       => t('common.js.connError'),
     'diagNone'        => t('cal.diag.none'),
     'diagRemove'      => t('cal.diag.remove'),
@@ -2104,21 +2105,31 @@ function toggleRecurrenciaUI() {
 }
 document.addEventListener('DOMContentLoaded', toggleRecurrenciaUI);
 
-// ── Confirmar antes de crear una serie recurrente ────────────────────
+// ── Confirmar antes de crear una serie recurrente + evitar doble envío ─
+var _citaEnviando = false;
 function confirmarRecurrencia() {
+    if (_citaEnviando) return false;   // ya se está enviando: bloquea el doble clic
     var sel = document.getElementById('recurrenciaSel');
-    if (!sel || sel.value === 'none') return true;   // cita única: sin confirmación
-    var tipo = sel.options[sel.selectedIndex].text;
-    var modo = (document.getElementById('recurEndMode') || {}).value || 'count';
-    var msg;
-    if (modo === 'count') {
-        var n = parseInt((document.getElementById('recurCount') || {}).value || '1', 10);
-        n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 52));
-        msg = TC.recurConfirm.replace('{n}', n).replace('{tipo}', tipo);
-    } else {
-        msg = TC.recurConfirmDate.replace('{tipo}', tipo);
+    if (sel && sel.value !== 'none') {
+        var tipo = sel.options[sel.selectedIndex].text;
+        var modo = (document.getElementById('recurEndMode') || {}).value || 'count';
+        var msg;
+        if (modo === 'count') {
+            var n = parseInt((document.getElementById('recurCount') || {}).value || '1', 10);
+            n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 52));
+            msg = TC.recurConfirm.replace('{n}', n).replace('{tipo}', tipo);
+        } else {
+            msg = TC.recurConfirmDate.replace('{tipo}', tipo);
+        }
+        if (!confirm(msg)) return false;
     }
-    return confirm(msg);
+    // A partir de aquí el formulario se envía: bloquear reenvíos.
+    _citaEnviando = true;
+    setTimeout(function () {
+        var btn = document.querySelector('#insertCita button[type="submit"]');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> ' + (TC.saving || ''); }
+    }, 0);
+    return true;
 }
 </script>
 

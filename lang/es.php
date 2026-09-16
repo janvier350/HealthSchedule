@@ -287,6 +287,7 @@ return array(
     'cal.js.recurConfirm'      => 'Vas a crear una serie recurrente ({tipo}): {n} citas. ¿Continuar?',
     'cal.js.recurConfirmDate'  => 'Vas a crear una serie recurrente ({tipo}) hasta la fecha final. ¿Continuar?',
     'cal.js.dragClosed'        => 'Esta cita está cerrada y no se puede mover.',
+    'cal.js.saving'            => 'Guardando…',
     'cal.js.apptGonePrev'      => 'La cita ya no existe o fue eliminada previamente.',
 
     // ── IMC / BMI categorías ───────────────────────────────────────────
@@ -985,6 +986,7 @@ return array(
     'att.icd10.needMig'      => 'Falta preparar los diagnósticos múltiples.',
     'att.icd10.needMigLink'  => 'Ejecútalo aquí',
     'att.years'              => 'años',
+    'att.prevMeasures'       => 'Peso / talla anterior',
     'att.ncp.insert'         => 'Insertar diagnóstico NCP/PES',
     'att.ncp.diagTitle'      => 'Diagnóstico nutricional (NCP/PES)',
     'att.ncp.help'           => 'Elige la enfermedad y se inserta en la nota el Problema / relacionado con (etiología) / evidenciado por, listo para editar.',

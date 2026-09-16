@@ -64,6 +64,19 @@ $rowTalla = $stmtT->get_result()->fetch_assoc();
 $stmtT->close();
 $tallaActual = $rowTalla['TALLA'] ?? null;
 
+// Peso más reciente registrado en atenciones (para mostrarlo en la cita)
+$stmtP = $conexion->prepare(
+    "SELECT H.PESO FROM AG_HISTORIAL H
+     INNER JOIN AG_CITA C ON C.IDCITA = H.IDCITA
+     WHERE C.IDPACIENTE = ? AND H.PESO IS NOT NULL AND H.PESO > 0
+     ORDER BY H.FECHA_REGISTRO DESC LIMIT 1"
+);
+$stmtP->bind_param("i", $idPaciente);
+$stmtP->execute();
+$rowPeso = $stmtP->get_result()->fetch_assoc();
+$stmtP->close();
+$pesoActual = $rowPeso['PESO'] ?? null;
+
 // Edad calculada desde FECHANACIMIENTO
 $edad = null;
 $fn   = $pac['FECHANACIMIENTO'] ?? '';
@@ -200,6 +213,9 @@ function imcColor($imc) {
             <div class="d-flex flex-wrap gap-3" style="font-size:.85rem;">
                 <?php if ($edad !== null): ?>
                     <span><i class="bi bi-person-fill text-muted me-1"></i><?php echo $edad; ?> <?php te('hp.years'); ?></span>
+                <?php endif; ?>
+                <?php if ($pesoActual): ?>
+                    <span><i class="bi bi-clipboard2-pulse text-muted me-1"></i><?php echo number_format($pesoActual, 1); ?> kg</span>
                 <?php endif; ?>
                 <?php if ($tallaActual): ?>
                     <?php $tallaM = $tallaActual > 3 ? $tallaActual / 100 : $tallaActual; ?>
