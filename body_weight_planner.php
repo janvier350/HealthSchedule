@@ -16,6 +16,8 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
     header("Location: expirada.php");
     exit();
 }
+require_once(__DIR__ . "/class/permisos.php");
+requerir('agenda.weightplanner');
 
 // Lista de pacientes activos para la precarga
 $pacientes = [];

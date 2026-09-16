@@ -9,10 +9,8 @@ if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
 if (!isset($_SESSION["rol"])) { header("Location: break.php"); exit(); }
 if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) { session_destroy(); header("Location: expirada.php"); exit(); }
-$rolAct = strtoupper($_SESSION['rol'] ?? '');
-if (!in_array($rolAct, ['SISTEMA', 'DOCTOR'], true)) {
-    die('<p style="color:red;font-family:sans-serif;padding:2rem;">'.htmlspecialchars(t('common.accessRestricted')).'</p>');
-}
+require_once(__DIR__ . "/class/permisos.php");
+requerir('pac.docenviados');
 
 $envios = [];
 $res = $conexion->query(

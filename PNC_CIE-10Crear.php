@@ -13,6 +13,8 @@ if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) {
     header("Location: expirada.php");
     exit();
 }
+require_once(__DIR__ . "/class/permisos.php");
+requerir('cfg.icd10');
 
 // Filtro de búsqueda
 $q         = trim($_GET['q'] ?? '');
