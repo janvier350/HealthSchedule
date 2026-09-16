@@ -99,6 +99,20 @@ if ($sp = $conexion->prepare(
     if ($rp) { $prevInforme = (string)$rp['CONTENIDO_INFORME']; $prevFecha = (string)$rp['FECHA_CITA']; $prevTipo = (string)($rp['TIPO'] ?? ''); }
 }
 
+// Peso/talla de la atención anterior (para mostrarlos en el encabezado y no preguntar)
+$prevPeso = null; $prevTalla = null; $prevPesoFecha = '';
+if ($sp2 = $conexion->prepare(
+    "SELECT H.PESO, H.TALLA, C.FECHA_CITA
+     FROM AG_HISTORIAL H
+     INNER JOIN AG_CITA C ON C.IDCITA = H.IDCITA
+     WHERE C.IDPACIENTE = ? AND H.IDCITA <> ? AND H.PESO IS NOT NULL AND H.PESO > 0
+     ORDER BY C.FECHA_CITA DESC, C.HORA_INICIO DESC, H.IDHISTORIAL DESC
+     LIMIT 1")) {
+    $sp2->bind_param('ii', $idPacienteA, $idCitaInt); $sp2->execute();
+    $rp2 = $sp2->get_result()->fetch_assoc(); $sp2->close();
+    if ($rp2) { $prevPeso = (float)$rp2['PESO']; $prevTalla = (float)$rp2['TALLA']; $prevPesoFecha = (string)$rp2['FECHA_CITA']; }
+}
+
 // ── Diagnósticos ICD-10: catálogo + los ya asignados al paciente ──────────
 $catIcd10 = [];
 $rc = $conexion->query("SELECT ID_ENFE_DIAG_COD AS id, CODIGO AS codigo, DESCRIPCION AS descripcion FROM ENFE_DIAG_COD ORDER BY CODIGO");
@@ -288,6 +302,14 @@ if ($dobRaw && $dobRaw !== '0000-00-00') {
     $ts = strtotime($dobRaw);
     if ($ts) { $dobTxt = date('m/d/Y', $ts); $edadTxt = (string)(new DateTime($dobRaw))->diff(new DateTime('today'))->y; }
 }
+// Texto de peso/talla anteriores (peso en kg, talla guardada en cm → m)
+$prevPesoTxt = ($prevPeso && $prevPeso > 0) ? number_format($prevPeso, 1) . ' kg' : '';
+$prevTallaTxt = '';
+if ($prevTalla && $prevTalla > 0) {
+    $prevTallaM = $prevTalla > 3 ? $prevTalla / 100 : $prevTalla;
+    $prevTallaTxt = number_format($prevTallaM, 2) . ' m';
+}
+$prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '') . $prevTallaTxt);
 ?>
 <div class="app-page-title">
     <div class="page-title-wrapper">
@@ -305,6 +327,9 @@ if ($dobRaw && $dobRaw !== '0000-00-00') {
                     <span class="me-3" title="<?php te('pf.id'); ?>"><i class="bi bi-card-text me-1"></i><?php echo h($d['CEDULA'] ?: '—'); ?></span>
                     <span class="me-3" title="<?php te('pf.dob'); ?>"><i class="bi bi-calendar-heart me-1"></i><?php echo $dobTxt ?: '—'; ?><?php echo $edadTxt !== '' ? ' ('.$edadTxt.' '.t('att.years').')' : ''; ?></span>
                     <span class="me-3" title="<?php te('pf.sex'); ?>"><i class="bi bi-gender-ambiguous me-1"></i><?php echo h($d['SEX'] ?: '—'); ?></span>
+                    <?php if ($prevMedidas !== ''): ?>
+                    <span class="me-3" title="<?php te('att.prevMeasures'); ?>"><i class="bi bi-clipboard2-pulse me-1"></i><?php echo h($prevMedidas); ?><?php echo $prevPesoFecha ? ' <span style="opacity:.75;">('.date('m/d/Y', strtotime($prevPesoFecha)).')</span>' : ''; ?></span>
+                    <?php endif; ?>
                     <span class="me-3" title="<?php te('pf.phone'); ?>"><i class="bi bi-telephone me-1"></i><?php echo h($d['TELEFONO'] ?: '—'); ?></span>
                     <span class="me-3" title="<?php te('pf.email'); ?>"><i class="bi bi-envelope me-1"></i><?php echo h($d['EMAIL'] ?: '—'); ?></span>
                     <?php if (!empty($d['ADDRESS'])): ?>
