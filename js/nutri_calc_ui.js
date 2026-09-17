@@ -10,7 +10,7 @@
 (function(global){
 
     var CFG = { lang: 'en' };
-    var STATE = { mode: 'adult', sex: 'M', age: 0, weightKg: 0, heightCm: 0, activityKey: 'sedentary', conditionId: 'baseline', subgroupId: null };
+    var STATE = { mode: 'adult', sex: 'M', age: 0, weightKg: 0, heightCm: 0, activityKey: 'sedentary', conditionId: 'baseline', subgroupId: null, hrRest: 0 };
 
     function L(en, es){ return (CFG.lang === 'es') ? es : en; }
 
@@ -198,11 +198,69 @@
         }
     }
 
+    // ── Frecuencia cardíaca (Tanaka + Karvonen) + zonas ──────────────────
+    function _renderHr(){
+        var hrmax = NutriCalc.hrMax(STATE.age);
+        var rest  = STATE.hrRest || 0;
+        $('#ncHrMax').html((hrmax > 0 ? hrmax : '—') + '<small>bpm</small>');
+        $('#ncHrMethod').html(hrmax > 0
+            ? (rest > 0 ? L('Zones by Karvonen (using resting HR).', 'Zonas por Karvonen (usando FC en reposo).')
+                        : L('Zones by % of HRmax. Add resting HR for Karvonen.', 'Zonas por % de FCmáx. Añade la FC en reposo para usar Karvonen.'))
+            : L('Enter the age to compute heart rate.', 'Ingresa la edad para calcular la frecuencia cardíaca.'));
+        var rows = '';
+        if (hrmax > 0) {
+            NutriCalc.HR_ZONES.forEach(function(z){
+                var b = NutriCalc.hrZoneBpm(hrmax, rest, z.lo, z.hi);
+                rows += '<tr>'
+                     + '<td><b>' + L(z.en, z.es) + '</b></td>'
+                     + '<td class="text-nowrap">' + Math.round(z.lo*100) + '–' + Math.round(z.hi*100) + '% </td>'
+                     + '<td class="text-nowrap"><b>' + b.lo + '–' + b.hi + ' bpm</b></td>'
+                     + '<td class="text-muted small">' + L(z.focus_en, z.focus_es) + '</td>'
+                     + '</tr>';
+            });
+        } else {
+            rows = '<tr><td colspan="4" class="text-muted small">—</td></tr>';
+        }
+        $('#ncHrZones').html(rows);
+    }
+
+    // ── Aumento muscular / hipertrofia (adulto): superávit + macros ──────
+    function _hyperData(){
+        var bmr = NutriCalc.bmr(STATE.sex, STATE.weightKg, STATE.heightCm, STATE.age);
+        var factor = (NutriCalc.ACTIVITY[STATE.activityKey] || NutriCalc.ACTIVITY.sedentary).factor;
+        var tdee = NutriCalc.tee(bmr, factor);
+        var w = STATE.weightKg;
+        return { bmr: bmr, factor: factor, tdee: tdee, w: w };
+    }
+    function _renderHyper(){
+        var d = _hyperData();
+        if (!d.tdee || !d.w) { $('#ncHyperBody').html('<div class="text-muted small">' + L('Enter weight, height and age.', 'Ingresa peso, talla y edad.') + '</div>'); return; }
+        var lean = { lo: Math.round(d.tdee + 250), hi: Math.round(d.tdee + 500) };
+        var uw   = { lo: Math.round(d.tdee + 500), hi: Math.round(d.tdee + 750) };
+        var protG = { lo: Math.round(1.6 * d.w), hi: Math.round(2.2 * d.w) };
+        var fatKcalLo = 0.20 * d.tdee, fatKcalHi = 0.35 * d.tdee;
+        var fatG = { lo: Math.round(fatKcalLo / 9), hi: Math.round(fatKcalHi / 9) };
+        var carbG = { lo: Math.round(3 * d.w), hi: Math.round(7 * d.w) };
+        var html = ''
+          + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+          + '<tr><td style="padding:3px 6px;"><b>TDEE (' + L('maintenance','mantenimiento') + '):</b></td><td style="padding:3px 6px;"><b>' + _fmt(d.tdee) + ' kcal/' + L('day','día') + '</b> <span class="text-muted">(BMR ' + _fmt(d.bmr) + ' × ' + d.factor + ')</span></td></tr>'
+          + '<tr><td style="padding:3px 6px;">' + L('Lean surplus','Superávit controlado') + ':</td><td style="padding:3px 6px;"><b>' + lean.lo + '–' + lean.hi + ' kcal</b> <span class="text-muted">(+250…+500)</span></td></tr>'
+          + '<tr><td style="padding:3px 6px;">' + L('Underweight surplus','Bajo peso') + ':</td><td style="padding:3px 6px;"><b>' + uw.lo + '–' + uw.hi + ' kcal</b> <span class="text-muted">(+500…+750)</span></td></tr>'
+          + '<tr><td style="padding:3px 6px;">' + L('Recomposition','Recomposición') + ':</td><td style="padding:3px 6px;"><b>' + _fmt(d.tdee - 200) + '–' + _fmt(d.tdee) + ' kcal</b> <span class="text-muted">(' + L('high protein','alta proteína') + ')</span></td></tr>'
+          + '<tr><td colspan="2" style="padding:4px 6px;border-top:1px solid #eee;"></td></tr>'
+          + '<tr><td style="padding:3px 6px;">' + L('Protein','Proteínas') + ':</td><td style="padding:3px 6px;"><b>' + protG.lo + '–' + protG.hi + ' g/' + L('day','día') + '</b> <span class="text-muted">(1.6–2.2 g/kg)</span></td></tr>'
+          + '<tr><td style="padding:3px 6px;">' + L('Fat','Grasas') + ':</td><td style="padding:3px 6px;"><b>' + fatG.lo + '–' + fatG.hi + ' g/' + L('day','día') + '</b> <span class="text-muted">(20–35% ' + L('of energy','de la energía') + ')</span></td></tr>'
+          + '<tr><td style="padding:3px 6px;">' + L('Carbs','Carbohidratos') + ':</td><td style="padding:3px 6px;"><b>' + carbG.lo + '–' + carbG.hi + ' g/' + L('day','día') + '</b> <span class="text-muted">(3–7 g/kg)</span></td></tr>'
+          + '</table>';
+        $('#ncHyperBody').html(html);
+    }
+
     function _applyMode(){
         var isPed = (STATE.mode === 'ped');
         $('#ncAdultResults').toggle(!isPed);
         $('#ncPedResults').toggle(isPed);
         $('#ncAdultInputs').toggle(!isPed);
+        $('#ncHyperCol').toggle(!isPed);   // hipertrofia: solo adultos
         if (isPed) { $('#ncSubgroupWrap').hide(); }
         $('#ncAgeHint').toggleClass('d-none', !isPed);
         _buildActivity();
@@ -229,7 +287,8 @@
 
     function _render(){
         if (STATE.mode === 'ped') { _renderPed(); }
-        else { _renderBase(); _renderCondition(); }
+        else { _renderBase(); _renderCondition(); _renderHyper(); }
+        _renderHr();   // frecuencia cardíaca: ambos modos
     }
 
     function _buildDropdowns(){
@@ -265,6 +324,7 @@
         STATE.activityKey= $('#ncActivity').val() || 'sedentary';
         STATE.conditionId= $('#ncCondition').val() || 'baseline';
         STATE.subgroupId = $('#ncSubgroup').val() || STATE.subgroupId;
+        STATE.hrRest     = parseFloat($('#ncHrRest').val()) || 0;
     }
 
     function _wire(){
@@ -274,7 +334,7 @@
         });
         // Cambiar sexo re-arma los factores PA pediátricos
         $('#ncSex').on('change', function(){ STATE.sex = $(this).val(); if (STATE.mode === 'ped') _buildActivity(); _readInputs(); _render(); });
-        $('#ncAge, #ncWeight, #ncHeight, #ncActivity').on('input change', function(){ _readInputs(); _render(); });
+        $('#ncAge, #ncWeight, #ncHeight, #ncActivity, #ncHrRest').on('input change', function(){ _readInputs(); _render(); });
         $('#ncCondition').on('change', function(){ STATE.conditionId = $(this).val(); STATE.subgroupId = null; _buildSubgroups(); _readInputs(); _renderCondition(); });
         $('#ncSubgroup').on('change', function(){ STATE.subgroupId = $(this).val(); _renderCondition(); });
     }
@@ -403,5 +463,61 @@
         _render();
     }
 
-    global.NutriCalcUI = { mount: mount, prefill: prefill, getReportHtml: getReportHtml, insertInReport: insertInReport };
+    function _hrReportHtml(){
+        var hrmax = NutriCalc.hrMax(STATE.age);
+        var rest  = STATE.hrRest || 0;
+        if (!hrmax) return '';
+        var rows = '';
+        NutriCalc.HR_ZONES.forEach(function(z){
+            var b = NutriCalc.hrZoneBpm(hrmax, rest, z.lo, z.hi);
+            rows += '<tr>'
+                 + '<td style="padding:3px 8px;border:1px solid #eee;"><b>' + L(z.en, z.es) + '</b></td>'
+                 + '<td style="padding:3px 8px;border:1px solid #eee;">' + Math.round(z.lo*100) + '–' + Math.round(z.hi*100) + '%</td>'
+                 + '<td style="padding:3px 8px;border:1px solid #eee;"><b>' + b.lo + '–' + b.hi + ' bpm</b></td>'
+                 + '<td style="padding:3px 8px;border:1px solid #eee;color:#5a6172;">' + L(z.focus_en, z.focus_es) + '</td>'
+                 + '</tr>';
+        });
+        return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#2b2b2b;margin:14px 0;padding:12px;border:1px solid #e5e7eb;border-radius:6px;">'
+            + '<h5 style="color:#5a2d82;margin:0 0 8px 0;">' + L('Heart Rate & Training Zones', 'Frecuencia Cardíaca y Zonas de Entrenamiento') + '</h5>'
+            + '<div style="font-size:12px;color:#5a6172;margin-bottom:8px;"><b>HRmax (Tanaka):</b> ' + hrmax + ' bpm'
+            + (rest > 0 ? ' &nbsp;·&nbsp; <b>' + L('Resting HR','FC reposo') + ':</b> ' + rest + ' bpm &nbsp;·&nbsp; ' + L('Karvonen method','método Karvonen') : ' &nbsp;·&nbsp; ' + L('% of HRmax','% de FCmáx')) + '</div>'
+            + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+            + '<tr style="background:#f5f5f7;"><th style="padding:3px 8px;border:1px solid #eee;text-align:left;">' + L('Zone','Zona') + '</th><th style="padding:3px 8px;border:1px solid #eee;">%HRmax</th><th style="padding:3px 8px;border:1px solid #eee;">bpm</th><th style="padding:3px 8px;border:1px solid #eee;text-align:left;">' + L('Focus','Enfoque') + '</th></tr>'
+            + rows
+            + '</table></div>';
+    }
+    function insertHr(){
+        var html = _hrReportHtml();
+        if (!html) { alert(L('Enter the age first.', 'Ingresa primero la edad.')); return; }
+        if (typeof window._nutriInsertHandler === 'function') window._nutriInsertHandler(html);
+        else { var w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); } }
+    }
+    function _hyperReportHtml(){
+        var d = _hyperData();
+        if (!d.tdee || !d.w) return '';
+        var lean = { lo: Math.round(d.tdee + 250), hi: Math.round(d.tdee + 500) };
+        var uw   = { lo: Math.round(d.tdee + 500), hi: Math.round(d.tdee + 750) };
+        var protG = { lo: Math.round(1.6 * d.w), hi: Math.round(2.2 * d.w) };
+        var fatG = { lo: Math.round(0.20 * d.tdee / 9), hi: Math.round(0.35 * d.tdee / 9) };
+        var carbG = { lo: Math.round(3 * d.w), hi: Math.round(7 * d.w) };
+        var row = function(k, v){ return '<tr><td style="padding:3px 8px;border:1px solid #eee;">' + k + '</td><td style="padding:3px 8px;border:1px solid #eee;"><b>' + v + '</b></td></tr>'; };
+        return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#2b2b2b;margin:14px 0;padding:12px;border:1px solid #e5e7eb;border-radius:6px;">'
+            + '<h5 style="color:#5a2d82;margin:0 0 8px 0;">' + L('Muscle Gain (Hypertrophy)', 'Aumento Muscular (Hipertrofia)') + '</h5>'
+            + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+            + row('TDEE (' + L('maintenance','mantenimiento') + ')', _fmt(d.tdee) + ' kcal/' + L('day','día'))
+            + row(L('Lean surplus','Superávit controlado'), lean.lo + '–' + lean.hi + ' kcal (+250…+500)')
+            + row(L('Underweight surplus','Bajo peso'), uw.lo + '–' + uw.hi + ' kcal (+500…+750)')
+            + row(L('Protein','Proteínas'), protG.lo + '–' + protG.hi + ' g/' + L('day','día') + ' (1.6–2.2 g/kg)')
+            + row(L('Fat','Grasas'), fatG.lo + '–' + fatG.hi + ' g/' + L('day','día') + ' (20–35%)')
+            + row(L('Carbs','Carbohidratos'), carbG.lo + '–' + carbG.hi + ' g/' + L('day','día') + ' (3–7 g/kg)')
+            + '</table></div>';
+    }
+    function insertHyper(){
+        var html = _hyperReportHtml();
+        if (!html) { alert(L('Enter weight, height and age first.', 'Ingresa peso, talla y edad primero.')); return; }
+        if (typeof window._nutriInsertHandler === 'function') window._nutriInsertHandler(html);
+        else { var w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); } }
+    }
+
+    global.NutriCalcUI = { mount: mount, prefill: prefill, getReportHtml: getReportHtml, insertInReport: insertInReport, insertHr: insertHr, insertHyper: insertHyper };
 })(typeof window !== 'undefined' ? window : this);
