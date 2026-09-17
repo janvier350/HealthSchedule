@@ -140,4 +140,40 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Frecuencia cardíaca / zonas de entrenamiento (adultos y niños) ── -->
+    <div class="col-12">
+      <div class="nc-card">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div class="nc-section mb-0"><i class="bi bi-heart-pulse me-1"></i><?php te('nc.hrTitle'); ?></div>
+          <button type="button" class="btn btn-sm btn-primary" onclick="NutriCalcUI.insertHr()"><i class="bi bi-plus-square me-1"></i><?php te('nc.insertBtn'); ?></button>
+        </div>
+        <div class="row g-2 align-items-end mb-2">
+          <div class="col-6 col-md-3">
+            <label class="form-label small mb-1"><?php te('nc.hrRest'); ?></label>
+            <input type="number" id="ncHrRest" class="form-control form-control-sm" min="30" max="120" step="1" placeholder="—">
+          </div>
+          <div class="col-6 col-md-3 text-center">
+            <div class="nc-metric" id="ncHrMax">—<small>bpm</small></div>
+            <div class="small text-muted"><?php te('nc.hrMax'); ?></div>
+          </div>
+          <div class="col-12 col-md-6 small text-muted" id="ncHrMethod"></div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-1"><tbody id="ncHrZones"></tbody></table>
+        </div>
+        <div class="nc-cond-note"><?php te('nc.hrNote'); ?></div>
+      </div>
+    </div>
+
+    <!-- ── Aumento muscular / hipertrofia (solo adultos) ── -->
+    <div class="col-12" id="ncHyperCol">
+      <div class="nc-card">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div class="nc-section mb-0"><i class="bi bi-clipboard2-heart me-1"></i><?php te('nc.hyperTitle'); ?></div>
+          <button type="button" class="btn btn-sm btn-primary" onclick="NutriCalcUI.insertHyper()"><i class="bi bi-plus-square me-1"></i><?php te('nc.insertBtn'); ?></button>
+        </div>
+        <div id="ncHyperBody"></div>
+      </div>
+    </div>
 </div>

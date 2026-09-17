@@ -414,6 +414,38 @@
         return Math.round(ageYears) + 5;
     }
 
+    // ── Frecuencia cardíaca (Tanaka + Karvonen) ──────────────────────────
+    // HRmax (Tanaka): válido para adultos y niños.
+    function hrMax(ageYears) {
+        if (!ageYears || ageYears <= 0) return 0;
+        return Math.round(208 - 0.7 * ageYears);
+    }
+    // Karvonen: FC objetivo = (HRmax − HRrep) × %intensidad + HRrep
+    function karvonen(hrmax, hrRest, pct) {
+        if (!hrmax) return 0;
+        hrRest = hrRest || 0;
+        return Math.round((hrmax - hrRest) * pct + hrRest);
+    }
+    var HR_ZONES = [
+        { id: 'z1', en: 'Zone 1 · Very light',  es: 'Zona 1 · Muy ligera',    lo: 0.50, hi: 0.60, focus_en: 'Warm-up / recovery',      focus_es: 'Calentamiento / recuperación' },
+        { id: 'z2', en: 'Zone 2 · Aerobic base',es: 'Zona 2 · Base aeróbica', lo: 0.60, hi: 0.70, focus_en: 'Fat oxidation',           focus_es: 'Oxidación de grasa' },
+        { id: 'z3', en: 'Zone 3 · Aerobic',     es: 'Zona 3 · Aeróbica',      lo: 0.70, hi: 0.80, focus_en: 'Cardiovascular endurance', focus_es: 'Resistencia cardiovascular' },
+        { id: 'z4', en: 'Zone 4 · Anaerobic',   es: 'Zona 4 · Anaeróbica',    lo: 0.80, hi: 0.90, focus_en: 'Lactate threshold',       focus_es: 'Umbral de lactato' }
+    ];
+    // Rango de pulsaciones de una zona. Con HRrep usa Karvonen; sin él, %HRmax.
+    function hrZoneBpm(hrmax, hrRest, lo, hi) {
+        if (hrRest && hrRest > 0) {
+            return { lo: karvonen(hrmax, hrRest, lo), hi: karvonen(hrmax, hrRest, hi) };
+        }
+        return { lo: Math.round(hrmax * lo), hi: Math.round(hrmax * hi) };
+    }
+
+    // ── Katch-McArdle (cuando se conoce la masa magra) ───────────────────
+    function katchMcArdle(lbmKg) {
+        if (!lbmKg || lbmKg <= 0) return 0;
+        return Math.round(370 + 21.6 * lbmKg);
+    }
+
     global.NutriCalc = {
         idealWeightKg: idealWeightKg,
         adjustedBodyWeight: adjustedBodyWeight,
@@ -429,6 +461,12 @@
         eerPediatric: eerPediatric,
         proteinPerKgPediatric: proteinPerKgPediatric,
         kcalPerKgQuickPediatric: kcalPerKgQuickPediatric,
-        fiberPediatric: fiberPediatric
+        fiberPediatric: fiberPediatric,
+        // Frecuencia cardíaca / masa magra
+        hrMax: hrMax,
+        karvonen: karvonen,
+        HR_ZONES: HR_ZONES,
+        hrZoneBpm: hrZoneBpm,
+        katchMcArdle: katchMcArdle
     };
 })(typeof window !== 'undefined' ? window : this);
