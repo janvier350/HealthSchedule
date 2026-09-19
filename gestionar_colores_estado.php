@@ -32,7 +32,8 @@ $sistemaListo = $tablaOk && $colUsuarioOk;
 $estadosDef = [
     'pendiente'=>'Pendiente / Reagendada','confirmada'=>'Confirmada','atendida'=>'Atendida',
     'cancelada'=>'Cancelada','cancelacion_tardia'=>'Cancelación tardía',
-    'cancelado_profesional'=>'Cancelado por profesional','no_asistio'=>'No asistió','default'=>'Otro / sin estado'
+    'cancelado_profesional'=>'Cancelado por profesional','no_asistio'=>'No asistió',
+    'no_contesto'=>'No contestó','default'=>'Otro / sin estado'
 ];
 
 $msg = null;

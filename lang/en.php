@@ -171,6 +171,7 @@ return array(
     'estado.Cancelación Tardía'        => 'Late Cancellation',
     'estado.Cancelado por Profesional' => 'Cancelled by Provider',
     'estado.No Asistió'        => 'No Show',
+    'estado.No contestó'       => 'No answer',
     'common.bmi'               => 'BMI',
 
     // ── Calendario (SCH_Calendar) ──────────────────────────────────────
