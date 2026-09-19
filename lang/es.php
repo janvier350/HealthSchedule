@@ -932,6 +932,7 @@ return array(
     'help.patientsTitle'      => 'Cómo gestionar pacientes',
     'help.billingTitle'       => 'Cómo funciona la facturación',
     'help.calcTitle'          => 'Cómo usar la calculadora',
+    'help.adminTitle'         => 'Administración (Sistema)',
     'help.centerTitle'        => 'Ayuda',
     'help.centerSub'          => 'Guías rápidas para usar la app.',
     'menu.help'               => 'Guías de uso',
