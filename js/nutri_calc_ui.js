@@ -285,10 +285,22 @@
         $act.val(STATE.activityKey);
     }
 
+    // ── Ajuste manual (kcal/kg, proteína g/kg, líquidos mL/kg) ───────────
+    function _renderManual(){
+        var w = STATE.weightKg || 0;
+        var kcal = parseFloat($('#ncManKcal').val()) || 0;
+        var prot = parseFloat($('#ncManProt').val()) || 0;
+        var flu  = parseFloat($('#ncManFluid').val()) || 0;
+        $('#ncManKcalOut').html((kcal > 0 && w > 0) ? '= <b>' + _fmt(kcal * w) + ' kcal/' + L('day','día') + '</b>' : '—');
+        $('#ncManProtOut').html((prot > 0 && w > 0) ? '= <b>' + _fmt(prot * w) + ' g/' + L('day','día') + '</b>' : '—');
+        $('#ncManFluidOut').html((flu > 0 && w > 0) ? '= <b>' + _fmt(flu * w) + ' mL/' + L('day','día') + '</b>' : '—');
+    }
+
     function _render(){
         if (STATE.mode === 'ped') { _renderPed(); }
         else { _renderBase(); _renderCondition(); _renderHyper(); }
-        _renderHr();   // frecuencia cardíaca: ambos modos
+        _renderHr();       // frecuencia cardíaca: ambos modos
+        _renderManual();   // ajuste manual: ambos modos
     }
 
     function _buildDropdowns(){
@@ -335,6 +347,7 @@
         // Cambiar sexo re-arma los factores PA pediátricos
         $('#ncSex').on('change', function(){ STATE.sex = $(this).val(); if (STATE.mode === 'ped') _buildActivity(); _readInputs(); _render(); });
         $('#ncAge, #ncWeight, #ncHeight, #ncActivity, #ncHrRest').on('input change', function(){ _readInputs(); _render(); });
+        $('#ncManKcal, #ncManProt, #ncManFluid').on('input change', function(){ _renderManual(); });
         $('#ncCondition').on('change', function(){ STATE.conditionId = $(this).val(); STATE.subgroupId = null; _buildSubgroups(); _readInputs(); _renderCondition(); });
         $('#ncSubgroup').on('change', function(){ STATE.subgroupId = $(this).val(); _renderCondition(); });
     }
@@ -519,5 +532,27 @@
         else { var w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); } }
     }
 
-    global.NutriCalcUI = { mount: mount, prefill: prefill, getReportHtml: getReportHtml, insertInReport: insertInReport, insertHr: insertHr, insertHyper: insertHyper };
+    function _manualReportHtml(){
+        var w = STATE.weightKg || 0;
+        var kcal = parseFloat($('#ncManKcal').val()) || 0;
+        var prot = parseFloat($('#ncManProt').val()) || 0;
+        var flu  = parseFloat($('#ncManFluid').val()) || 0;
+        if (!w || (!kcal && !prot && !flu)) return '';
+        var row = function(k, v){ return '<tr><td style="padding:3px 8px;border:1px solid #eee;">' + k + '</td><td style="padding:3px 8px;border:1px solid #eee;"><b>' + v + '</b></td></tr>'; };
+        var rows = '';
+        if (kcal > 0) rows += row(L('Calories','Calorías'), kcal + ' kcal/kg × ' + _fmt(w,1) + ' kg = ' + _fmt(kcal * w) + ' kcal/' + L('day','día'));
+        if (prot > 0) rows += row(L('Protein','Proteínas'), prot + ' g/kg × ' + _fmt(w,1) + ' kg = ' + _fmt(prot * w) + ' g/' + L('day','día'));
+        if (flu  > 0) rows += row(L('Fluid','Líquidos'), flu + ' mL/kg × ' + _fmt(w,1) + ' kg = ' + _fmt(flu * w) + ' mL/' + L('day','día'));
+        return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#2b2b2b;margin:14px 0;padding:12px;border:1px solid #e5e7eb;border-radius:6px;">'
+            + '<h5 style="color:#5a2d82;margin:0 0 8px 0;">' + L('Nutrition Requirements (manual)', 'Requerimientos Nutricionales (manual)') + '</h5>'
+            + '<table style="width:100%;border-collapse:collapse;font-size:12px;">' + rows + '</table></div>';
+    }
+    function insertManual(){
+        var html = _manualReportHtml();
+        if (!html) { alert(L('Enter weight and at least one value.', 'Ingresa el peso y al menos un valor.')); return; }
+        if (typeof window._nutriInsertHandler === 'function') window._nutriInsertHandler(html);
+        else { var w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); } }
+    }
+
+    global.NutriCalcUI = { mount: mount, prefill: prefill, getReportHtml: getReportHtml, insertInReport: insertInReport, insertHr: insertHr, insertHyper: insertHyper, insertManual: insertManual };
 })(typeof window !== 'undefined' ? window : this);
