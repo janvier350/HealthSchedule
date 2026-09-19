@@ -929,6 +929,8 @@ return array(
     'help.howItWorks'         => 'How it works',
     'help.scheduleTitle'      => 'How to schedule appointments',
     'help.attendTitle'        => 'How to attend a visit',
+    'help.patientsTitle'      => 'How to manage patients',
+    'help.billingTitle'       => 'How billing works',
     // Extend appointment
     'att.extendBtn'           => 'Extend +30 min',
     'att.extendTip'           => 'Add 30 minutes to the end of the appointment.',

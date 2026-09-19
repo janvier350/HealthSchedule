@@ -116,11 +116,52 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                             </div>
                         </div>
                         <div class="page-title-actions">
+                            <button type="button" class="btn btn-outline-info btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modalAyudaPacientes">
+                                <i class="bi bi-question-circle me-1"></i><?php te('help.howItWorks'); ?>
+                            </button>
                             <a href="registrar_paciente_seguro.php" class="btn btn-primary btn-sm">
                                 <i class="bi bi-person-plus-fill me-1"></i> <?php te('menu.registerPatientInsurance'); ?>
                             </a>
                         </div>
                     </div>
+                </div>
+
+                <!-- ── MODAL: ¿Cómo gestionar pacientes? ──────────────────── -->
+                <div class="modal fade" id="modalAyudaPacientes" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                      <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="bi bi-people me-2"></i><?php te('help.patientsTitle'); ?></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <?php if (current_lang() === 'en'): ?>
+                          <ol style="line-height:1.9;">
+                            <li><b>New patient →</b> click <b>Register patient</b>. Fill name, ID, date of birth, sex, phone, email and the <b>address</b> (street, or city + state + ZIP).</li>
+                            <li><b>Extra phones / emails →</b> you can add more than one contact per patient.</li>
+                            <li><b>ICD-10 diagnosis + address are required to schedule.</b> Add at least one ICD-10 and a complete address here, or the calendar won't let you book the appointment.</li>
+                            <li><b>Insurance →</b> add the patient's insurer(s), policy number and priority; you can upload the card image.</li>
+                            <li><b>Edit / find →</b> use the search box; click a patient to edit their data, see their history, or open their record.</li>
+                            <li><b>Duplicates →</b> if the same patient exists twice, an admin can merge them (menu → Merge duplicates) without losing history.</li>
+                          </ol>
+                          <div class="alert alert-warning py-2 mb-0">Deleting a patient asks for a <b>reason</b> and keeps them in <b>Deleted patients</b> (nothing is lost).</div>
+                        <?php else: ?>
+                          <ol style="line-height:1.9;">
+                            <li><b>Paciente nuevo →</b> pulsa <b>Registrar paciente</b>. Llena nombre, ID, fecha de nacimiento, sexo, teléfono, correo y la <b>dirección</b> (calle, o ciudad + estado + ZIP).</li>
+                            <li><b>Teléfonos / correos extra →</b> puedes agregar más de un contacto por paciente.</li>
+                            <li><b>El diagnóstico ICD-10 y la dirección son obligatorios para agendar.</b> Agrega aquí al menos un ICD-10 y la dirección completa, o el calendario no dejará crear la cita.</li>
+                            <li><b>Seguro →</b> agrega la(s) aseguradora(s) del paciente, número de póliza y prioridad; puedes subir la imagen de la tarjeta.</li>
+                            <li><b>Editar / buscar →</b> usa el buscador; haz clic en un paciente para editar sus datos, ver su historial o abrir su ficha.</li>
+                            <li><b>Duplicados →</b> si el mismo paciente está dos veces, un administrador puede fusionarlos (menú → Fusionar duplicados) sin perder el historial.</li>
+                          </ol>
+                          <div class="alert alert-warning py-2 mb-0">Al eliminar un paciente se pide un <b>motivo</b> y queda en <b>Pacientes eliminados</b> (no se pierde nada).</div>
+                        <?php endif; ?>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Buscador -->
