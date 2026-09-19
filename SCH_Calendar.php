@@ -67,6 +67,7 @@ $colDefault = [
     'cancelacion_tardia'    => '#ffc107',
     'cancelado_profesional' => '#ff8a80',
     'no_asistio'            => '#dc3545',
+    'no_contesto'           => '#6c757d',
     'default'               => '#007bff',
 ];
 $colEstado = $colDefault;
@@ -119,6 +120,7 @@ function claveEstado($e) {
         case 'Cancelación Tardía':        return 'cancelacion_tardia';
         case 'Cancelado por Profesional': return 'cancelado_profesional';
         case 'No Asistió':                return 'no_asistio';
+        case 'No contestó':               return 'no_contesto';
         default:                          return 'default';
     }
 }
@@ -498,6 +500,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                                 <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> <?php echo estado_label('Cancelación Tardía'); ?></span>
                                 <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> <?php echo estado_label('Cancelado por Profesional'); ?></span>
                                 <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> <?php echo estado_label('No Asistió'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6c757d"></span> <?php echo estado_label('No contestó'); ?></span>
                             </div>
                             <div class="leyenda-calendario">
                                 <span class="leyenda-label"><?php te('cal.legendType'); ?></span>
@@ -526,6 +529,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                                 <span class="leyenda-item"><span class="leyenda-dot" style="background:#ffc107"></span> <?php echo estado_label('Cancelación Tardía'); ?></span>
                                 <span class="leyenda-item"><span class="leyenda-dot" style="background:#ff8a80"></span> <?php echo estado_label('Cancelado por Profesional'); ?></span>
                                 <span class="leyenda-item"><span class="leyenda-dot" style="background:#dc3545"></span> <?php echo estado_label('No Asistió'); ?></span>
+                                <span class="leyenda-item"><span class="leyenda-dot" style="background:#6c757d"></span> <?php echo estado_label('No contestó'); ?></span>
                             </div>
                             <div class="leyenda-calendario">
                                 <span class="leyenda-label"><?php te('cal.legendType'); ?></span>
@@ -815,6 +819,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                             <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelación Tardía')"><?php echo estado_label('Cancelación Tardía'); ?></button></li>
                             <li><button class="dropdown-item" type="submit" onclick="setEstado('Cancelado por Profesional')"><?php echo estado_label('Cancelado por Profesional'); ?></button></li>
                             <li><button class="dropdown-item" type="submit" onclick="setEstado('No Asistió')"><?php echo estado_label('No Asistió'); ?></button></li>
+                            <li><button class="dropdown-item" type="submit" onclick="setEstado('No contestó')"><?php echo estado_label('No contestó'); ?></button></li>
                         </ul>
                     </div>
                     <button id="btnEliminar" class="btn btn-outline-danger" type="button" onclick="eliminarCita()">
@@ -979,6 +984,7 @@ const ESTADO_LABELS = {
     'Cancelación Tardía':          <?php echo json_encode(estado_label('Cancelación Tardía')); ?>,
     'Cancelado por Profesional':   <?php echo json_encode(estado_label('Cancelado por Profesional')); ?>,
     'No Asistió':                  <?php echo json_encode(estado_label('No Asistió')); ?>,
+    'No contestó':                 <?php echo json_encode(estado_label('No contestó')); ?>,
 };
 const TC = <?php echo json_encode(array(
     'lblPatient'      => t('cal.js.lblPatient'),
@@ -1061,6 +1067,7 @@ function estadoBadge(estado) {
         'Cancelación Tardía':          '#ffc107',
         'Cancelado por Profesional':   '#ff8a80',
         'No Asistió':                  '#dc3545',
+        'No contestó':                 '#6c757d',
     };
     const color = map[estado] || '#6c757d';
     const label = ESTADO_LABELS[estado] || estado;
