@@ -94,8 +94,55 @@ $hoy = new DateTime('today');
                 <div class="page-title-icon"><i class="pe-7s-cash icon-gradient bg-plum-plate"></i></div>
                 <div>Cuentas por Cobrar <div class="page-title-subheading">Facturas abiertas con saldo pendiente.</div></div>
             </div>
-            <div class="page-title-actions"><a href="crear_factura.php" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Crear factura</a></div>
+            <div class="page-title-actions">
+                <button type="button" class="btn btn-outline-info btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modalAyudaFactura"><i class="bi bi-question-circle me-1"></i><?php te('help.howItWorks'); ?></button>
+                <a href="crear_factura.php" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> <?php te('menu.createInvoice'); ?></a>
+            </div>
             </div></div>
+
+            <!-- ── MODAL: ¿Cómo funciona la facturación? ──────────────── -->
+            <div class="modal fade" id="modalAyudaFactura" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                  <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="bi bi-receipt me-2"></i><?php te('help.billingTitle'); ?></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <?php if (current_lang() === 'en'): ?>
+                      <h6 class="fw-bold text-info"><i class="bi bi-plus-circle me-1"></i>Create an invoice</h6>
+                      <ol style="line-height:1.9;">
+                        <li>Pick the <b>patient</b> and the <b>date</b>.</li>
+                        <li>Add <b>line items</b> (service / bill item), quantity and price — the <b>total updates automatically</b>.</li>
+                        <li><b>Save</b> the invoice. It then appears in <b>Accounts Receivable</b>.</li>
+                      </ol>
+                      <h6 class="fw-bold text-info"><i class="bi bi-cash-coin me-1"></i>Accounts Receivable &amp; payments</h6>
+                      <ul style="line-height:1.9;">
+                        <li>This screen lists each invoice's status (paid / pending / due date).</li>
+                        <li>Open an invoice to <b>register a payment</b> (full or partial); the balance updates. You can also <b>print</b> it.</li>
+                      </ul>
+                      <div class="alert alert-info py-2 mb-0"><b>Note:</b> the catalog of services/prices is in <b>Bill Items</b>. Insurers are managed under <b>Insurance</b>.</div>
+                    <?php else: ?>
+                      <h6 class="fw-bold text-info"><i class="bi bi-plus-circle me-1"></i>Crear una factura</h6>
+                      <ol style="line-height:1.9;">
+                        <li>Elige el <b>paciente</b> y la <b>fecha</b>.</li>
+                        <li>Agrega los <b>renglones</b> (servicio / bill item), cantidad y precio — el <b>total se calcula solo</b>.</li>
+                        <li><b>Guarda</b> la factura. Luego aparece en <b>Cuentas por Cobrar</b>.</li>
+                      </ol>
+                      <h6 class="fw-bold text-info"><i class="bi bi-cash-coin me-1"></i>Cuentas por Cobrar y pagos</h6>
+                      <ul style="line-height:1.9;">
+                        <li>Esta pantalla lista el estado de cada factura (pagada / pendiente / vencimiento).</li>
+                        <li>Abre una factura para <b>registrar un pago</b> (total o parcial); el saldo se actualiza. También puedes <b>imprimirla</b>.</li>
+                      </ul>
+                      <div class="alert alert-info py-2 mb-0"><b>Nota:</b> el catálogo de servicios/precios está en <b>Bill Items</b>. Las aseguradoras se gestionan en <b>Seguros</b>.</div>
+                    <?php endif; ?>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <?php if (!$tablaOk): ?>
                 <div class="alert alert-warning">Falta el esquema de facturación.
