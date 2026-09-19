@@ -141,6 +141,34 @@
       </div>
     </div>
 
+    <!-- ── Ajuste manual: kcal/kg, proteína g/kg, líquidos mL/kg ── -->
+    <div class="col-12">
+      <div class="nc-card">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div class="nc-section mb-0"><i class="bi bi-sliders me-1"></i><?php te('nc.manualTitle'); ?></div>
+          <button type="button" class="btn btn-sm btn-primary" onclick="NutriCalcUI.insertManual()"><i class="bi bi-plus-square me-1"></i><?php te('nc.insertBtn'); ?></button>
+        </div>
+        <div class="row g-2 align-items-start">
+          <div class="col-6 col-md-3">
+            <label class="form-label small mb-1"><?php te('nc.manualKcal'); ?></label>
+            <input type="number" id="ncManKcal" class="form-control form-control-sm" min="1" max="60" step="0.5" placeholder="kcal/kg">
+            <div class="small text-muted mt-1" id="ncManKcalOut">—</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small mb-1"><?php te('nc.manualProt'); ?></label>
+            <input type="number" id="ncManProt" class="form-control form-control-sm" min="0.1" max="4" step="0.1" placeholder="g/kg">
+            <div class="small text-muted mt-1" id="ncManProtOut">—</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small mb-1"><?php te('nc.manualFluid'); ?></label>
+            <input type="number" id="ncManFluid" class="form-control form-control-sm" min="1" max="60" step="1" placeholder="mL/kg">
+            <div class="small text-muted mt-1" id="ncManFluidOut">—</div>
+          </div>
+          <div class="col-6 col-md-3 small text-muted pt-4"><?php te('nc.manualNote'); ?></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Frecuencia cardíaca / zonas de entrenamiento (adultos y niños) ── -->
     <div class="col-12">
       <div class="nc-card">

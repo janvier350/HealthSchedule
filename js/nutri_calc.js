@@ -102,6 +102,17 @@
             }]
         },
         {
+            id: 'overweight',
+            en: 'Overweight (BMI 25–29.9)',
+            es: 'Sobrepeso (IMC 25–29.9)',
+            subgroups: [{
+                id: 'ow', en: 'Weight management', es: 'Control de peso',
+                kcal:    { min: 20, max: 25, basis: 'actual', note_en: 'gradual weight loss (~500 kcal/day deficit)', note_es: 'pérdida gradual (déficit ~500 kcal/día)' },
+                protein: [{ min: 1.2, max: 1.5, basis: 'actual' }],
+                fluid:   { min: 30, max: 35, unit: 'mL/kg', basis: 'actual' }
+            }]
+        },
+        {
             id: 'obesity_1_2',
             en: 'Obesity Class I–II (BMI 30–39.9)',
             es: 'Obesidad Clase I–II (IMC 30–39.9)',

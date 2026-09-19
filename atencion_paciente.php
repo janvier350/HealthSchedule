@@ -913,9 +913,16 @@ function ncpBuildHtml(){
 function ncpPreview(){ var p=document.getElementById('ncpPreview'); if(p) p.innerHTML = ncpBuildHtml() || '<span class="text-muted small">—</span>'; }
 function insertarNcp(){
     var html = ncpBuildHtml(); if(!html) return;
-    $('#editorInforme').summernote('pasteHTML', html);
     var el = document.getElementById('modalNcp');
     var m = el ? bootstrap.Modal.getInstance(el) : null; if(m) m.hide();
+    var $ed = $('#editorInforme');
+    try {
+        var cur = $ed.summernote('code') || '';
+        $ed.summernote('code', cur + '<p><br></p>' + html);
+        $ed.summernote('focus');
+    } catch (e) {
+        try { $ed.summernote('focus'); $ed.summernote('pasteHTML', html); } catch (e2) {}
+    }
 }
 </script>
 <script>
@@ -1434,9 +1441,19 @@ function abrirCalculadora(){
 }
 // Handler global que la calculadora invoca al pulsar "Insertar en el informe"
 window._nutriInsertHandler = function(html){
-    $('#editorInforme').summernote('pasteHTML', html);
+    // Cerrar el modal primero: mientras está abierto, el editor no tiene el
+    // cursor y summernote('pasteHTML') no inserta nada.
     var m = bootstrap.Modal.getInstance(document.getElementById('modalNutriCalc'));
     if (m) m.hide();
+    var $ed = $('#editorInforme');
+    // Inserción fiable: añade el bloque al final del informe (no depende del cursor).
+    try {
+        var cur = $ed.summernote('code') || '';
+        $ed.summernote('code', cur + '<p><br></p>' + html);
+        $ed.summernote('focus');
+    } catch (e) {
+        try { $ed.summernote('focus'); $ed.summernote('pasteHTML', html); } catch (e2) {}
+    }
 };
 
 // ── IMPRIMIR ──────────────────────────────────────────────────────────

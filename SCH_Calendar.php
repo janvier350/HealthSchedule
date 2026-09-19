@@ -662,7 +662,7 @@ while ($a = $resAgencias->fetch_assoc()) {
                             </div>
                             <div class="col-md-7" id="recurCountWrap">
                                 <div class="input-group">
-                                    <input type="number" class="form-control" name="recurCount" id="recurCount" min="1" max="52" value="4">
+                                    <input type="number" class="form-control" name="recurCount" id="recurCount" min="1" max="12" value="4">
                                     <span class="input-group-text"><?php te('cal.recur.sessions'); ?></span>
                                 </div>
                             </div>
@@ -2123,7 +2123,7 @@ function confirmarRecurrencia() {
         var msg;
         if (modo === 'count') {
             var n = parseInt((document.getElementById('recurCount') || {}).value || '1', 10);
-            n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 52));
+            n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 12));
             msg = TC.recurConfirm.replace('{n}', n).replace('{tipo}', tipo);
         } else {
             msg = TC.recurConfirmDate.replace('{tipo}', tipo);
