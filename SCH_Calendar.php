@@ -469,6 +469,9 @@ while ($a = $resAgencias->fetch_assoc()) {
                             </div>
                         </div>
                         <div class="page-title-actions">
+                            <button type="button" class="btn btn-outline-info btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modalAyudaAgenda">
+                                <i class="bi bi-question-circle me-1"></i><?php te('help.howItWorks'); ?>
+                            </button>
                             <div class="cal-patient-search position-relative">
                                 <div class="input-group">
                                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
@@ -680,6 +683,60 @@ while ($a = $resAgencias->fetch_assoc()) {
             </div>
         </div>
     </div>
+</div>
+
+<!-- ── MODAL: ¿Cómo agendar citas? (guía para doctores) ────────────── -->
+<div class="modal fade" id="modalAyudaAgenda" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="bi bi-calendar3 me-2"></i><?php te('help.scheduleTitle'); ?></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <?php if (current_lang() === 'en'): ?>
+          <h6 class="fw-bold text-info"><i class="bi bi-plus-circle me-1"></i>Schedule a new appointment</h6>
+          <ol style="line-height:1.9;">
+            <li>Click a <b>day</b> on the calendar (or the schedule button) to open the form.</li>
+            <li>Choose <b>date, patient, time, consultation type, doctor and location</b>.</li>
+            <li><b>Recurrence:</b> leave <b>"Do not repeat"</b> for a single appointment. For a series pick <b>weekly / biweekly / monthly</b> and how many (up to 12). It asks you to confirm how many will be created.</li>
+          </ol>
+          <div class="alert alert-warning py-2">To schedule, the patient must already have <b>at least one ICD-10 diagnosis</b> and a <b>complete address</b> (street, or city + state).</div>
+          <h6 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-1"></i>Move / change an appointment</h6>
+          <ul style="line-height:1.9;">
+            <li><b>Drag</b> the appointment to another day/time, or open it and press <b>Reschedule</b>. The patient gets an email with the new time.</li>
+            <li>For a <b>series</b>, choose <b>"all future visits"</b> to move the whole series to the new weekday keeping its cadence (e.g. all stay on Fridays), or <b>"only this one"</b>.</li>
+          </ul>
+          <h6 class="fw-bold text-info"><i class="bi bi-check2-square me-1"></i>Status &amp; attending</h6>
+          <ul style="line-height:1.9;">
+            <li>Open an appointment to <b>Attend</b> it (any time — even before its hour, or before the previous patient arrives), <b>Confirm</b>, <b>Cancel</b>, or set <b>Other status</b>.</li>
+            <li><b>No answer</b>: if you call and the patient doesn't pick up, mark <b>"No answer"</b> and move on — the appointment stays open so you can retry or reschedule.</li>
+          </ul>
+        <?php else: ?>
+          <h6 class="fw-bold text-info"><i class="bi bi-plus-circle me-1"></i>Agendar una cita nueva</h6>
+          <ol style="line-height:1.9;">
+            <li>Haz clic en un <b>día</b> del calendario (o en el botón de agendar) para abrir el formulario.</li>
+            <li>Elige <b>fecha, paciente, hora, tipo de consulta, doctor y location</b>.</li>
+            <li><b>Recurrencia:</b> deja <b>"No repetir"</b> para una sola cita. Para una serie elige <b>semanal / quincenal / mensual</b> y cuántas (hasta 12). Te pide confirmar cuántas se crearán.</li>
+          </ol>
+          <div class="alert alert-warning py-2">Para agendar, el paciente debe tener ya <b>al menos un diagnóstico ICD-10</b> y la <b>dirección completa</b> (calle, o ciudad + estado).</div>
+          <h6 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-1"></i>Mover / cambiar una cita</h6>
+          <ul style="line-height:1.9;">
+            <li><b>Arrastra</b> la cita a otro día/hora, o ábrela y pulsa <b>Reagendar</b>. Al paciente le llega un correo con la nueva hora.</li>
+            <li>En una <b>serie</b>, elige <b>"todas las futuras"</b> para mover toda la serie al nuevo día conservando la cadencia (ej. que todas queden los viernes), o <b>"solo esta"</b>.</li>
+          </ul>
+          <h6 class="fw-bold text-info"><i class="bi bi-check2-square me-1"></i>Estados y atención</h6>
+          <ul style="line-height:1.9;">
+            <li>Abre una cita para <b>Atender</b> (a cualquier hora — aunque sea antes de su hora o antes de que llegue el paciente anterior), <b>Confirmar</b>, <b>Cancelar</b>, o poner <b>Otro estado</b>.</li>
+            <li><b>No contestó</b>: si llamas y el paciente no responde, márcala como <b>"No contestó"</b> y sigue con otro — la cita queda abierta para reintentar o reagendar.</li>
+          </ul>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── MODAL GESTIÓN CITA ─────────────────────────────────────────── -->
