@@ -932,6 +932,7 @@ return array(
     'help.patientsTitle'      => 'How to manage patients',
     'help.billingTitle'       => 'How billing works',
     'help.calcTitle'          => 'How to use the calculator',
+    'help.adminTitle'         => 'Administration (System)',
     'help.centerTitle'        => 'Help',
     'help.centerSub'          => 'Quick guides for using the app.',
     'menu.help'               => 'User guides',

@@ -194,6 +194,41 @@ $en = (current_lang() === 'en');
                 </div></div>
               </div>
 
+              <?php if (strtoupper($_SESSION['rol'] ?? '') === 'SISTEMA'): ?>
+              <!-- Administración (solo SISTEMA) -->
+              <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#h6">
+                    <i class="bi bi-shield-lock me-2"></i><?php te('help.adminTitle'); ?></button></h2>
+                <div id="h6" class="accordion-collapse collapse" data-bs-parent="#accAyuda"><div class="accordion-body">
+                  <?php if ($en): ?>
+                    <h6>Users &amp; permissions</h6>
+                    <ul><li>Control Panel → <b>Users</b>: create users and assign a role (Doctor, Assistant, System…).</li>
+                    <li>Control Panel → <b>User permissions</b>: turn each module on/off <b>per person</b> (allow / block / inherit from role). SYSTEM always has full access.</li></ul>
+                    <h6>Catalogs</h6>
+                    <ul><li><b>ICD-10</b>, <b>Consultation types</b>, <b>NCP/PES diagnoses</b>, <b>Insurance types</b> and <b>Insurers</b> are maintained from the Configuration/Billing menu.</li>
+                    <li><b>NCP/PES:</b> add more nutrition-diagnosis cases from menu → NCP/PES Diagnoses.</li></ul>
+                    <h6>Status colors &amp; duplicates</h6>
+                    <ul><li><b>Status Colors:</b> choose or customize the color palette for appointment statuses (per user).</li>
+                    <li><b>Merge duplicates:</b> if a patient exists twice, merge them without losing history.</li></ul>
+                    <h6>Migrations</h6>
+                    <ul><li>New features that need database changes ship with a one-time <b>migration</b> page (SYSTEM only). Run it once after deploying; it's idempotent (safe to re-run). Example: <code>migrar_ncp_diagnosticos.php</code> to load new NCP/PES cases.</li></ul>
+                  <?php else: ?>
+                    <h6>Usuarios y permisos</h6>
+                    <ul><li>Panel de Control → <b>Usuarios</b>: crea usuarios y asigna su rol (Doctor, Asistente, Sistema…).</li>
+                    <li>Panel de Control → <b>Permisos por usuario</b>: prende/apaga cada módulo <b>por persona</b> (permitir / bloquear / según el rol). SISTEMA siempre tiene acceso total.</li></ul>
+                    <h6>Catálogos</h6>
+                    <ul><li><b>ICD-10</b>, <b>Tipos de consulta</b>, <b>Diagnósticos NCP/PES</b>, <b>Tipos de seguro</b> y <b>Aseguradoras</b> se mantienen desde el menú de Configuración/Facturación.</li>
+                    <li><b>NCP/PES:</b> agrega más casos de diagnóstico nutricional en menú → Diagnósticos NCP/PES.</li></ul>
+                    <h6>Colores de estado y duplicados</h6>
+                    <ul><li><b>Colores de estado:</b> elige o personaliza la paleta de colores de los estados de cita (por usuario).</li>
+                    <li><b>Fusionar duplicados:</b> si un paciente está dos veces, fusiónalos sin perder el historial.</li></ul>
+                    <h6>Migraciones</h6>
+                    <ul><li>Las funciones nuevas que requieren cambios en la base de datos traen una página de <b>migración</b> de una sola vez (solo SISTEMA). Ejecútala una vez tras desplegar; es idempotente (se puede repetir sin problema). Ejemplo: <code>migrar_ncp_diagnosticos.php</code> para cargar nuevos casos NCP/PES.</li></ul>
+                  <?php endif; ?>
+                </div></div>
+              </div>
+              <?php endif; ?>
+
             </div>
 
         </div></div>
