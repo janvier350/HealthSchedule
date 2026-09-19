@@ -335,6 +335,14 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <?php endif; ?>
             <?php endif; ?>
 
+            <!-- ══ AYUDA (todos los roles) ═══════════════════════════ -->
+            <li class="app-sidebar__heading"><?php te('help.centerTitle'); ?></li>
+            <li>
+                <a href="ayuda.php" class="<?php echo menuActivo('ayuda.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-question-circle"></i> <?php te('menu.help'); ?>
+                </a>
+            </li>
+
             <!-- ══ PIE: idioma + cerrar sesión (dentro de la lista, siempre al final) ══ -->
             <li class="sidebar-footer-li">
                 <div class="sidebar-logout-footer">

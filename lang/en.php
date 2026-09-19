@@ -931,6 +931,10 @@ return array(
     'help.attendTitle'        => 'How to attend a visit',
     'help.patientsTitle'      => 'How to manage patients',
     'help.billingTitle'       => 'How billing works',
+    'help.calcTitle'          => 'How to use the calculator',
+    'help.centerTitle'        => 'Help',
+    'help.centerSub'          => 'Quick guides for using the app.',
+    'menu.help'               => 'User guides',
     // Extend appointment
     'att.extendBtn'           => 'Extend +30 min',
     'att.extendTip'           => 'Add 30 minutes to the end of the appointment.',

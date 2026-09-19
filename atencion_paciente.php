@@ -844,6 +844,7 @@ const ATT = {
     </div>
   </div>
 </div>
+<script>(function(){var m=document.getElementById('modalAyudaAtencion');if(m&&m.parentNode!==document.body)document.body.appendChild(m);})();</script>
 
 <?php if (!empty($ncpDiag)): ?>
 <!-- ── MODAL: Insertar diagnóstico NCP/PES ─────────────────────────── -->
