@@ -339,6 +339,9 @@ $prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '')
             </div>
         </div>
         <div class="page-title-actions">
+            <button type="button" class="btn btn-outline-info btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modalAyudaAtencion">
+                <i class="bi bi-question-circle me-1"></i><?php te('help.howItWorks'); ?>
+            </button>
             <span class="badge rounded-pill fs-6" style="background:linear-gradient(135deg,#0e1f55,#1a3a8c);color:#fff;padding:.55rem .9rem;">
                 <i class="bi bi-hash"></i><?php echo $idCita; ?>
             </span>
@@ -793,6 +796,46 @@ const ATT = {
           </ol>
           <div class="alert alert-info py-2 mb-2"><b>ICD-10:</b> arriba también puedes buscar y <b>Añadir</b> uno o varios códigos ICD-10 al paciente.</div>
           <div class="text-muted small"><b>Admin:</b> para agregar más enfermedades a la biblioteca, ve al menú → <b>Diagnósticos NCP/PES</b>.</div>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: ¿Cómo atender una cita? (guía para doctores) ──────────── -->
+<div class="modal fade" id="modalAyudaAtencion" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i><?php te('help.attendTitle'); ?></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <?php if (current_lang() === 'en'): ?>
+          <ol style="line-height:1.9;">
+            <li><b>Weight &amp; height →</b> type them and the <b>BMI is calculated automatically</b>. You can switch units (kg/lbs, cm/m or ft+in). The patient's <b>previous weight/height</b> shows in the header.</li>
+            <li><b>Previous note →</b> for follow-ups the <b>last visit's note is pre-loaded</b> so you only edit what changed.</li>
+            <li><b>ICD-10 diagnoses →</b> search a code or description and press <b>Add</b>; add as many as needed. They stay in the patient's record.</li>
+            <li><b>NCP/PES diagnosis →</b> click <b>Insert NCP/PES diagnosis</b>, pick the case, and it drops the ready-made statement into the note.</li>
+            <li><b>Nutrition Calculator →</b> opens with the patient's data already filled. It computes <b>BMR, TEE, ideal &amp; adjusted weight, BMI, fluids (Holliday-Segar)</b>; in <b>Pediatric</b> mode: <b>EER, protein, fluids, fiber</b>; plus <b>heart-rate zones</b>, <b>muscle gain</b>, and a <b>manual per-kg</b> box. Press <b>Insert into report</b> on any card to drop it into the note.</li>
+            <li><b>Report templates →</b> load a template; auto fields like <code>{{fecha_actual}}</code>, <code>{{paciente_dob}}</code>, <code>{{firma_nombre}}</code> fill in by themselves (dates in month/day/year).</li>
+            <li><b>Finish →</b> <b>Save &amp; Finish Consultation</b> stores the note and marks the visit attended. <b>Preview &amp; Print</b> prints it.</li>
+          </ol>
+          <div class="alert alert-info py-2 mb-0"><b>Tip:</b> "Insert into report" always adds the block to the <b>end</b> of the note — you can then move or edit it.</div>
+        <?php else: ?>
+          <ol style="line-height:1.9;">
+            <li><b>Peso y estatura →</b> escríbelos y el <b>IMC se calcula solo</b>. Puedes cambiar las unidades (kg/lbs, cm/m o pies+pulgadas). El <b>peso/talla anterior</b> del paciente aparece en el encabezado.</li>
+            <li><b>Nota anterior →</b> en los seguimientos se <b>precarga la nota de la visita anterior</b>; solo editas lo que cambió.</li>
+            <li><b>Diagnósticos ICD-10 →</b> busca un código o descripción y pulsa <b>Añadir</b>; agrega los que necesites. Quedan en la ficha del paciente.</li>
+            <li><b>Diagnóstico NCP/PES →</b> pulsa <b>Insertar diagnóstico NCP/PES</b>, elige el caso y coloca el enunciado ya redactado en la nota.</li>
+            <li><b>Calculadora nutricional →</b> abre con los datos del paciente ya cargados. Calcula <b>TMB (BMR), GET (TEE), peso ideal y ajustado, IMC, líquidos (Holliday-Segar)</b>; en modo <b>Pediátrico</b>: <b>EER, proteínas, líquidos, fibra</b>; además <b>zonas de frecuencia cardíaca</b>, <b>aumento muscular</b> y un cuadro <b>manual por kg</b>. Pulsa <b>Insertar en el informe</b> en cualquier tarjeta para pasarlo a la nota.</li>
+            <li><b>Plantillas de informe →</b> carga una plantilla; los campos automáticos como <code>{{fecha_actual}}</code>, <code>{{paciente_dob}}</code>, <code>{{firma_nombre}}</code> se llenan solos (fechas en mes/día/año).</li>
+            <li><b>Terminar →</b> <b>Guardar y finalizar</b> guarda la nota y marca la cita como atendida. <b>Vista previa e imprimir</b> la imprime.</li>
+          </ol>
+          <div class="alert alert-info py-2 mb-0"><b>Tip:</b> "Insertar en el informe" siempre agrega el bloque al <b>final</b> de la nota — después puedes moverlo o editarlo.</div>
         <?php endif; ?>
       </div>
       <div class="modal-footer">

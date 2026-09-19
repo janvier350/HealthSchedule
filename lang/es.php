@@ -926,6 +926,9 @@ return array(
     'att.drTitle'             => 'Dr./Dra.',
     // Modal de ayuda del dictado
     'att.helpBtn'             => 'Ayuda dictado',
+    'help.howItWorks'         => '¿Cómo funciona?',
+    'help.scheduleTitle'      => 'Cómo agendar citas',
+    'help.attendTitle'        => 'Cómo atender una cita',
     // Extender cita
     'att.extendBtn'           => 'Extender +30 min',
     'att.extendTip'           => 'Suma 30 minutos al final de la cita.',
