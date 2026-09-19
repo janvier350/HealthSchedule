@@ -163,6 +163,7 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                     </div>
                   </div>
                 </div>
+                <script>(function(){var m=document.getElementById('modalAyudaPacientes');if(m&&m.parentNode!==document.body)document.body.appendChild(m);})();</script>
 
                 <!-- Buscador -->
                 <div class="card shadow-sm mb-3">

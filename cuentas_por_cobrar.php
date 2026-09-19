@@ -143,6 +143,7 @@ $hoy = new DateTime('today');
                 </div>
               </div>
             </div>
+            <script>(function(){var m=document.getElementById('modalAyudaFactura');if(m&&m.parentNode!==document.body)document.body.appendChild(m);})();</script>
 
             <?php if (!$tablaOk): ?>
                 <div class="alert alert-warning">Falta el esquema de facturación.

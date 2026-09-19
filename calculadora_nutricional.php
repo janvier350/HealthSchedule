@@ -86,7 +86,66 @@ $rol = strtoupper($_SESSION['rol']);
                                 <div class="page-title-subheading"><?php te('nc.subtitle'); ?></div>
                             </div>
                         </div>
+                        <div class="page-title-actions">
+                            <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalAyudaCalc">
+                                <i class="bi bi-question-circle me-1"></i><?php te('help.howItWorks'); ?>
+                            </button>
+                        </div>
                     </div>
+                </div>
+
+                <!-- ── MODAL: ¿Cómo usar la calculadora? ──────────────── -->
+                <div class="modal fade" id="modalAyudaCalc" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                      <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="bi bi-calculator me-2"></i><?php te('help.calcTitle'); ?></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <?php if (current_lang() === 'en'): ?>
+                          <p class="text-muted mb-2">Fill sex, age, weight and height. Every result recalculates automatically. From inside a consultation it opens pre-filled with the patient's data.</p>
+                          <h6 class="fw-bold text-info"><i class="bi bi-person me-1"></i>Adult</h6>
+                          <ul style="line-height:1.8;">
+                            <li><b>Base:</b> BMR (Mifflin-St Jeor), TEE (BMR × activity), ideal &amp; adjusted weight, BMI, fluids (Holliday-Segar).</li>
+                            <li><b>Clinical condition:</b> pick one (incl. <b>Overweight</b> and Obesity classes) for recommended calorie / protein / fluid ranges.</li>
+                            <li><b>Muscle gain (hypertrophy):</b> surplus targets and macros from the TEE.</li>
+                          </ul>
+                          <h6 class="fw-bold text-info"><i class="bi bi-emoji-smile me-1"></i>Pediatric</h6>
+                          <ul style="line-height:1.8;">
+                            <li>Toggle <b>Pediatric</b> (auto for under-18 inside a consultation). Shows <b>EER</b> (IOM/DRI by age), protein by age, fluids (Holliday-Segar), fiber and quick kcal/kg. Enter age with decimals for infants (e.g. 0.5 = 6 months).</li>
+                          </ul>
+                          <h6 class="fw-bold text-info"><i class="bi bi-heart-pulse me-1"></i>Heart rate &amp; manual</h6>
+                          <ul style="line-height:1.8;">
+                            <li><b>Heart rate:</b> HRmax (Tanaka) and training zones; add the resting HR for the Karvonen method.</li>
+                            <li><b>Manual (per kg):</b> type your own kcal/kg, protein g/kg or fluid mL/kg and it multiplies by the weight automatically.</li>
+                          </ul>
+                          <div class="alert alert-info py-2 mb-0"><b>Insert into report:</b> every card has this button — it drops that block into the consultation note.</div>
+                        <?php else: ?>
+                          <p class="text-muted mb-2">Llena sexo, edad, peso y talla. Todo se recalcula solo. Desde una consulta abre con los datos del paciente ya cargados.</p>
+                          <h6 class="fw-bold text-info"><i class="bi bi-person me-1"></i>Adulto</h6>
+                          <ul style="line-height:1.8;">
+                            <li><b>Base:</b> TMB (Mifflin-St Jeor), GET (TMB × actividad), peso ideal y ajustado, IMC, líquidos (Holliday-Segar).</li>
+                            <li><b>Condición clínica:</b> elige una (incluye <b>Sobrepeso</b> y las clases de Obesidad) para los rangos recomendados de calorías / proteína / líquidos.</li>
+                            <li><b>Aumento muscular (hipertrofia):</b> superávit y macros a partir del GET.</li>
+                          </ul>
+                          <h6 class="fw-bold text-info"><i class="bi bi-emoji-smile me-1"></i>Pediátrico</h6>
+                          <ul style="line-height:1.8;">
+                            <li>Activa <b>Pediátrico</b> (automático en menores de 18 desde la consulta). Muestra <b>EER</b> (IOM/DRI por edad), proteína por edad, líquidos (Holliday-Segar), fibra y kcal/kg rápido. Para bebés escribe la edad con decimales (ej. 0.5 = 6 meses).</li>
+                          </ul>
+                          <h6 class="fw-bold text-info"><i class="bi bi-heart-pulse me-1"></i>Frecuencia cardíaca y manual</h6>
+                          <ul style="line-height:1.8;">
+                            <li><b>Frecuencia cardíaca:</b> FCmáx (Tanaka) y zonas de entrenamiento; agrega la FC en reposo para el método Karvonen.</li>
+                            <li><b>Manual (por kg):</b> escribe tu propio kcal/kg, proteína g/kg o líquidos mL/kg y se multiplica por el peso automáticamente.</li>
+                          </ul>
+                          <div class="alert alert-info py-2 mb-0"><b>Insertar en el informe:</b> cada tarjeta tiene este botón — coloca ese bloque en la nota de la consulta.</div>
+                        <?php endif; ?>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php te('common.close'); ?></button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <?php include(__DIR__ . '/calculadora_nutricional_widget.php'); ?>

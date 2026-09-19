@@ -168,6 +168,7 @@ if (($conexion->query("SHOW TABLES LIKE 'bill_items'")->num_rows ?? 0) > 0) {
                 </div>
               </div>
             </div>
+            <script>(function(){var m=document.getElementById('modalAyudaFactura');if(m&&m.parentNode!==document.body)document.body.appendChild(m);})();</script>
 
             <?php if (!$tablaOk): ?>
                 <div class="alert alert-warning">Falta el esquema de facturación. <a href="migrar_facturas_schema.php" class="alert-link">Créalo aquí</a>.</div>

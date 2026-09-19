@@ -738,6 +738,7 @@ while ($a = $resAgencias->fetch_assoc()) {
     </div>
   </div>
 </div>
+<script>(function(){var m=document.getElementById('modalAyudaAgenda');if(m&&m.parentNode!==document.body)document.body.appendChild(m);})();</script>
 
 <!-- ── MODAL GESTIÓN CITA ─────────────────────────────────────────── -->
 <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
