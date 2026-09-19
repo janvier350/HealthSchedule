@@ -64,10 +64,14 @@ $horaAnterior  = substr($citaVieja['HORA_INICIO'] ?? '', 0, 5);
 $idSerie       = $tieneSerie ? (int)($citaVieja['IDSERIE'] ?? 0) : 0;
 
 if ($alcance === 'todas' && $idSerie > 0) {
-    // Aplicar la nueva hora (no la fecha) a esta cita y a todas las FUTURAS de la serie.
+    // Mover ESTA cita y TODAS las futuras de la serie por el mismo desfase de
+    // días, de modo que toda la serie se mantenga alineada (mismo día de la
+    // semana y misma cadencia). Ej.: si la cita del viernes se mueve al
+    // miércoles, todas las futuras pasan a miércoles conservando el intervalo.
+    $deltaDays = (int)round((strtotime($fecha) - strtotime($fechaAnterior)) / 86400);
     $stmt = $conexion->prepare(
         "UPDATE AG_CITA
-         SET FECHA_CITA  = CASE WHEN IDCITA = ? THEN ? ELSE FECHA_CITA END,
+         SET FECHA_CITA  = DATE_ADD(FECHA_CITA, INTERVAL ? DAY),
              HORA_INICIO = ?,
              HORA_FIN    = ?,
              ESTADO_CITA = 'Pendiente'
@@ -75,7 +79,7 @@ if ($alcance === 'todas' && $idSerie > 0) {
            AND ESTADO = 'A'
            AND FECHA_CITA >= ?"
     );
-    $stmt->bind_param("isssiis", $idCita, $fecha, $hora, $horaFin, $idSerie, $idCita, $fechaAnterior);
+    $stmt->bind_param("issiis", $deltaDays, $hora, $horaFin, $idSerie, $idCita, $fechaAnterior);
 } else {
     // Reagendar solo esta cita
     $stmt = $conexion->prepare(
