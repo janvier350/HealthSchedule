@@ -156,8 +156,8 @@ $rol = strtoupper($_SESSION['rol']);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/nutri_calc.js"></script>
-<script src="js/nutri_calc_ui.js"></script>
+<script src="js/nutri_calc.js?v=<?php echo @filemtime(__DIR__.'/js/nutri_calc.js'); ?>"></script>
+<script src="js/nutri_calc_ui.js?v=<?php echo @filemtime(__DIR__.'/js/nutri_calc_ui.js'); ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     NutriCalcUI.mount('#ncRoot', { lang: <?php echo json_encode(current_lang()); ?> });
