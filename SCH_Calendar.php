@@ -51,7 +51,11 @@ $query = "SELECT
           INNER JOIN AG_TIPOCONSULTA C ON A.IDTIPOCONSULTA  = C.IDTIPOCONSULTA
           INNER JOIN ADM_USUARIO D     ON A.IDDOCTOR        = D.IDADM_USUARIO
           LEFT  JOIN ADM_AGENCIA E     ON A.IDAGENCIA       = E.IDAGENCIA
-          WHERE A.ESTADO = 'A'";
+          WHERE A.ESTADO = 'A'
+            AND A.FECHA_CITA >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+// Nota: el calendario solo carga citas de los últimos 3 meses en adelante para
+// no traer miles de citas históricas (causaba lentitud/timeout). Las citas
+// antiguas siguen visibles en el historial del paciente.
 
 $resultado = $conexion->query($query);
 $eventos   = array();
@@ -1217,6 +1221,12 @@ async function reagendarPorArrastre(info) {
     const ev    = info.event;
     const start = ev.start;
     if (!start) { info.revert(); return; }
+
+    // Ignorar arrastres accidentales (soltó en el mismo día/hora): no hacer nada.
+    if (info.oldEvent && info.oldEvent.start && info.oldEvent.start.getTime() === start.getTime()) {
+        info.revert();
+        return;
+    }
 
     const pad   = function (n) { return String(n).padStart(2, '0'); };
     const fecha = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate());

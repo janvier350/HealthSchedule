@@ -281,6 +281,12 @@ $seed = [
   'Evidenciado por ganancia de 6 kg en 7 días y edema bilateral +3','As evidenced by 6 kg weight gain in 7 days and +3 bilateral pitting edema',
   'Restricción de sodio (< 2000 mg) y líquidos según indicación; educación; coordinar con cardiología.','Sodium (< 2000 mg) and fluid restriction as indicated; education; coordinate with cardiology.',
   'Peso diario en ayunas, edema y balance hídrico.','Daily morning weight, edema, and fluid balance.'],
+ ['Sobrepeso (Adulto)','Overweight (Adult)','NC-3.3.1',
+  'Sobrepeso en el adulto','Overweight, adult',
+  'Relacionado con ingesta energética excesiva por alto consumo de alimentos ultraprocesados densos en energía y estilo de vida sedentario','Related to excessive energy intake from ultra-processed, energy-dense foods and a sedentary lifestyle',
+  'Evidenciado por IMC de 28.4 kg/m², circunferencia de cintura elevada e ingesta ~500 kcal/día por encima del requerimiento','As evidenced by BMI 28.4 kg/m², elevated waist circumference, and intake ~500 kcal/day above the estimated requirement',
+  'Déficit de 500 kcal/día con patrón alto en fibra y proteína adecuada; aumentar actividad física; metas SMART.','500 kcal/day deficit with a high-fiber, adequate-protein pattern; increase physical activity; SMART goals.',
+  'Peso y circunferencia de cintura mensual; meta de 5-7% de pérdida en 6 meses.','Monthly weight and waist circumference; target 5-7% weight loss over 6 months.'],
 ];
 $chk = $conexion->prepare("SELECT id FROM ncp_diagnosticos WHERE enfermedad_en=? LIMIT 1");
 $ins = $conexion->prepare("INSERT INTO ncp_diagnosticos
