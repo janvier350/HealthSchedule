@@ -886,8 +886,8 @@ const ATT = {
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
 <script src="js/who_growth.js"></script>
 <script src="js/cdc_growth.js"></script>
-<script src="js/nutri_calc.js"></script>
-<script src="js/nutri_calc_ui.js"></script>
+<script src="js/nutri_calc.js?v=<?php echo @filemtime(__DIR__.'/js/nutri_calc.js'); ?>"></script>
+<script src="js/nutri_calc_ui.js?v=<?php echo @filemtime(__DIR__.'/js/nutri_calc_ui.js'); ?>"></script>
 <script>
 // ── DIAGNÓSTICOS ICD-10 (asignar/quitar en la consulta) ──────────────
 $(function(){
