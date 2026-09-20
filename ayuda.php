@@ -85,7 +85,7 @@ $en = (current_lang() === 'en');
                     <li>Recurrence: leave "Do not repeat" for a single appointment; for a series pick weekly/biweekly/monthly (up to 12) and confirm the count.</li></ol>
                     <div class="alert alert-warning py-2">To schedule, the patient must already have at least one ICD-10 diagnosis and a complete address.</div>
                     <h6>Move / change &amp; status</h6>
-                    <ul><li>Drag the appointment or use Reschedule; the patient is emailed. For a series choose "all future visits" to move the whole series to the new weekday.</li>
+                    <ul><li>Open the appointment and use Reschedule; the patient is emailed. For a series choose "all future visits" to move the whole series to the new weekday.</li>
                     <li>Attend any time; mark "No answer" if the patient doesn't pick up and move on.</li></ul>
                   <?php else: ?>
                     <h6>Agendar una cita nueva</h6>
@@ -94,7 +94,7 @@ $en = (current_lang() === 'en');
                     <li>Recurrencia: deja "No repetir" para una sola cita; para una serie elige semanal/quincenal/mensual (hasta 12) y confirma la cantidad.</li></ol>
                     <div class="alert alert-warning py-2">Para agendar, el paciente debe tener ya al menos un diagnóstico ICD-10 y la dirección completa.</div>
                     <h6>Mover / cambiar y estados</h6>
-                    <ul><li>Arrastra la cita o usa Reagendar; al paciente le llega correo. En una serie elige "todas las futuras" para mover toda la serie al nuevo día.</li>
+                    <ul><li>Abre la cita y usa Reagendar; al paciente le llega correo. En una serie elige "todas las futuras" para mover toda la serie al nuevo día.</li>
                     <li>Atiende a cualquier hora; marca "No contestó" si el paciente no responde y sigue con otro.</li></ul>
                   <?php endif; ?>
                 </div></div>
