@@ -708,7 +708,7 @@ while ($a = $resAgencias->fetch_assoc()) {
           <div class="alert alert-warning py-2">To schedule, the patient must already have <b>at least one ICD-10 diagnosis</b> and a <b>complete address</b> (street, or city + state).</div>
           <h6 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-1"></i>Move / change an appointment</h6>
           <ul style="line-height:1.9;">
-            <li>Open the appointment and press <b>Reschedule</b> to change its date/time. The patient gets an email with the new time.</li>
+            <li><b>Drag</b> the appointment to another day/time, or open it and press <b>Reschedule</b>. The patient gets an email with the new time. <span class="text-muted">(To avoid accidental moves, a confirmation appears before saving.)</span></li>
             <li>For a <b>series</b>, choose <b>"all future visits"</b> to move the whole series to the new weekday keeping its cadence (e.g. all stay on Fridays), or <b>"only this one"</b>.</li>
           </ul>
           <h6 class="fw-bold text-info"><i class="bi bi-check2-square me-1"></i>Status &amp; attending</h6>
@@ -726,7 +726,7 @@ while ($a = $resAgencias->fetch_assoc()) {
           <div class="alert alert-warning py-2">Para agendar, el paciente debe tener ya <b>al menos un diagnóstico ICD-10</b> y la <b>dirección completa</b> (calle, o ciudad + estado).</div>
           <h6 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-1"></i>Mover / cambiar una cita</h6>
           <ul style="line-height:1.9;">
-            <li>Abre la cita y pulsa <b>Reagendar</b> para cambiar su fecha/hora. Al paciente le llega un correo con la nueva hora.</li>
+            <li><b>Arrastra</b> la cita a otro día/hora, o ábrela y pulsa <b>Reagendar</b>. Al paciente le llega un correo con la nueva hora. <span class="text-muted">(Para evitar movimientos accidentales, sale una confirmación antes de guardar.)</span></li>
             <li>En una <b>serie</b>, elige <b>"todas las futuras"</b> para mover toda la serie al nuevo día conservando la cadencia (ej. que todas queden los viernes), o <b>"solo esta"</b>.</li>
           </ul>
           <h6 class="fw-bold text-info"><i class="bi bi-check2-square me-1"></i>Estados y atención</h6>
@@ -1828,10 +1828,25 @@ document.addEventListener('DOMContentLoaded', function () {
         slotMaxTime: '22:00:00',
         expandRows: true,
         nowIndicator: true,
-        // Arrastrar y soltar DESACTIVADO: movía citas por accidente (clic/scroll).
-        // Para cambiar fecha/hora se usa el botón "Reagendar" del detalle de la cita.
-        editable: false,
+        // Arrastrar la cita a otro día/hora la reagenda (con confirmación).
+        editable: true,
+        eventDurationEditable: false,
+        // Salvaguardas contra movimientos accidentales:
+        eventDragMinDistance: 12,     // hay que arrastrar un poco antes de que cuente
+        longPressDelay: 500,          // en táctil: mantener presionado para arrastrar
+        eventLongPressDelay: 500,
         events: eventosAll,
+
+        // No permitir arrastrar citas ya cerradas (atendidas/canceladas).
+        eventAllow: function (dropInfo, draggedEvent) {
+            var est = (draggedEvent.extendedProps || {}).cita || 'Pendiente';
+            return ESTADOS_CERRADOS.indexOf(est) === -1;
+        },
+
+        // Reagendar por arrastre (misma lógica y correo que el botón "Reagendar").
+        eventDrop: function (info) {
+            reagendarPorArrastre(info);
+        },
 
         // Render personalizado en TODAS las vistas (mes, semana y día):
         // hora inicio-fin, paciente, doctor y location sin recortar
