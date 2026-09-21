@@ -193,6 +193,30 @@ while ($a = $resAgencias->fetch_assoc()) {
         'nombre' => $a['DESCRIPCION'],
     );
 }
+
+// Ausencias / no disponibilidad de los doctores (vacaciones y bloqueos de horas).
+$ausencias = array();
+if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0) > 0) {
+    $ra = $conexion->query(
+        "SELECT a.IDDOCTOR, a.tipo, a.fecha_inicio, a.fecha_fin, a.hora_inicio, a.hora_fin, a.motivo,
+                CONCAT(U.NOMBRES,' ',U.APELLIDOS) AS doctor
+         FROM ausencias_doctor a
+         LEFT JOIN ADM_USUARIO U ON U.IDADM_USUARIO = a.IDDOCTOR
+         WHERE a.estado = 1"
+    );
+    if ($ra) while ($x = $ra->fetch_assoc()) {
+        $ausencias[] = array(
+            'idDoctor'     => (int)$x['IDDOCTOR'],
+            'doctor'       => $x['doctor'],
+            'tipo'         => $x['tipo'],
+            'fecha_inicio' => $x['fecha_inicio'],
+            'fecha_fin'    => $x['fecha_fin'],
+            'hora_inicio'  => $x['hora_inicio'] ? substr($x['hora_inicio'],0,5) : null,
+            'hora_fin'     => $x['hora_fin'] ? substr($x['hora_fin'],0,5) : null,
+            'motivo'       => $x['motivo'],
+        );
+    }
+}
 ?>
 <!doctype html>
 <html lang="<?php echo current_lang(); ?>">
@@ -680,6 +704,8 @@ while ($a = $resAgencias->fetch_assoc()) {
                         <div class="form-text mt-1" id="recurPreview"></div>
                     </div>
 
+                    <div id="ausAviso" class="alert alert-warning py-2 d-none"></div>
+
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-calendar-check"></i> <?php te('cal.scheduleBtn'); ?>
                     </button>
@@ -1103,6 +1129,9 @@ const TC = <?php echo json_encode(array(
     'recurConfirmDate'=> t('cal.js.recurConfirmDate'),
     'dragClosed'      => t('cal.js.dragClosed'),
     'saving'          => t('cal.js.saving'),
+    'ausVac'          => t('cal.js.ausVac'),
+    'ausBlq'          => t('cal.js.ausBlq'),
+    'ausConfirm'      => t('cal.js.ausConfirm'),
     'connError'       => t('common.js.connError'),
     'diagNone'        => t('cal.diag.none'),
     'diagRemove'      => t('cal.diag.remove'),
@@ -1486,6 +1515,22 @@ function validarFormulario() {
 // ── Datos compartidos (FullCalendar + Vista por Doctor) ───────────────
 const eventosAll      = <?php echo json_encode($eventos); ?>;
 const doctoresActivos = <?php echo json_encode($doctoresActivos); ?>;
+const ausenciasAll    = <?php echo json_encode($ausencias); ?>;
+// ¿El doctor tiene vacación (día completo) o bloqueo (hora) en esa fecha/hora?
+function ausenciaConflicto(idDoctor, fecha, hora){
+    idDoctor = String(idDoctor||''); if(!idDoctor || !fecha) return null;
+    for (var i=0;i<ausenciasAll.length;i++){
+        var a = ausenciasAll[i];
+        if (String(a.idDoctor) !== idDoctor) continue;
+        if (a.tipo === 'vacacion'){
+            if (fecha >= a.fecha_inicio && fecha <= a.fecha_fin) return { tipo:'vacacion', doctor:a.doctor, motivo:a.motivo };
+        } else if (a.tipo === 'bloqueo'){
+            if (fecha === a.fecha_inicio && hora && a.hora_inicio && a.hora_fin && hora >= a.hora_inicio && hora < a.hora_fin)
+                return { tipo:'bloqueo', doctor:a.doctor, motivo:a.motivo, hora_inicio:a.hora_inicio, hora_fin:a.hora_fin };
+        }
+    }
+    return null;
+}
 // Doctor con la sesión iniciada (si el usuario logueado es DOCTOR): su columna se muestra por defecto
 const loginDoctorId   = <?php echo json_encode((strtoupper($_SESSION['rol'] ?? '') === 'DOCTOR') ? (string)($_SESSION['iduser'] ?? '') : ''); ?>;
 
@@ -1887,6 +1932,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     calendar.render();
 
+    // ── Vacaciones / no disponibilidad: fondo de color en el calendario ──
+    (function(){
+        function addDays(ymd, n){ var d = new Date(ymd + 'T00:00:00'); d.setDate(d.getDate()+n);
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+        (ausenciasAll || []).forEach(function(a){
+            if (a.tipo === 'vacacion'){
+                calendar.addEvent({
+                    start: a.fecha_inicio, end: addDays(a.fecha_fin, 1), allDay: true,
+                    display: 'background', color: '#ffd8a8',
+                    title: '🏖️ ' + (a.doctor || '')
+                });
+            } else if (a.hora_inicio && a.hora_fin){
+                calendar.addEvent({
+                    start: a.fecha_inicio + 'T' + a.hora_inicio, end: a.fecha_inicio + 'T' + a.hora_fin,
+                    display: 'background', color: '#f1aeb5',
+                    title: '⛔ ' + (a.doctor || '')
+                });
+            }
+        });
+    })();
+
     inicializarVistaPorDoctor();
 
     document.getElementById('btnVistaCalendario').addEventListener('click', function () {
@@ -2186,8 +2252,37 @@ document.addEventListener('DOMContentLoaded', toggleRecurrenciaUI);
 
 // ── Confirmar antes de crear una serie recurrente + evitar doble envío ─
 var _citaEnviando = false;
+// ── Aviso de vacaciones/no disponibilidad del doctor al agendar ──────
+function _ausTextoConflicto(c){
+    if (!c) return '';
+    if (c.tipo === 'vacacion') return TC.ausVac.replace('{doctor}', c.doctor || '');
+    return TC.ausBlq.replace('{doctor}', c.doctor || '').replace('{ini}', c.hora_inicio || '').replace('{fin}', c.hora_fin || '');
+}
+function revisarAusenciaForm(){
+    var box = document.getElementById('ausAviso'); if(!box) return;
+    var idDoc = (document.querySelector('#insertCita [name="IdDoctor"]') || {}).value || '';
+    var fecha = (document.getElementById('fechafactura') || {}).value || '';
+    var hora  = (document.getElementById('timeIni') || {}).value || '';
+    var c = ausenciaConflicto(idDoc, fecha, hora);
+    if (c) { box.innerHTML = '<i class="bi bi-airplane me-1"></i>' + _ausTextoConflicto(c); box.classList.remove('d-none'); }
+    else   { box.classList.add('d-none'); box.innerHTML = ''; }
+}
+document.addEventListener('DOMContentLoaded', function(){
+    var f = document.getElementById('insertCita'); if(!f) return;
+    ['IdDoctor','fechafactura','timeIni'].forEach(function(n){
+        var el = f.querySelector('[name="'+n+'"]') || document.getElementById(n);
+        if (el) el.addEventListener('change', revisarAusenciaForm);
+    });
+});
+
 function confirmarRecurrencia() {
     if (_citaEnviando) return false;   // ya se está enviando: bloquea el doble clic
+    // Aviso si el doctor está de vacaciones / no disponible ese día u hora.
+    var _idDoc = (document.querySelector('#insertCita [name="IdDoctor"]') || {}).value || '';
+    var _fecha = (document.getElementById('fechafactura') || {}).value || '';
+    var _hora  = (document.getElementById('timeIni') || {}).value || '';
+    var _c = ausenciaConflicto(_idDoc, _fecha, _hora);
+    if (_c && !confirm(_ausTextoConflicto(_c) + '\n\n' + TC.ausConfirm)) return false;
     var sel = document.getElementById('recurrenciaSel');
     if (sel && sel.value !== 'none') {
         var tipo = sel.options[sel.selectedIndex].text;
