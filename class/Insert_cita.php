@@ -57,12 +57,19 @@ if ($q && ($r = $q->fetch_assoc())) {
 // Dirección "completa" = tiene ADDRESS, o bien ciudad y estado.
 $dirCompleta = ($dir !== '') || ($city !== '' && $state !== '');
 
+@require_once(__DIR__ . '/../lang/i18n.php');
+$en = (function_exists('current_lang') && current_lang() === 'en');
 $faltantes = [];
-if ($numDiag === 0)  $faltantes[] = 'un diagnóstico (ICD-10)';
-if (!$dirCompleta)   $faltantes[] = 'la dirección (calle o ciudad y estado)';
+if ($numDiag === 0)  $faltantes[] = $en ? 'a diagnosis (ICD-10)' : 'un diagnóstico (ICD-10)';
+if (!$dirCompleta)   $faltantes[] = $en ? 'the address (street, or city and state)' : 'la dirección (calle o ciudad y estado)';
 if ($faltantes) {
-    $msg = "No se puede agendar: al paciente le falta ".implode(' y ', $faltantes).
-           ". Complétalo en la ficha del paciente (Gestionar Pacientes) y vuelve a intentar.";
+    if ($en) {
+        $msg = "Cannot schedule: the patient is missing ".implode(' and ', $faltantes).
+               ". Complete it in the patient's record (Manage Patients) and try again.";
+    } else {
+        $msg = "No se puede agendar: al paciente le falta ".implode(' y ', $faltantes).
+               ". Complétalo en la ficha del paciente (Gestionar Pacientes) y vuelve a intentar.";
+    }
     echo "<script>alert(".json_encode($msg, JSON_UNESCAPED_UNICODE)."); history.back();</script>";
     exit;
 }

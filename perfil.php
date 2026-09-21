@@ -292,6 +292,48 @@ $iniciales = strtoupper(substr($u['NOMBRES'] ?? '', 0, 1) . substr($u['APELLIDOS
                     </div>
                 </div>
 
+                <?php if (strtoupper($_SESSION['rol'] ?? '') === 'DOCTOR'):
+                    $misAus = [];
+                    if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0) > 0) {
+                        if ($qa = $conexion->prepare("SELECT tipo, fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo FROM ausencias_doctor WHERE estado=1 AND IDDOCTOR=? ORDER BY fecha_inicio DESC")) {
+                            $qa->bind_param('i', $idUsuario); $qa->execute();
+                            $rqa = $qa->get_result(); while ($x = $rqa->fetch_assoc()) $misAus[] = $x; $qa->close();
+                        }
+                    }
+                ?>
+                <div class="row"><div class="col-12">
+                  <div class="card shadow-sm mb-3">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                      <span><i class="bi bi-airplane me-1"></i><?php te('aus.title'); ?></span>
+                      <a href="ausencias_doctor.php" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square me-1"></i><?php te('aus.addTitle'); ?></a>
+                    </div>
+                    <div class="card-body">
+                      <?php if (!$misAus): ?>
+                        <div class="text-muted small">—</div>
+                      <?php else: ?>
+                        <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+                          <thead><tr><th><?php te('aus.type'); ?></th><th><?php te('aus.dates'); ?></th><th><?php te('aus.reason'); ?></th></tr></thead>
+                          <tbody>
+                          <?php foreach ($misAus as $a):
+                              $esBlq = ($a['tipo'] === 'bloqueo');
+                              $fechas = $esBlq
+                                  ? htmlspecialchars($a['fecha_inicio']).' · '.substr($a['hora_inicio'],0,5).'–'.substr($a['hora_fin'],0,5)
+                                  : htmlspecialchars($a['fecha_inicio']).($a['fecha_fin'] !== $a['fecha_inicio'] ? ' → '.htmlspecialchars($a['fecha_fin']) : '');
+                          ?>
+                            <tr>
+                              <td><?php if ($esBlq): ?><span class="badge bg-warning text-dark"><?php te('aus.block'); ?></span><?php else: ?><span class="badge bg-info text-dark"><?php te('aus.vacation'); ?></span><?php endif; ?></td>
+                              <td class="small"><?php echo $fechas; ?></td>
+                              <td class="small text-muted"><?php echo htmlspecialchars($a['motivo'] ?? ''); ?></td>
+                            </tr>
+                          <?php endforeach; ?>
+                          </tbody>
+                        </table></div>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                </div></div>
+                <?php endif; ?>
+
             </div>
         </div>
     </div>
