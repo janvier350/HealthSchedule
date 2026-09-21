@@ -1908,13 +1908,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 return { domNodes: [bg] };
             }
             var p = arg.event.extendedProps;
-            // Bloqueo de horas: evento visible (también en vista Mes), no es una cita.
+            // Ausencia (vacaciones día completo o bloqueo de horas): evento visible, no es una cita.
             if (p && p.esAusencia) {
-                var fmtB = function (d) { return d ? d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : ''; };
                 var ab = document.createElement('div');
                 ab.style.cssText = 'padding:2px 6px;font-size:.72rem;font-weight:700;color:#212529;line-height:1.2;';
-                ab.innerHTML = '<div>' + fmtB(arg.event.start) + ' - ' + fmtB(arg.event.end) + '</div>' +
-                               '<div>' + esc(arg.event.title) + '</div>';
+                if (arg.event.allDay) {
+                    ab.innerHTML = esc(arg.event.title);
+                } else {
+                    var fmtB = function (d) { return d ? d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : ''; };
+                    ab.innerHTML = '<div>' + fmtB(arg.event.start) + ' - ' + fmtB(arg.event.end) + '</div>' +
+                                   '<div>' + esc(arg.event.title) + '</div>';
+                }
                 return { domNodes: [ab] };
             }
             var fmt = function (d) {
@@ -1957,10 +1961,13 @@ document.addEventListener('DOMContentLoaded', function () {
             return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
         (ausenciasAll || []).forEach(function(a){
             if (a.tipo === 'vacacion'){
+                // Vacaciones: evento de día completo visible (texto oscuro, no clicable/arrastrable).
                 calendar.addEvent({
                     start: a.fecha_inicio, end: addDays(a.fecha_fin, 1), allDay: true,
-                    display: 'background', color: '#ffd8a8',
-                    title: '🏖️ ' + (a.doctor || '')
+                    title: '🏖️ ' + (a.doctor || ''),
+                    backgroundColor: '#ffd8a8', borderColor: '#f5b878', textColor: '#212529',
+                    editable: false,
+                    extendedProps: { esAusencia: true, doctor: a.doctor, motivo: a.motivo }
                 });
             } else if (a.hora_inicio && a.hora_fin){
                 // Bloqueo de horas: evento visible (se ve en Mes, Semana y Día), no clicable.
