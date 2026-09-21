@@ -1896,11 +1896,18 @@ document.addEventListener('DOMContentLoaded', function () {
         // Render personalizado en TODAS las vistas (mes, semana y día):
         // hora inicio-fin, paciente, doctor y location sin recortar
         eventContent: function (arg) {
-            var p = arg.event.extendedProps;
             var esc = function (s) {
                 return (s == null ? '' : String(s))
                     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             };
+            // Eventos de fondo (vacaciones / bloqueos): solo etiqueta con texto oscuro, sin hora.
+            if (arg.event.display === 'background') {
+                var bg = document.createElement('div');
+                bg.style.cssText = 'padding:2px 6px;font-size:.72rem;font-weight:700;color:#7a4a00;';
+                bg.innerHTML = esc(arg.event.title);
+                return { domNodes: [bg] };
+            }
+            var p = arg.event.extendedProps;
             var fmt = function (d) {
                 return d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
             };
@@ -1916,6 +1923,8 @@ document.addEventListener('DOMContentLoaded', function () {
         },
 
         eventClick: function (info) {
+            // Ignorar eventos de fondo (vacaciones / bloqueos): no abren el modal de cita.
+            if (info.event.display === 'background') return;
             abrirModalCita(info.event.id, info.event.title, info.event.start, info.event.extendedProps);
         },
 
