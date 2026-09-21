@@ -910,6 +910,9 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
                             <li><button class="dropdown-item" type="submit" onclick="setEstado('No contestó')"><?php echo estado_label('No contestó'); ?></button></li>
                         </ul>
                     </div>
+                    <button id="btnRestablecer" class="btn btn-success d-none" type="button" onclick="restablecerCitaModal()">
+                        <i class="bi bi-arrow-counterclockwise"></i> <?php te('cal.restore'); ?>
+                    </button>
                     <button id="btnEliminar" class="btn btn-outline-danger" type="button" onclick="eliminarCita()">
                         <i class="bi bi-trash"></i> <?php te('cal.delete'); ?>
                     </button>
@@ -1132,6 +1135,9 @@ const TC = <?php echo json_encode(array(
     'ausVac'          => t('cal.js.ausVac'),
     'ausBlq'          => t('cal.js.ausBlq'),
     'ausConfirm'      => t('cal.js.ausConfirm'),
+    'restoreConfirm'  => t('cal.js.restoreConfirm'),
+    'restoreOk'       => t('cal.js.restoreOk'),
+    'restoreError'    => t('cal.js.restoreError'),
     'connError'       => t('common.js.connError'),
     'diagNone'        => t('cal.diag.none'),
     'diagRemove'      => t('cal.diag.remove'),
@@ -1243,6 +1249,17 @@ async function guardarReagenda() {
     }).fail(function() {
         alert(TC.connError);
     });
+}
+
+// ── Restablecer una cita cancelada por error (vuelve a Pendiente) ────
+function restablecerCitaModal(){
+    var id = document.getElementById('idCita').value;
+    if (!id) return;
+    if (!confirm(TC.restoreConfirm)) return;
+    $.post('restablecer_cita.php', { idCita: id }, function(res){
+        if (res && res.ok) { alert(TC.restoreOk); location.reload(); }
+        else { alert(TC.restoreError + ((res && res.error) ? res.error : '')); }
+    }, 'json').fail(function(){ alert(TC.connError); });
 }
 
 // ── Reagendar arrastrando la cita en el calendario ───────────────────
@@ -1603,6 +1620,11 @@ function abrirModalCita(id, title, startDate, p) {
     const btnConfirmar   = document.getElementById('btnConfirmar');
     const btnCancelar    = document.getElementById('btnCancelar');
     const btnMasEstados  = document.getElementById('btnMasEstados');
+    const btnRestablecer = document.getElementById('btnRestablecer');
+
+    // Mostrar "Restablecer" solo si la cita está cancelada (para deshacer una cancelación por error)
+    const esCancelada = ['Cancelada','Cancelado','Cancelación Tardía','Cancelado por Profesional','No Asistió','No contestó'].indexOf(est) !== -1;
+    if (btnRestablecer) btnRestablecer.classList.toggle('d-none', !esCancelada);
 
     // Cerrar paneles reagendar/editar al abrir una nueva cita
     cerrarReagendar();

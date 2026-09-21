@@ -155,6 +155,7 @@ $badge = [
                         <th><?php te('cc.status'); ?></th>
                         <th><?php te('cc.reason'); ?></th>
                         <th><?php te('cc.cancelledBy'); ?></th>
+                        <th></th>
                     </tr></thead>
                     <tbody>
                     <?php if($rows): foreach($rows as $c):
@@ -177,9 +178,14 @@ $badge = [
                             <td><small class="text-muted"><?php echo $tieneAudit ? h($c['CANCELADO_POR_NOMBRE']?:'—') : '—'; ?></small>
                                 <?php if($tieneAudit && !empty($c['FECHA_CANCELACION'])): ?><div class="text-muted small"><?php echo h(date('m/d/Y H:i', strtotime($c['FECHA_CANCELACION']))); ?></div><?php endif; ?>
                             </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-success" onclick="restablecerCita(<?php echo (int)$c['IDCITA']; ?>, this)">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i><?php te('cc.restore'); ?>
+                                </button>
+                            </td>
                         </tr>
                     <?php endforeach; else: ?>
-                        <tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-calendar-x fs-2 d-block mb-2"></i><?php te('cc.empty'); ?></td></tr>
+                        <tr><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-calendar-x fs-2 d-block mb-2"></i><?php te('cc.empty'); ?></td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
@@ -189,5 +195,22 @@ $badge = [
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+var CC_T = {
+    confirm: <?php echo json_encode(t('cc.restoreConfirm')); ?>,
+    ok:      <?php echo json_encode(t('cc.restoreOk')); ?>,
+    err:     <?php echo json_encode(t('cc.restoreError')); ?>
+};
+function restablecerCita(id, btn){
+    if(!confirm(CC_T.confirm)) return;
+    if(btn){ btn.disabled = true; }
+    fetch('restablecer_cita.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({idCita:id}) })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.ok){ var tr = btn.closest('tr'); if(tr) tr.remove(); }
+        else { alert(CC_T.err + (res.error||'')); if(btn) btn.disabled=false; }
+      }).catch(function(){ alert(CC_T.err); if(btn) btn.disabled=false; });
+}
+</script>
 </body>
 </html>
