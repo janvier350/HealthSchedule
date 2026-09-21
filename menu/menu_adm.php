@@ -150,6 +150,13 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
             </li>
             <?php endif; ?>
+            <?php if (puede('agenda.ausencias')): ?>
+            <li>
+                <a href="ausencias_doctor.php" class="<?php echo menuActivo('ausencias_doctor.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-airplane"></i> <?php te('menu.ausencias'); ?>
+                </a>
+            </li>
+            <?php endif; ?>
 
             <!-- ══ PACIENTES ═══════════════════════════════════════════ -->
             <li class="app-sidebar__heading"><?php te('menu.heading.patients'); ?></li>
