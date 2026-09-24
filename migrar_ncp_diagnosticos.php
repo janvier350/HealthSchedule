@@ -287,6 +287,26 @@ $seed = [
   'Evidenciado por IMC de 28.4 kg/m², circunferencia de cintura elevada e ingesta ~500 kcal/día por encima del requerimiento','As evidenced by BMI 28.4 kg/m², elevated waist circumference, and intake ~500 kcal/day above the estimated requirement',
   'Déficit de 500 kcal/día con patrón alto en fibra y proteína adecuada; aumentar actividad física; metas SMART.','500 kcal/day deficit with a high-fiber, adequate-protein pattern; increase physical activity; SMART goals.',
   'Peso y circunferencia de cintura mensual; meta de 5-7% de pérdida en 6 meses.','Monthly weight and waist circumference; target 5-7% weight loss over 6 months.'],
+
+ // ── MNT (Terapia Médica Nutricional) — mapeo NCP + ICD-10 ─────────────
+ ['Pérdida de Peso Involuntaria (MNT)','Involuntary Weight Loss (MNT)','NC-3.2',
+  'Pérdida de peso involuntaria','Involuntary weight loss',
+  'Relacionada con ingesta energética inadecuada secundaria a la condición médica de base','Related to inadequate energy intake secondary to the underlying medical condition',
+  'Evidenciado por pérdida de peso no intencional y baja ingesta. ICD-10: R63.4 (pérdida de peso anormal), R64 (caquexia)','As evidenced by unintentional weight loss and reduced intake. ICD-10: R63.4 (abnormal weight loss), R64 (cachexia)',
+  'Plan hipercalórico e hiperproteico; SNO; comidas pequeñas y frecuentes; enriquecimiento calórico.','High-calorie, high-protein plan; ONS; small frequent meals; calorie fortification.',
+  'Peso y % de cambio; ingesta vs. necesidades. CPT: 97802 (inicial) / 97803 (seguimiento).','Weight and % change; intake vs. needs. CPT: 97802 (initial) / 97803 (follow-up).'],
+ ['Osteoporosis (MNT)','Osteoporosis (MNT)','NI-5.10.1',
+  'Ingesta inadecuada de minerales (calcio/vitamina D)','Inadequate mineral intake (calcium/vitamin D)',
+  'Relacionada con bajo consumo de alimentos ricos en calcio y vitamina D','Related to low intake of calcium- and vitamin D-rich foods',
+  'Evidenciado por densitometría/T-score y baja ingesta de calcio en el recordatorio. ICD-10: M81.0 (osteoporosis sin fractura), M80.00 (osteoporosis con fractura)','As evidenced by DXA/T-score and low dietary calcium on recall. ICD-10: M81.0 (osteoporosis without fracture), M80.00 (osteoporosis with fracture)',
+  'Aumentar calcio y vitamina D dietéticos; suplementación según indicación médica; actividad con carga de peso.','Increase dietary calcium and vitamin D; supplementation per medical order; weight-bearing activity.',
+  'Ingesta de calcio/vitamina D; laboratorios y densitometría de seguimiento. CPT: 97802 / 97803.','Calcium/vitamin D intake; follow-up labs and DXA. CPT: 97802 / 97803.'],
+ ['Artritis (MNT)','Arthritis (MNT)','NC-2.2',
+  'Alteración de valores de laboratorio relacionados con la nutrición','Altered nutrition-related laboratory values',
+  'Relacionada con inflamación crónica y/o interacción fármaco-nutrimento (p. ej. metotrexato y folato)','Related to chronic inflammation and/or a food-medication interaction (e.g. methotrexate and folate)',
+  'Evidenciado por laboratorios alterados y síntomas articulares. ICD-10: M19.90 (osteoartritis), M06.9 (artritis reumatoide)','As evidenced by altered labs and joint symptoms. ICD-10: M19.90 (osteoarthritis), M06.9 (rheumatoid arthritis)',
+  'Patrón antiinflamatorio; folato si usa metotrexato; control de peso; calcio/vitamina D si usa corticoides.','Anti-inflammatory dietary pattern; folate if on methotrexate; weight management; calcium/vitamin D if on corticosteroids.',
+  'Laboratorios, síntomas y peso. CPT: 97802 / 97803; G0270 si cambia la referencia.','Labs, symptoms and weight. CPT: 97802 / 97803; G0270 if referral changes.'],
 ];
 $chk = $conexion->prepare("SELECT id FROM ncp_diagnosticos WHERE enfermedad_en=? LIMIT 1");
 $ins = $conexion->prepare("INSERT INTO ncp_diagnosticos
