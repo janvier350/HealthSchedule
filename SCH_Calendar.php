@@ -276,6 +276,8 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
         .select2-results__options { max-height: 40vh !important; overflow-y: auto !important; }
 
         .fc-event { cursor: pointer; font-size: calc(0.85em * var(--cal-font-scale, 1)); padding: 2px 5px; }
+        /* El mismo control A-/A/A+ escala el texto del modal de Gestión de Cita */
+        #eventModal .modal-body { font-size: calc(1rem * var(--cal-font-scale, 1)); }
         #eventModal .btn { transition: all 0.3s ease; white-space: nowrap; }
         #eventModal .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
         /* Franja izquierda = tipo de consulta (el fondo del evento sigue indicando el estado) */
@@ -344,8 +346,8 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
         .cita-hist-card { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f1f1f1; }
         .cita-hist-card:last-child { border-bottom: none; }
         .cita-hist-main { flex: 1 1 auto; min-width: 0; }
-        .cita-hist-fecha { font-weight: 600; font-size: 0.82rem; color: #343a40; }
-        .cita-hist-sub { font-size: 0.74rem; color: #777; white-space: normal; }
+        .cita-hist-fecha { font-weight: 600; font-size: 0.82em; color: #343a40; }
+        .cita-hist-sub { font-size: 0.74em; color: #777; white-space: normal; }
         .cita-hist-estado { flex: 0 0 auto; }
 
         /* Lista de citas para móvil (Vista por Doctor) */
@@ -795,7 +797,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
 
                     <!-- Diagnósticos ICD-10 del paciente (para el biller): ver y añadir -->
                     <div id="citaDiagWrap" class="rounded mb-2" style="background:#fff;position:relative;border:2px solid #0d6efd;">
-                        <div class="fw-bold px-2 py-1" style="background:#0d6efd;color:#fff;font-size:.95rem;border-radius:.2rem .2rem 0 0;">
+                        <div class="fw-bold px-2 py-1" style="background:#0d6efd;color:#fff;font-size:.95em;border-radius:.2rem .2rem 0 0;">
                             <i class="bi bi-clipboard2-pulse me-1"></i><?php te('cal.diag.title'); ?>
                         </div>
                         <div class="p-2">
@@ -1675,14 +1677,14 @@ var _icd10Cat = null;           // catálogo cargado una sola vez
 function _pintaDiagChips(list){
     var c = document.getElementById('citaDiagLista'); if(!c) return;
     c.innerHTML = '';
-    if(!list || !list.length){ c.innerHTML = '<span class="badge bg-secondary text-white" style="font-size:.85rem;font-weight:600;">'+TC.diagNone+'</span>'; return; }
+    if(!list || !list.length){ c.innerHTML = '<span class="badge bg-secondary text-white" style="font-size:.85em;font-weight:600;">'+TC.diagNone+'</span>'; return; }
     list.forEach(function(it){
         var chip = document.createElement('span');
         chip.className = 'badge bg-primary text-white d-inline-flex align-items-center';
-        chip.style.cssText = 'gap:6px;padding:7px 8px 7px 12px;font-size:.92rem;font-weight:600;';
+        chip.style.cssText = 'gap:6px;padding:7px 8px 7px 12px;font-size:.92em;font-weight:600;';
         chip.innerHTML = '<span><strong>'+escHtml(it.codigo)+'</strong> '+escHtml(it.descripcion||'')+'</span>';
         var b = document.createElement('button');
-        b.type='button'; b.className='btn btn-sm p-0 px-1 text-white'; b.style.cssText='line-height:1;font-size:1.05rem;opacity:.9;';
+        b.type='button'; b.className='btn btn-sm p-0 px-1 text-white'; b.style.cssText='line-height:1;font-size:1.05em;opacity:.9;';
         b.innerHTML='&times;'; b.title=TC.diagRemove;
         b.onclick=function(){ eliminarDiagCita(it.id); };
         chip.appendChild(b); c.appendChild(chip);
@@ -1754,9 +1756,9 @@ function cargarInfoPacienteCita(idPaciente) {
                 var _edadLbl = info.getAttribute('data-edad-lbl') || '';
                 if (_edad) {
                     out += '<div class="d-flex align-items-center gap-2 mb-2 px-3 py-2 rounded" style="background:#fff3cd;border:2px solid #ffda6a;">' +
-                               '<i class="bi bi-person-badge" style="font-size:1.5rem;color:#664d03;"></i>' +
-                               '<span style="font-size:1.6rem;font-weight:800;color:#664d03;line-height:1;">' + _edad + '</span>' +
-                               '<span style="font-size:1rem;font-weight:600;color:#664d03;">' + _edadLbl + '</span>' +
+                               '<i class="bi bi-person-badge" style="font-size:1.5em;color:#664d03;"></i>' +
+                               '<span style="font-size:1.6em;font-weight:800;color:#664d03;line-height:1;">' + _edad + '</span>' +
+                               '<span style="font-size:1em;font-weight:600;color:#664d03;">' + _edadLbl + '</span>' +
                            '</div>';
                 }
                 out += '<div class="border rounded overflow-hidden">' + (style ? style.outerHTML : '') + info.outerHTML + '</div>';
