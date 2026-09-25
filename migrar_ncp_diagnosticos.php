@@ -307,6 +307,26 @@ $seed = [
   'Evidenciado por laboratorios alterados y síntomas articulares. ICD-10: M19.90 (osteoartritis), M06.9 (artritis reumatoide)','As evidenced by altered labs and joint symptoms. ICD-10: M19.90 (osteoarthritis), M06.9 (rheumatoid arthritis)',
   'Patrón antiinflamatorio; folato si usa metotrexato; control de peso; calcio/vitamina D si usa corticoides.','Anti-inflammatory dietary pattern; folate if on methotrexate; weight management; calcium/vitamin D if on corticosteroids.',
   'Laboratorios, síntomas y peso. CPT: 97802 / 97803; G0270 si cambia la referencia.','Labs, symptoms and weight. CPT: 97802 / 97803; G0270 if referral changes.'],
+
+ // ── Lote: Plan de cuidados de enfermería (endocrino/hepático) ─────────
+ ['Hipotiroidismo (Plan de cuidados)','Hypothyroidism (Care Plan)',null,
+  'Desequilibrio nutricional: ingesta superior a las necesidades','Imbalanced Nutrition: More Than Body Requirements',
+  'Relacionado con disminución de la tasa metabólica secundaria a deficiencia de hormona tiroidea','Related to reduced metabolic rate secondary to thyroid hormone deficiency',
+  'Evidenciado por tendencia al aumento de peso, fatiga, letargo y estreñimiento','As evidenced by tendency to weight gain, fatigue, lethargy and constipation',
+  'Dieta baja en calorías y rica en fibra para prevenir el aumento de peso y el estreñimiento; fomentar líquidos 2 L/día (salvo contraindicación); administrar levotiroxina en ayunas por la mañana (30–60 min antes de alimentos) y planificar periodos de descanso.','Low-calorie, high-fiber diet to prevent weight gain and constipation; encourage fluids 2 L/day (unless contraindicated); give levothyroxine in the morning on an empty stomach (30–60 min before food) and plan rest periods.',
+  'Registrar peso semanal y edema; monitorear TSH y T4 libre. Vigilar hipotermia/coma mixedematoso en casos graves.','Track weekly weight and edema; monitor TSH and Free T4. Watch for hypothermia/myxedema coma in severe cases.'],
+ ['Hipertiroidismo (Plan de cuidados)','Hyperthyroidism (Care Plan)',null,
+  'Desequilibrio nutricional: ingesta inferior a las necesidades','Imbalanced Nutrition: Less Than Body Requirements',
+  'Relacionado con estado hipermetabólico e hipermotilidad del tracto gastrointestinal','Related to hypermetabolic state and GI tract hypermotility',
+  'Evidenciado por pérdida de peso, taquicardia y aumento de la frecuencia de evacuaciones','As evidenced by weight loss, tachycardia and increased stool frequency',
+  'Dieta hipercalórica (4,000–5,000 kcal/día) e hiperproteica, fraccionada en tomas pequeñas y frecuentes; evitar estimulantes (cafeína, té, picantes); administrar betabloqueantes/antitiroideos según indicación y mantener ambiente fresco y tranquilo.','High-calorie (4,000–5,000 kcal/day), high-protein diet in small frequent meals; avoid stimulants (caffeine, tea, spicy foods); give beta-blockers/antithyroid drugs as ordered and keep a calm, cool environment.',
+  'Pesar diariamente y vigilar evacuaciones; monitorear frecuencia cardíaca, presión y ECG. Vigilar signos de tormenta tiroidea (taquicardia severa, fiebre alta, agitación).','Daily weight and stool frequency; monitor heart rate, blood pressure and ECG. Watch for thyroid storm (severe tachycardia, high fever, agitation).'],
+ ['Hígado Graso (HGNA/EHNA) — Plan de cuidados','Fatty Liver Disease (NAFLD/MASLD) — Care Plan',null,
+  'Riesgo de deterioro de la función hepática','Risk for Impaired Liver Function',
+  'Relacionado con acumulación de lípidos en el parénquima hepático, resistencia a la insulina y disfunción metabólica','Related to lipid accumulation in hepatic parenchyma, insulin resistance and metabolic dysfunction',
+  'Evidenciado por enzimas hepáticas elevadas (ALT/AST), perfil lipídico alterado y síndrome metabólico','As evidenced by elevated liver enzymes (ALT/AST), altered lipid panel and metabolic syndrome',
+  'Patrón mediterráneo de bajo índice glucémico; reducir carbohidratos refinados, grasas saturadas y bebidas con fructosa; meta de pérdida del 7–10% del peso corporal; 150 min/semana de ejercicio aeróbico moderado; evitar por completo el alcohol y los medicamentos hepatotóxicos.','Low-glycemic Mediterranean pattern; reduce refined carbohydrates, saturated fats and fructose-sweetened beverages; target 7–10% body-weight loss; 150 min/week moderate aerobic exercise; completely avoid alcohol and hepatotoxic medications.',
+  'Monitorear pruebas de función hepática (ALT, AST, bilirrubina) y perfil lipídico; evaluar adherencia al plan y meta de peso.','Monitor liver function tests (ALT, AST, bilirubin) and lipid panel; assess plan adherence and weight goal.'],
 ];
 $chk = $conexion->prepare("SELECT id FROM ncp_diagnosticos WHERE enfermedad_en=? LIMIT 1");
 $ins = $conexion->prepare("INSERT INTO ncp_diagnosticos
