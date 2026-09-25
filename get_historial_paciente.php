@@ -190,8 +190,8 @@ function imcColor($imc) {
 ?>
 <style>
     .badge-atendida { background:#6f42c1; color:#fff; }
-    .info-label { font-size:.7rem; text-transform:uppercase; color:#888; font-weight:600; }
-    .imc-pill { display:inline-block; padding:2px 8px; border-radius:20px; font-size:.75rem; font-weight:600; color:#fff; }
+    .info-label { font-size:.7em; text-transform:uppercase; color:#888; font-weight:600; }
+    .imc-pill { display:inline-block; padding:2px 8px; border-radius:20px; font-size:.75em; font-weight:600; color:#fff; }
 </style>
 
 <!-- ── INFO DEL PACIENTE ─────────────────────────────────────── -->
@@ -200,17 +200,17 @@ function imcColor($imc) {
         <div class="col-md-7">
             <div class="d-flex gap-3 align-items-center mb-2">
                 <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);
-                            color:#fff;font-weight:700;font-size:1.2rem;display:flex;align-items:center;justify-content:center;">
+                            color:#fff;font-weight:700;font-size:1.2em;display:flex;align-items:center;justify-content:center;">
                     <?php echo strtoupper(substr($pac['NOMBRES'],0,1) . substr($pac['APELLIDOS'],0,1)); ?>
                 </div>
                 <div>
-                    <div class="fw-bold" style="font-size:1.05rem;">
+                    <div class="fw-bold" style="font-size:1.05em;">
                         <?php echo htmlspecialchars($pac['NOMBRES'] . ' ' . $pac['APELLIDOS']); ?>
                     </div>
                     <small class="text-muted">ID <?php echo htmlspecialchars($pac['CEDULA'] ?? '—'); ?></small>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-3" style="font-size:.85rem;">
+            <div class="d-flex flex-wrap gap-3" style="font-size:.85em;">
                 <?php if ($edad !== null): ?>
                     <span><i class="bi bi-person-fill text-muted me-1"></i><?php echo $edad; ?> <?php te('hp.years'); ?></span>
                 <?php endif; ?>
@@ -237,7 +237,7 @@ function imcColor($imc) {
                 <?php endif; ?>
             </div>
             <?php if ($icd10Codigo !== ''): ?>
-                <div class="mt-2" style="font-size:.85rem;">
+                <div class="mt-2" style="font-size:.85em;">
                     <span class="badge bg-info text-dark"><i class="bi bi-clipboard2-pulse me-1"></i>ICD-10: <?php echo htmlspecialchars($icd10Codigo); ?></span>
                     <span class="text-muted ms-1"><?php echo htmlspecialchars($icd10Descripcion); ?></span>
                 </div>
@@ -248,24 +248,24 @@ function imcColor($imc) {
         <div class="col-md-5">
             <div class="d-flex flex-wrap gap-2 justify-content-md-end">
                 <div class="text-center px-3 py-1 rounded" style="background:#e8f0fe;">
-                    <div style="font-size:1.2rem;font-weight:700;color:#3d5af1;"><?php echo $totalCitas; ?></div>
+                    <div style="font-size:1.2em;font-weight:700;color:#3d5af1;"><?php echo $totalCitas; ?></div>
                     <div class="info-label"><?php te('hp.totalAppts'); ?></div>
                 </div>
                 <div class="text-center px-3 py-1 rounded" style="background:#ede7f6;">
-                    <div style="font-size:1.2rem;font-weight:700;color:#6f42c1;"><?php echo $atendidas; ?></div>
+                    <div style="font-size:1.2em;font-weight:700;color:#6f42c1;"><?php echo $atendidas; ?></div>
                     <div class="info-label"><?php te('hp.attended'); ?></div>
                 </div>
                 <div class="text-center px-3 py-1 rounded" style="background:#fff3cd;">
-                    <div style="font-size:1.2rem;font-weight:700;color:#e67e22;"><?php echo $pendientes; ?></div>
+                    <div style="font-size:1.2em;font-weight:700;color:#e67e22;"><?php echo $pendientes; ?></div>
                     <div class="info-label"><?php te('hp.pending'); ?></div>
                 </div>
                 <div class="text-center px-3 py-1 rounded" style="background:#fdecea;">
-                    <div style="font-size:1.2rem;font-weight:700;color:#c0392b;"><?php echo $canceladas; ?></div>
+                    <div style="font-size:1.2em;font-weight:700;color:#c0392b;"><?php echo $canceladas; ?></div>
                     <div class="info-label"><?php te('hp.cancelled'); ?></div>
                 </div>
                 <?php if ($imcProm): ?>
                 <div class="text-center px-3 py-1 rounded" style="background:#e8f5e9;">
-                    <div style="font-size:1.2rem;font-weight:700;color:#2e7d32;"><?php echo $imcProm; ?></div>
+                    <div style="font-size:1.2em;font-weight:700;color:#2e7d32;"><?php echo $imcProm; ?></div>
                     <div class="info-label"><?php te('hp.bmiAvg'); ?></div>
                 </div>
                 <?php endif; ?>
@@ -284,7 +284,7 @@ function imcColor($imc) {
 <div class="mx-4 mt-3 p-2 rounded d-flex align-items-start gap-2"
      style="background:#fdecea;border-left:4px solid #dc3545;">
     <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;"></i>
-    <div style="font-size:.85rem;color:#842029;white-space:pre-wrap;"><?php echo htmlspecialchars($alertaTxt); ?></div>
+    <div style="font-size:.85em;color:#842029;white-space:pre-wrap;"><?php echo htmlspecialchars($alertaTxt); ?></div>
 </div>
 <?php endif; ?>
 
@@ -295,7 +295,7 @@ function imcColor($imc) {
     <div class="col-md-6">
         <div class="border rounded p-2 h-100" style="background:#fff;">
             <div class="info-label mb-1"><i class="bi bi-journal-text"></i> <?php te('hp.important'); ?></div>
-            <div style="font-size:.83rem;white-space:pre-wrap;"><?php echo htmlspecialchars($notasTxt); ?></div>
+            <div style="font-size:.83em;white-space:pre-wrap;"><?php echo htmlspecialchars($notasTxt); ?></div>
         </div>
     </div>
     <?php endif; ?>
@@ -303,7 +303,7 @@ function imcColor($imc) {
     <div class="col-md-6">
         <div class="border rounded p-2 h-100" style="background:#fff;">
             <div class="info-label mb-1"><i class="bi bi-receipt"></i> <?php te('hp.billing'); ?></div>
-            <div style="font-size:.83rem;white-space:pre-wrap;"><?php echo htmlspecialchars($factNotasTxt); ?></div>
+            <div style="font-size:.83em;white-space:pre-wrap;"><?php echo htmlspecialchars($factNotasTxt); ?></div>
         </div>
     </div>
     <?php endif; ?>
@@ -316,7 +316,7 @@ function imcColor($imc) {
     <div class="border rounded p-2" style="background:#fff;">
         <div class="info-label mb-2"><i class="bi bi-graph-down-arrow"></i> <?php te('hp.weightPlans'); ?></div>
         <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0" style="font-size:.8rem;">
+            <table class="table table-sm align-middle mb-0" style="font-size:.8em;">
                 <thead class="table-light">
                     <tr>
                         <th><?php te('hp.date'); ?></th>
@@ -348,7 +348,7 @@ function imcColor($imc) {
                 </tbody>
             </table>
         </div>
-        <div class="text-muted mt-1" style="font-size:.7rem;"><?php te('hp.caloriesNote'); ?></div>
+        <div class="text-muted mt-1" style="font-size:.7em;"><?php te('hp.caloriesNote'); ?></div>
     </div>
 </div>
 <?php endif; ?>
@@ -400,7 +400,7 @@ function imcColor($imc) {
                     <span class="imc-pill" style="background:<?php echo imcColor((float)$c['IMC']); ?>">
                         <?php echo number_format($c['IMC'],1); ?>
                     </span>
-                    <div style="font-size:.68rem;color:#888;"><?php echo imcLabel((float)$c['IMC']); ?></div>
+                    <div style="font-size:.68em;color:#888;"><?php echo imcLabel((float)$c['IMC']); ?></div>
                 <?php else: ?>
                     <span class="text-muted">—</span>
                 <?php endif; ?>
