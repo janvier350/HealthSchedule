@@ -275,7 +275,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
            la lista larga de horarios se salga de la pantalla sin poder bajar). */
         .select2-results__options { max-height: 40vh !important; overflow-y: auto !important; }
 
-        .fc-event { cursor: pointer; font-size: 0.85em; padding: 2px 5px; }
+        .fc-event { cursor: pointer; font-size: calc(0.85em * var(--cal-font-scale, 1)); padding: 2px 5px; }
         #eventModal .btn { transition: all 0.3s ease; white-space: nowrap; }
         #eventModal .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
         /* Franja izquierda = tipo de consulta (el fondo del evento sigue indicando el estado) */
@@ -518,9 +518,17 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
                 <div class="main-card mb-3 card" id="viewFullCalendar">
                     <div class="card-body">
                         <!-- Leyenda de colores (colapsable, para ganar espacio arriba) -->
-                        <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#leyendaColores1" aria-expanded="false">
-                            <i class="bi bi-palette"></i> <?php te('cal.legendToggle'); ?>
-                        </button>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#leyendaColores1" aria-expanded="false">
+                                <i class="bi bi-palette"></i> <?php te('cal.legendToggle'); ?>
+                            </button>
+                            <div class="btn-group btn-group-sm ms-auto" role="group" aria-label="<?php te('cal.fontSize'); ?>">
+                                <span class="d-flex align-items-center text-muted me-1" style="font-size:.8rem;"><i class="bi bi-fonts me-1"></i><?php te('cal.fontSize'); ?></span>
+                                <button class="btn btn-outline-secondary" type="button" onclick="calFont(-1)" title="<?php te('cal.fontSmaller'); ?>">A&minus;</button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="calFont(0)" title="<?php te('cal.fontReset'); ?>">A</button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="calFont(1)" title="<?php te('cal.fontLarger'); ?>" style="font-size:1.05rem;">A+</button>
+                            </div>
+                        </div>
                         <div class="collapse" id="leyendaColores1">
                             <div class="leyenda-calendario">
                                 <span class="leyenda-label"><?php te('cal.legendStatus'); ?></span>
@@ -1976,6 +1984,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     calendar.render();
+
+    // ── Tamaño de letra de las citas (A-/A/A+, persistente por equipo) ──
+    (function(){
+        var MIN = 1.0, MAX = 2.2, STEP = 0.15, KEY = 'calFontScale';
+        function get(){
+            try { var v = parseFloat(localStorage.getItem(KEY)); return isNaN(v) ? 1 : Math.min(MAX, Math.max(MIN, v)); }
+            catch(e){ return 1; }
+        }
+        function apply(v){
+            document.documentElement.style.setProperty('--cal-font-scale', v);
+            try { calendar.updateSize(); } catch(e){}
+        }
+        // Expuesta globalmente para los botones A-/A/A+ del encabezado.
+        window.calFont = function(dir){
+            var v = (dir === 0) ? 1 : get() + (dir > 0 ? STEP : -STEP);
+            v = Math.min(MAX, Math.max(MIN, Math.round(v * 100) / 100));
+            try { localStorage.setItem(KEY, v); } catch(e){}
+            apply(v);
+        };
+        apply(get());
+    })();
 
     // ── Vacaciones / no disponibilidad: fondo de color en el calendario ──
     (function(){
