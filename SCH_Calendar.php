@@ -601,7 +601,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
 
 <!-- ── MODAL AGENDAR CITA ─────────────────────────────────────────── -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><?php te('cal.newAppointment'); ?></h5>
@@ -2307,14 +2307,27 @@ function renderVistaPorDoctorLista(doctores, weekEnd) {
 }
 
 // ── Select2 en modal Agendar ─────────────────────────────────────────
-$(document).ready(function () {
-    $('#editModal').on('shown.bs.modal', function () {
-        $('.select-busqueda').select2({
-            theme: 'bootstrap-5',
-            dropdownParent: $('#editModal'),
-            width: '100%'
-        });
+// Destruir cualquier instancia previa antes de crear una nueva evita que,
+// al reabrir el modal, se apilen contenedores select2 duplicados (lo que
+// hacía que la selección de Doctor "rebotara" en algunas pantallas).
+function _destruirSelect2Agendar() {
+    $('#editModal .select-busqueda').each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+            try { $(this).select2('destroy'); } catch (e) {}
+        }
     });
+}
+function _initSelect2Agendar() {
+    _destruirSelect2Agendar();
+    $('#editModal .select-busqueda').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $('#editModal'),
+        width: '100%'
+    });
+}
+$(document).ready(function () {
+    $('#editModal').on('shown.bs.modal', _initSelect2Agendar);
+    $('#editModal').on('hidden.bs.modal', _destruirSelect2Agendar);
 });
 
 // ── Recurrencia (mostrar/ocultar controles) ──────────────────────────
