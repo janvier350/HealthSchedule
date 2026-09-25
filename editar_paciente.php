@@ -50,6 +50,31 @@ $tieneCity   = $colExiste('CITY');
 $tieneState  = $colExiste('STATE');
 $tieneZip    = $colExiste('ZIP');
 
+// Auto-provisión: si faltan las columnas de ciudad/estado/ZIP, crearlas aquí
+// para no perder lo que el usuario escribe (evita que "se elimine" la ciudad
+// o el estado cuando la migración no se ha ejecutado en el servidor).
+if (!$tieneCity)  { if ($conexion->query("ALTER TABLE AG_PACIENTE ADD COLUMN CITY VARCHAR(120) NULL"))  $tieneCity  = true; }
+if (!$tieneState) { if ($conexion->query("ALTER TABLE AG_PACIENTE ADD COLUMN STATE VARCHAR(60) NULL"))  $tieneState = true; }
+if (!$tieneZip)   { if ($conexion->query("ALTER TABLE AG_PACIENTE ADD COLUMN ZIP VARCHAR(15) NULL"))     $tieneZip   = true; }
+
+// Auto-ampliación: garantizar que ADDRESS y TELEFONO sean suficientemente
+// amplias para una dirección completa y teléfonos largos (evita el error
+// "Data too long" que hacía fallar todo el guardado).
+$anchoCol = function ($col) use ($conexion, $dbName) {
+    $r = $conexion->query(
+        "SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH AS len FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='AG_PACIENTE' AND COLUMN_NAME='$col' LIMIT 1"
+    );
+    return $r ? $r->fetch_assoc() : null;
+};
+foreach (['ADDRESS' => ['VARCHAR(255)', 255], 'TELEFONO' => ['VARCHAR(30)', 30]] as $col => $obj) {
+    $info = $anchoCol($col);
+    if (!$info) continue;
+    $len = ($info['len'] === null) ? 0 : (int)$info['len'];
+    $esTexto = in_array(strtolower($info['DATA_TYPE']), ['varchar','char','text','tinytext','mediumtext','longtext'], true);
+    if (!$esTexto || $len < $obj[1]) { $conexion->query("ALTER TABLE AG_PACIENTE MODIFY COLUMN $col {$obj[0]} NULL"); }
+}
+
 $idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
 // Construir el UPDATE dinámicamente
