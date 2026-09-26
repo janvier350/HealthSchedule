@@ -553,6 +553,14 @@ $prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '')
             </button>
         </div>
 
+        <!-- ── AVISO: borrador local recuperado ────────────────────── -->
+        <div id="avisoBorrador" class="alert alert-warning d-none align-items-center justify-content-between flex-wrap gap-2 py-2">
+            <span><i class="bi bi-arrow-counterclockwise me-1"></i><span id="avisoBorradorTxt"></span></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="descartarBorrador()">
+                <i class="bi bi-x-circle"></i> <span id="btnDescartarBorradorTxt"></span>
+            </button>
+        </div>
+
         <!-- ── EDITOR ──────────────────────────────────────────────── -->
         <div class="mb-1 d-flex justify-content-end flex-wrap gap-2">
             <?php if (!empty($ncpDiag)): ?>
@@ -564,8 +572,11 @@ $prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '')
                 <i class="bi bi-arrow-clockwise"></i> <?php te('att.prev.load'); ?>
             </button>
         </div>
-        <div class="mb-3">
+        <div class="mb-1">
             <textarea id="editorInforme" name="informe"></textarea>
+        </div>
+        <div id="draftStatus" class="text-muted small mb-3 d-none">
+            <i class="bi bi-cloud-check me-1"></i><span id="draftStatusTxt"></span>
         </div>
 
         <!-- ── BOTONES ─────────────────────────────────────────────── -->
@@ -757,6 +768,11 @@ const ATT = {
         indicator:         <?php echo json_encode(t('att.ph.indicator')); ?>,
         goal:              <?php echo json_encode(t('att.ph.goal')); ?>,
         progress:          <?php echo json_encode(t('att.ph.progress')); ?>
+    },
+    draft: {
+        saved:    <?php echo json_encode(t('att.draft.saved')); ?>,
+        restored: <?php echo json_encode(t('att.draft.restored')); ?>,
+        discard:  <?php echo json_encode(t('att.draft.discard')); ?>
     }
 };
 </script>
@@ -1006,7 +1022,64 @@ $(document).ready(function(){
     }
     // El botón para (re)cargar la consulta anterior sólo si existe una.
     if (previa !== '') $('#btnCargarPrevia').removeClass('d-none');
+
+    // ── AUTOGUARDADO LOCAL (borrador) ────────────────────────────────
+    // Si existe un borrador local para esta cita y difiere de lo cargado,
+    // se restaura automáticamente (recupera lo que la Dra. estaba escribiendo
+    // aunque se haya cerrado la sesión o la página).
+    try {
+        var raw = localStorage.getItem(_draftKey);
+        if (raw) {
+            var d = JSON.parse(raw);
+            var cargado  = ($('#editorInforme').summernote('code') || '').replace(/\s+/g, '');
+            var borrador = (d && d.html ? d.html : '').replace(/\s+/g, '');
+            var borradorTxt = (d && d.html ? d.html : '').replace(/<[^>]*>/g, '').trim();
+            if (borradorTxt.length > 0 && borrador !== cargado) {
+                $('#editorInforme').summernote('code', d.html);
+                $('#avisoBorradorTxt').text((ATT.draft.restored || '').replace('%t', _fmtHoraBorrador(d.ts)));
+                document.getElementById('btnDescartarBorradorTxt').textContent = ATT.draft.discard || '';
+                $('#avisoBorrador').removeClass('d-none').addClass('d-flex');
+            }
+        }
+    } catch (e) {}
+
+    // Guardar el borrador al escribir (con rebote) y periódicamente.
+    $('#editorInforme').on('summernote.change', function () {
+        clearTimeout(_draftTimer);
+        _draftTimer = setTimeout(_guardarBorrador, 1200);
+    });
+    setInterval(_guardarBorrador, 5000);
+    window.addEventListener('beforeunload', _guardarBorrador);
 });
+
+// ── Helpers de autoguardado local (borrador de la nota) ──────────────
+var _draftKey   = 'att_draft_' + DATOS_CITA.idCita;
+var _draftTimer = null;
+function _fmtHoraBorrador(ts) {
+    try { return new Date(ts).toLocaleTimeString(); } catch (e) { return ''; }
+}
+function _guardarBorrador() {
+    try {
+        var html = $('#editorInforme').summernote('code') || '';
+        if (html.replace(/<[^>]*>/g, '').trim().length === 0) return;   // no guardar vacío
+        var ts = Date.now();
+        localStorage.setItem(_draftKey, JSON.stringify({ html: html, ts: ts }));
+        var box = document.getElementById('draftStatus');
+        var txt = document.getElementById('draftStatusTxt');
+        if (box && txt) {
+            txt.textContent = (ATT.draft.saved || '').replace('%t', _fmtHoraBorrador(ts));
+            box.classList.remove('d-none');
+        }
+    } catch (e) {}
+}
+function descartarBorrador() {
+    try { localStorage.removeItem(_draftKey); } catch (e) {}
+    var b = document.getElementById('avisoBorrador');
+    if (b) { b.classList.add('d-none'); b.classList.remove('d-flex'); }
+}
+function _limpiarBorrador() {
+    try { localStorage.removeItem(_draftKey); } catch (e) {}
+}
 
 // Carga (o recarga) la nota de la consulta anterior en el editor.
 function cargarConsultaAnterior(){
@@ -1365,10 +1438,12 @@ function guardarAtencion(){
         success: function(res){
             var r = (res || '').trim();
             if (r === 'OK') {
+                _limpiarBorrador();   // nota guardada en el servidor: ya no hace falta el borrador local
                 alert(ATT.savedOk);
                 window.location.href = 'SCH_Calendar.php';
             } else if (r.indexOf('PARCIAL:') === 0) {
                 // Informe guardado, pero no se pudo marcar la cita como Atendida.
+                _limpiarBorrador();
                 alert(ATT.savedPartial + '\n\n' + r.substring(8).trim());
                 window.location.href = 'SCH_Calendar.php';
             } else if (r === 'DATOS_INCOMPLETOS') {
