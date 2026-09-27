@@ -1,6 +1,7 @@
 <?php
 require_once("funciones.php");
 require_once("conexionBD.php");
+require_once(__DIR__ . "/auditoria.php");
 $conexion = conectarse();
 session_start();
 
@@ -72,6 +73,7 @@ if ($existe) {
     // Insert status
     if ($consulta) {
         $nuevoId = (int)$conexion->insert_id;
+        auditar($conexion, 'Pacientes', 'crear', 'AG_PACIENTE', $nuevoId, 'Creó paciente: '.trim($nombres.' '.$apellidos));
 
         // Seguro primario (opcional): si el usuario eligió una aseguradora en el mismo
         // formulario de Create Patient, se guarda junto con el paciente. Así evitamos

@@ -1,6 +1,7 @@
 <?php
 require_once("funciones.php");
 require_once("conexionBD.php");
+require_once(__DIR__ . "/auditoria.php");
 $conexion = conectarse();
 session_start();
 
@@ -63,6 +64,8 @@ if ($esCancelacion && $tieneAuditCancel) {
 }
 
 if ($stmt->execute()) {
+    auditar($conexion, 'Agenda', ($esCancelacion ? 'cancelar' : 'estado'), 'AG_CITA', $id,
+        'Estado de cita → '.$estado.($esCancelacion && $motivo !== '' ? '. Motivo: '.$motivo : ''));
     echo json_encode([
         "success" => true,
         "message" => "Estado actualizado correctamente",

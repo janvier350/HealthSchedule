@@ -3,6 +3,7 @@ session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once("class/email_cita.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -99,6 +100,10 @@ if (!$stmt->execute()) {
     exit;
 }
 $stmt->close();
+
+auditar($conexion, 'Agenda', 'reagendar', 'AG_CITA', $idCita,
+    ($alcance === 'todas' ? 'Reagendó la serie' : 'Reagendó la cita').
+    ' de '.$fechaAnterior.' '.$horaAnterior.' a '.$fecha.' '.$hora);
 
 // ── Notificar al paciente del reagendamiento ────────────────────────
 $stmt_info = $conexion->prepare(

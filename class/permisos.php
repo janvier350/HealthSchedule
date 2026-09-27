@@ -50,6 +50,7 @@ function permisos_catalogo() {
         'rep.calculadora'      => ['Calculadora nutricional',       'Reportes',      ['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>0]],
         // Panel de control
         'panel.usuarios'       => ['Usuarios (crear / listar)',     'Panel de control',['SISTEMA'=>1,'DOCTOR'=>0,'USUARIO'=>0,'ASISTENTE'=>0]],
+        'panel.auditoria'      => ['Bitácora de cambios (auditoría)','Panel de control',['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>0]],
     ];
 }
 

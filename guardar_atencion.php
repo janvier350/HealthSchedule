@@ -13,6 +13,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -77,6 +78,9 @@ if (!$updCita->execute()) {
     exit;
 }
 $updCita->close();
+
+auditar($conexion, 'Atención', 'atender', 'AG_CITA', $idCita, 'Guardó la nota de consulta y marcó la cita como Atendida.');
+
 $conexion->close();
 
 echo 'OK';
