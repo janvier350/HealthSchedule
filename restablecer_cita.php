@@ -7,6 +7,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 header('Content-Type: application/json; charset=utf-8');
@@ -36,6 +37,9 @@ if ($tieneAudit) {
     $stmt = $conexion->prepare("UPDATE AG_CITA SET ESTADO_CITA='Pendiente' WHERE IDCITA=?");
 }
 $stmt->bind_param('i', $id);
-if ($stmt->execute()) { echo json_encode(['ok'=>true]); }
+if ($stmt->execute()) {
+    auditar($conexion, 'Agenda', 'restaurar', 'AG_CITA', $id, 'Restableció cita cancelada a Pendiente.');
+    echo json_encode(['ok'=>true]);
+}
 else { echo json_encode(['ok'=>false,'error'=>$stmt->error]); }
 $stmt->close();

@@ -2,6 +2,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 
 if (!isset($_SESSION["rol"])) { echo 'SIN_SESION'; exit; }
@@ -100,6 +101,7 @@ $stmt = $conexion->prepare($sql);
 $stmt->bind_param($tipos, ...$vals);
 
 if ($stmt->execute()) {
+    auditar($conexion, 'Pacientes', 'editar', 'AG_PACIENTE', $id, 'Editó paciente: '.trim($nombres.' '.$apellidos));
     echo $tieneAlerta ? 'OK' : 'OK_SIN_ALERTA';
 } else {
     echo 'ERROR: ' . $stmt->error;

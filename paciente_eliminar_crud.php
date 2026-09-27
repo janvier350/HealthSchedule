@@ -8,6 +8,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -31,6 +32,9 @@ if ($tieneAudit) {
     $stmt->bind_param('i', $id);
 }
 if ($stmt->execute()) {
+    if ($stmt->affected_rows > 0) {
+        auditar($conexion, 'Pacientes', 'eliminar', 'AG_PACIENTE', $id, 'Eliminó paciente. Motivo: '.$motivo);
+    }
     echo $stmt->affected_rows > 0 ? 'OK' : 'NO_CAMBIO';
 } else {
     echo 'ERROR: ' . $stmt->error;

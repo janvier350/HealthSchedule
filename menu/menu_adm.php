@@ -342,6 +342,16 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             <?php endif; ?>
             <?php endif; ?>
 
+            <!-- ══ AUDITORÍA (SISTEMA/Dra. Silvia o a quien se otorgue) ══ -->
+            <?php if (puede('panel.auditoria')): ?>
+            <?php if (!puede('panel.usuarios')): ?><li class="app-sidebar__heading"><?php te('menu.heading.controlPanel'); ?></li><?php endif; ?>
+            <li>
+                <a href="auditoria.php" class="<?php echo menuActivo('auditoria.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-journal-text"></i> <?php te('menu.auditlog'); ?>
+                </a>
+            </li>
+            <?php endif; ?>
+
             <!-- ══ AYUDA (todos los roles) ═══════════════════════════ -->
             <li class="app-sidebar__heading"><?php te('help.centerTitle'); ?></li>
             <li>

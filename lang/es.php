@@ -831,6 +831,7 @@ return array(
     'menu.users'               => 'Usuarios',
     'menu.list'                => 'Listado',
     'menu.userPermissions'     => 'Permisos por Usuario',
+    'menu.auditlog'            => 'Bitácora de cambios',
     'menu.logout'              => 'Cerrar Sesión',
 
     // ── Planificador de Peso Corporal (body_weight_planner.php) ──

@@ -831,6 +831,7 @@ return array(
     'menu.users'               => 'Users',
     'menu.list'                => 'List',
     'menu.userPermissions'     => 'User Permissions',
+    'menu.auditlog'            => 'Change log',
     'menu.logout'              => 'Log Out',
 
     // ── Body Weight Planner (body_weight_planner.php) ──

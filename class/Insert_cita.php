@@ -2,6 +2,7 @@
 require_once("funciones.php");
 require_once("conexionBD.php");
 require_once("email_cita.php");
+require_once(__DIR__ . "/auditoria.php");
 $conexion = conectarse();
 session_start();
 
@@ -194,6 +195,9 @@ if ($dbName) {
         $tieneSerie = true;
     }
 }
+
+auditar($conexion, 'Agenda', 'crear', 'AG_CITA', $primeraIdCita,
+    'Creó '.$creadas.' cita(s)'.($tieneSerie ? ' (serie)' : '').' desde '.$primeraFechaOK.' '.$timeIni);
 
 // El correo se enviará solo por la PRIMERA cita creada.
 $fechafactura = $primeraFechaOK;
