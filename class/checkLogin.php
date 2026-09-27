@@ -3,6 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 require_once("funciones.php");
 require_once("conexionBD.php");
+require_once(__DIR__ . "/auditoria.php");
 require_once(__DIR__ . "/../lang/i18n.php");
 $conexion = conectarse();
 ?>
@@ -39,14 +40,18 @@ if ($result->num_rows > 0) {
         // session.gc_maxlifetime en .user.ini.
         $_SESSION['expire'] = $_SESSION['start'] + (60 * 60 * 24);
 
+        auditar($conexion, 'Sesión', 'login', 'ADM_USUARIO', $row['IDADM_USUARIO'], 'Inició sesión');
+
         echo "<script language='JavaScript'>";
         echo 'self.location = "../SCH_Calendar.php"';
-        echo "</script>"; 
+        echo "</script>";
     } else {
+        auditar($conexion, 'Sesión', 'login_fallido', 'ADM_USUARIO', null, 'Contraseña incorrecta para usuario: '.$username);
         echo htmlspecialchars(t('login.error_wrong'), ENT_QUOTES, 'UTF-8');
         echo "<br><a href='../index.php'>" . htmlspecialchars(t('login.retry'), ENT_QUOTES, 'UTF-8') . "</a>";
     }
 } else {
+    auditar($conexion, 'Sesión', 'login_fallido', 'ADM_USUARIO', null, 'Usuario no encontrado: '.$username);
     echo htmlspecialchars(t('login.error_notfound'), ENT_QUOTES, 'UTF-8');
 }
 
