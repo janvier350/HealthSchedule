@@ -3,6 +3,7 @@ session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once("class/email_cita.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -134,6 +135,10 @@ if (!$stmt->execute()) {
     exit;
 }
 $stmt->close();
+
+auditar($conexion, 'Agenda', 'editar', 'AG_CITA', $idCita,
+    ($alcance === 'todas' ? 'Editó la serie de citas' : 'Editó la cita').
+    ($cambioFechaHora ? (' — fecha/hora: '.$fechaAnterior.' '.$horaAnterior.' → '.$fecha.' '.$hora) : ' — cambió doctor/tipo/lugar'));
 
 // Si NO cambió la fecha ni la hora, es una corrección interna: no se notifica.
 if (!$cambioFechaHora) {

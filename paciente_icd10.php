@@ -11,6 +11,7 @@
 session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once("class/auditoria.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 header('Content-Type: application/json; charset=utf-8');
@@ -62,16 +63,26 @@ if ($accion === 'agregar') {
     $ins->bind_param('iii',$idPaciente,$idIcd10,$idUser);
     $ins->execute(); $ins->close();
     sincronizarPrincipal($conexion,$idPaciente,$tieneColPrincipal);
+    auditar($conexion, 'ICD-10', 'agregar', 'AG_PACIENTE', $idPaciente,
+        'Agregó ICD-10 '.$cat['CODIGO'].' — '.$cat['DESCRIPCION']);
     echo json_encode(['ok'=>true, 'lista'=>listar($conexion,$idPaciente)]);
     exit;
 }
 
 if ($accion === 'eliminar') {
     if ($idIcd10 <= 0) { echo json_encode(['ok'=>false,'error'=>'ICD_INVALIDO']); exit; }
+    // Buscar el código antes de borrar, para dejarlo en la bitácora.
+    $codTxt = '#'.$idIcd10;
+    if ($q = $conexion->prepare("SELECT CODIGO, DESCRIPCION FROM ENFE_DIAG_COD WHERE ID_ENFE_DIAG_COD=? LIMIT 1")) {
+        $q->bind_param('i',$idIcd10); $q->execute();
+        if ($c = $q->get_result()->fetch_assoc()) $codTxt = $c['CODIGO'].' — '.$c['DESCRIPCION'];
+        $q->close();
+    }
     $del = $conexion->prepare("DELETE FROM paciente_icd10 WHERE IDPACIENTE=? AND ID_ENFE_DIAG_COD=?");
     $del->bind_param('ii',$idPaciente,$idIcd10);
     $del->execute(); $del->close();
     sincronizarPrincipal($conexion,$idPaciente,$tieneColPrincipal);
+    auditar($conexion, 'ICD-10', 'quitar', 'AG_PACIENTE', $idPaciente, 'Quitó ICD-10 '.$codTxt);
     echo json_encode(['ok'=>true, 'lista'=>listar($conexion,$idPaciente)]);
     exit;
 }
