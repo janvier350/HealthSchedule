@@ -79,7 +79,7 @@ $tieneSerie = (int)$conexion->query(
 // Leer la fecha/hora/serie actuales ANTES de actualizar
 $colSerie = $tieneSerie ? ', IDSERIE' : '';
 $stmt_old = $conexion->prepare(
-    "SELECT FECHA_CITA, HORA_INICIO $colSerie FROM AG_CITA WHERE IDCITA = ? AND ESTADO = 'A'"
+    "SELECT FECHA_CITA, HORA_INICIO, IDTIPOCONSULTA, IDDOCTOR, IDAGENCIA $colSerie FROM AG_CITA WHERE IDCITA = ? AND ESTADO = 'A'"
 );
 $stmt_old->bind_param("i", $idCita);
 $stmt_old->execute();
@@ -95,6 +95,22 @@ $fechaAnterior = $citaVieja['FECHA_CITA'];
 $horaAnterior  = substr($citaVieja['HORA_INICIO'] ?? '', 0, 5);
 $idSerie       = $tieneSerie ? (int)($citaVieja['IDSERIE'] ?? 0) : 0;
 $cambioFechaHora = ($fechaAnterior !== $fecha) || ($horaAnterior !== $hora);
+
+// Valores anteriores (para el diff de la bitácora)
+$tipoAnterior  = (int)($citaVieja['IDTIPOCONSULTA'] ?? 0);
+$docAnterior   = (int)($citaVieja['IDDOCTOR'] ?? 0);
+$ageAnterior   = (int)($citaVieja['IDAGENCIA'] ?? 0);
+// Resuelve un nombre desde una tabla (o '#id' / '(ninguno)' si no aplica).
+$nombreDe = function ($sql, $idv) use ($conexion) {
+    $idv = (int)$idv;
+    if ($idv <= 0) return '(ninguno)';
+    if ($st = $conexion->prepare($sql)) {
+        $st->bind_param('i', $idv); $st->execute();
+        $r = $st->get_result()->fetch_assoc(); $st->close();
+        if ($r) return trim(reset($r));
+    }
+    return '#'.$idv;
+};
 
 if ($alcance === 'todas' && $idSerie > 0) {
     // Aplicar la hora + doctor + tipo + agencia a esta cita y a todas las FUTURAS de la serie.
@@ -136,9 +152,26 @@ if (!$stmt->execute()) {
 }
 $stmt->close();
 
-auditar($conexion, 'Agenda', 'editar', 'AG_CITA', $idCita,
-    ($alcance === 'todas' ? 'Editó la serie de citas' : 'Editó la cita').
-    ($cambioFechaHora ? (' — fecha/hora: '.$fechaAnterior.' '.$horaAnterior.' → '.$fecha.' '.$hora) : ' — cambió doctor/tipo/lugar'));
+// Diff de campos para la bitácora
+$cambios = [];
+if ($cambioFechaHora) {
+    $cambios[] = 'Fecha/hora: '.$fechaAnterior.' '.$horaAnterior.' → '.$fecha.' '.$hora;
+}
+if ($tipoAnterior !== $idTipoConsulta) {
+    $cambios[] = 'Tipo: "'.$nombreDe("SELECT NOMBRES FROM AG_TIPOCONSULTA WHERE IDTIPOCONSULTA=? LIMIT 1", $tipoAnterior).
+                 '" → "'.$nombreDe("SELECT NOMBRES FROM AG_TIPOCONSULTA WHERE IDTIPOCONSULTA=? LIMIT 1", $idTipoConsulta).'"';
+}
+if ($docAnterior !== $idDoctor) {
+    $cambios[] = 'Doctor: "'.$nombreDe("SELECT CONCAT(NOMBRES,' ',APELLIDOS) n FROM ADM_USUARIO WHERE IDADM_USUARIO=? LIMIT 1", $docAnterior).
+                 '" → "'.$nombreDe("SELECT CONCAT(NOMBRES,' ',APELLIDOS) n FROM ADM_USUARIO WHERE IDADM_USUARIO=? LIMIT 1", $idDoctor).'"';
+}
+if ($ageAnterior !== $idAgencia) {
+    $cambios[] = 'Lugar: "'.$nombreDe("SELECT DESCRIPCION FROM ADM_AGENCIA WHERE IDAGENCIA=? LIMIT 1", $ageAnterior).
+                 '" → "'.$nombreDe("SELECT DESCRIPCION FROM ADM_AGENCIA WHERE IDAGENCIA=? LIMIT 1", $idAgencia).'"';
+}
+$detalleCita = ($alcance === 'todas' ? 'Editó la serie de citas' : 'Editó la cita');
+$detalleCita .= $cambios ? ' — '.implode('; ', $cambios) : ' (sin cambios de datos)';
+auditar($conexion, 'Agenda', 'editar', 'AG_CITA', $idCita, $detalleCita);
 
 // Si NO cambió la fecha ni la hora, es una corrección interna: no se notifica.
 if (!$cambioFechaHora) {
