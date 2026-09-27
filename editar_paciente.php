@@ -78,6 +78,44 @@ foreach (['ADDRESS' => ['VARCHAR(255)', 255], 'TELEFONO' => ['VARCHAR(30)', 30]]
 
 $idicd10 = isset($_POST['idicd10']) && ctype_digit((string)$_POST['idicd10']) ? (int)$_POST['idicd10'] : 0;
 
+// ── Diff de campos para la bitácora: leer valores actuales y comparar ──
+$campoLabel = [
+    'NOMBRES'=>'Nombres','APELLIDOS'=>'Apellidos','CEDULA'=>'ID','TELEFONO'=>'Teléfono',
+    'EMAIL'=>'Correo','FECHANACIMIENTO'=>'Fecha nac.','SEX'=>'Sexo','GENDER'=>'Género',
+    'ADDRESS'=>'Dirección','NOTES'=>'Notas','ADDNOTES'=>'Notas fact.',
+    'CITY'=>'Ciudad','STATE'=>'Estado','ZIP'=>'ZIP','ALERTA'=>'Alerta','IDIOMA'=>'Idioma',
+];
+$nuevo = [
+    'NOMBRES'=>$nombres,'APELLIDOS'=>$apellidos,'CEDULA'=>$cedula,'TELEFONO'=>$telefono,
+    'EMAIL'=>$email,'FECHANACIMIENTO'=>(string)($fecNacParam ?? ''),'SEX'=>$sex,'GENDER'=>$gender,
+    'ADDRESS'=>$address,'NOTES'=>$notes,'ADDNOTES'=>$addNotes,
+];
+if ($tieneCity)   $nuevo['CITY']   = $city;
+if ($tieneState)  $nuevo['STATE']  = $state;
+if ($tieneZip)    $nuevo['ZIP']    = $zip;
+if ($tieneAlerta) $nuevo['ALERTA'] = $alerta;
+if ($tieneIdioma && $idioma !== '') $nuevo['IDIOMA'] = $idioma;
+
+$actual = [];
+$colsSel = array_keys($nuevo);
+if ($sSel = $conexion->prepare("SELECT ".implode(',', $colsSel)." FROM AG_PACIENTE WHERE IDPACIENTE=? LIMIT 1")) {
+    $sSel->bind_param('i', $id); $sSel->execute();
+    $actual = $sSel->get_result()->fetch_assoc() ?: [];
+    $sSel->close();
+}
+$corta = function ($s) {
+    $s = preg_replace('/\s+/', ' ', strip_tags(trim((string)$s)));
+    if ($s === '') return '(vacío)';
+    return mb_strlen($s) > 40 ? mb_substr($s, 0, 40).'…' : $s;
+};
+$cambios = [];
+foreach ($nuevo as $col => $valNuevo) {
+    $valViejo = (string)($actual[$col] ?? '');
+    if ($col === 'FECHANACIMIENTO' && $valViejo === '0000-00-00') $valViejo = '';
+    if (trim($valViejo) === trim((string)$valNuevo)) continue;
+    $cambios[] = ($campoLabel[$col] ?? $col).': "'.$corta($valViejo).'" → "'.$corta($valNuevo).'"';
+}
+
 // Construir el UPDATE dinámicamente
 $campos = ["NOMBRES = ?", "APELLIDOS = ?", "CEDULA = ?", "TELEFONO = ?", "EMAIL = ?",
            "FECHANACIMIENTO = ?", "SEX = ?", "GENDER = ?", "ADDRESS = ?",
@@ -101,7 +139,9 @@ $stmt = $conexion->prepare($sql);
 $stmt->bind_param($tipos, ...$vals);
 
 if ($stmt->execute()) {
-    auditar($conexion, 'Pacientes', 'editar', 'AG_PACIENTE', $id, 'Editó paciente: '.trim($nombres.' '.$apellidos));
+    $detalle = 'Editó paciente: '.trim($nombres.' '.$apellidos);
+    $detalle .= $cambios ? ' — '.implode('; ', $cambios) : ' (sin cambios de datos)';
+    auditar($conexion, 'Pacientes', 'editar', 'AG_PACIENTE', $id, $detalle);
     echo $tieneAlerta ? 'OK' : 'OK_SIN_ALERTA';
 } else {
     echo 'ERROR: ' . $stmt->error;
