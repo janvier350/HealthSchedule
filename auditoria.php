@@ -70,6 +70,9 @@ function accionBadge($a, $en) {
         'reagendar' => ['secondary',$en?'Rescheduled':'Reagendó'],
         'atender'   => ['success', $en?'Attended':'Atendió'],
         'estado'    => ['secondary',$en?'Status':'Estado'],
+        'login'         => ['info',   $en?'Login':'Ingresó'],
+        'logout'        => ['secondary',$en?'Logout':'Salió'],
+        'login_fallido' => ['danger', $en?'Failed login':'Login fallido'],
     ];
     $m = $map[$a] ?? ['secondary', htmlspecialchars($a)];
     return '<span class="badge bg-'.$m[0].'">'.htmlspecialchars($m[1]).'</span>';
