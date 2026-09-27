@@ -31,7 +31,7 @@ $fDesde  = trim($_GET['desde']   ?? '');
 $fHasta  = trim($_GET['hasta']   ?? '');
 $fQ      = trim($_GET['q']       ?? '');
 
-$modulos = []; $acciones = []; $usuarios = []; $rows = []; $total = 0;
+$modulos = []; $acciones = []; $usuarios = []; $rows = []; $total = 0; $pacNombre = []; $citaPac = [];
 if ($existe) {
     // Opciones de filtro
     if ($r = $conexion->query("SELECT DISTINCT modulo FROM auditoria ORDER BY modulo")) while ($x=$r->fetch_assoc()) $modulos[]=$x['modulo'];
@@ -57,6 +57,36 @@ if ($existe) {
         $stmt->close();
     }
     $total = (int)$conexion->query("SELECT COUNT(*) c FROM auditoria")->fetch_assoc()['c'];
+
+    // Resolver el PACIENTE de cada registro (por entidad + entidad_id) para
+    // mostrarlo en una columna, incluso en registros antiguos.
+    $pacIds = []; $citaIds = [];
+    foreach ($rows as $r) {
+        if ($r['entidad_id'] === null || !ctype_digit((string)$r['entidad_id'])) continue;
+        if ($r['entidad'] === 'AG_PACIENTE') $pacIds[(int)$r['entidad_id']] = true;
+        elseif ($r['entidad'] === 'AG_CITA') $citaIds[(int)$r['entidad_id']] = true;
+    }
+    $pacNombre = [];  // idPaciente => nombre
+    if ($pacIds) {
+        $ids = implode(',', array_map('intval', array_keys($pacIds)));
+        if ($q = $conexion->query("SELECT IDPACIENTE, CONCAT(NOMBRES,' ',APELLIDOS) nom FROM AG_PACIENTE WHERE IDPACIENTE IN ($ids)"))
+            while ($x = $q->fetch_assoc()) $pacNombre[(int)$x['IDPACIENTE']] = trim($x['nom']);
+    }
+    $citaPac = [];    // idCita => nombre del paciente de esa cita
+    if ($citaIds) {
+        $ids = implode(',', array_map('intval', array_keys($citaIds)));
+        if ($q = $conexion->query("SELECT A.IDCITA, CONCAT(P.NOMBRES,' ',P.APELLIDOS) nom FROM AG_CITA A INNER JOIN AG_PACIENTE P ON A.IDPACIENTE=P.IDPACIENTE WHERE A.IDCITA IN ($ids)"))
+            while ($x = $q->fetch_assoc()) $citaPac[(int)$x['IDCITA']] = trim($x['nom']);
+    }
+}
+
+/** Nombre del paciente asociado a un registro de auditoría (o '' si no aplica). */
+function pacienteDeFila($r, $pacNombre, $citaPac) {
+    if ($r['entidad_id'] === null || !ctype_digit((string)$r['entidad_id'])) return '';
+    $id = (int)$r['entidad_id'];
+    if ($r['entidad'] === 'AG_PACIENTE') return $pacNombre[$id] ?? '';
+    if ($r['entidad'] === 'AG_CITA')     return $citaPac[$id]  ?? '';
+    return '';
 }
 
 // Etiquetas de acción (bilingüe, con color)
@@ -197,19 +227,21 @@ function accionBadge($a, $en) {
                                 <th><?php echo $en?'User':'Usuario'; ?></th>
                                 <th><?php echo $en?'Role':'Rol'; ?></th>
                                 <th><?php echo $en?'Module':'Módulo'; ?></th>
+                                <th><?php echo $en?'Patient':'Paciente'; ?></th>
                                 <th><?php echo $en?'Action':'Acción'; ?></th>
                                 <th><?php echo $en?'Detail':'Detalle'; ?></th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (!$rows): ?>
-                            <tr><td colspan="6" class="text-center text-muted py-4"><?php echo $en?'No records for these filters.':'No hay registros para estos filtros.'; ?></td></tr>
-                        <?php else: foreach ($rows as $r): ?>
+                            <tr><td colspan="7" class="text-center text-muted py-4"><?php echo $en?'No records for these filters.':'No hay registros para estos filtros.'; ?></td></tr>
+                        <?php else: foreach ($rows as $r): $pac = pacienteDeFila($r, $pacNombre, $citaPac); ?>
                             <tr>
                                 <td class="small text-nowrap"><?php echo htmlspecialchars(date('m/d/Y H:i', strtotime($r['fecha']))); ?></td>
                                 <td class="small"><?php echo htmlspecialchars(trim($r['nombre']) ?: ($r['usuario'] ?: '—')); ?></td>
                                 <td class="small"><?php echo htmlspecialchars($r['rol'] ?: '—'); ?></td>
                                 <td class="small"><?php echo htmlspecialchars($r['modulo']); ?></td>
+                                <td class="small"><?php echo $pac !== '' ? htmlspecialchars($pac) : '<span class="text-muted">—</span>'; ?></td>
                                 <td><?php echo accionBadge($r['accion'], $en); ?></td>
                                 <td class="small"><?php echo htmlspecialchars($r['detalle'] ?: '—'); ?><?php echo $r['entidad_id']?' <span class="text-muted">(#'.htmlspecialchars($r['entidad_id']).')</span>':''; ?></td>
                             </tr>
