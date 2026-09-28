@@ -582,6 +582,7 @@ return array(
     'plist.reportTitle'        => 'Informe de Atención',
     'hp.years'                 => 'años',
     'hp.registered'            => 'Registrado',
+    'hp.weightProgress'        => 'Evolución de peso',
     'hp.totalAppts'            => 'Total citas',
     'hp.attended'              => 'Atendidas',
     'hp.pending'               => 'Pendientes',
