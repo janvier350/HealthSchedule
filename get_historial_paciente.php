@@ -242,6 +242,12 @@ function imcColor($imc) {
                     <span class="text-muted ms-1"><?php echo htmlspecialchars($icd10Descripcion); ?></span>
                 </div>
             <?php endif; ?>
+            <div class="mt-2">
+                <a href="evolucion_peso.php?idPaciente=<?php echo (int)$idPaciente; ?>" target="_blank"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-graph-up-arrow me-1"></i><?php te('hp.weightProgress'); ?>
+                </a>
+            </div>
         </div>
 
         <!-- Estadísticas rápidas -->
