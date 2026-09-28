@@ -571,7 +571,11 @@ $prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '')
             <button type="button" id="btnCargarPrevia" class="btn btn-sm btn-outline-primary d-none" onclick="cargarConsultaAnterior()">
                 <i class="bi bi-arrow-clockwise"></i> <?php te('att.prev.load'); ?>
             </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="insertarEvolucionPeso()">
+                <i class="bi bi-graph-up-arrow"></i> <?php te('att.insertWeightChart'); ?>
+            </button>
         </div>
+        <canvas id="chartEvolucionOculto" width="760" height="380" style="display:none;"></canvas>
         <div class="mb-1">
             <textarea id="editorInforme" name="informe"></textarea>
         </div>
@@ -773,6 +777,10 @@ const ATT = {
         saved:    <?php echo json_encode(t('att.draft.saved')); ?>,
         restored: <?php echo json_encode(t('att.draft.restored')); ?>,
         discard:  <?php echo json_encode(t('att.draft.discard')); ?>
+    },
+    weightChart: {
+        noData: <?php echo json_encode(t('att.js.weightChartNoData')); ?>,
+        title:  <?php echo json_encode(t('att.js.weightChartTitle')); ?>
     }
 };
 </script>
@@ -897,6 +905,7 @@ const ATT = {
 <?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
@@ -971,6 +980,45 @@ function ncpBuildHtml(){
     return html;
 }
 function ncpPreview(){ var p=document.getElementById('ncpPreview'); if(p) p.innerHTML = ncpBuildHtml() || '<span class="text-muted small">—</span>'; }
+
+// ── Insertar la gráfica de evolución de peso/IMC en el informe (como imagen) ──
+var _chartEvolucion = null;
+function insertarEvolucionPeso(){
+    $.getJSON('get_evolucion_peso.php', { idPaciente: DATOS_CITA.idPaciente })
+    .done(function(d){
+        if (!d || !d.ok || !d.labels || d.labels.length === 0) { alert(ATT.weightChart.noData); return; }
+        if (typeof Chart === 'undefined') { alert('Chart.js'); return; }
+        var canvas = document.getElementById('chartEvolucionOculto');
+        if (_chartEvolucion) { try { _chartEvolucion.destroy(); } catch(e){} }
+        // Plugin para fondo blanco (si no, la imagen sale con fondo transparente/negro al imprimir)
+        var fondoBlanco = { id:'fondoBlanco', beforeDraw:function(c){ var ctx=c.canvas.getContext('2d'); ctx.save(); ctx.globalCompositeOperation='destination-over'; ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height); ctx.restore(); } };
+        _chartEvolucion = new Chart(canvas.getContext('2d'), {
+            type:'line',
+            data:{ labels:d.labels, datasets:[
+                { label:'Peso (kg)', data:d.pesos, yAxisID:'yPeso', borderColor:'#3d5af1', backgroundColor:'rgba(61,90,241,.12)', tension:.3, spanGaps:true, pointRadius:3, fill:true },
+                { label:'IMC', data:d.imcs, yAxisID:'yImc', borderColor:'#e67e22', backgroundColor:'rgba(230,126,34,.10)', tension:.3, spanGaps:true, pointRadius:3, fill:false }
+            ]},
+            options:{ responsive:false, animation:false, plugins:{ legend:{ position:'top' }, title:{ display:true, text:ATT.weightChart.title } },
+                scales:{ yPeso:{ type:'linear', position:'left', title:{display:true,text:'Peso (kg)'} },
+                         yImc:{ type:'linear', position:'right', title:{display:true,text:'IMC'}, grid:{drawOnChartArea:false} } } },
+            plugins:[fondoBlanco]
+        });
+        // animation:false => ya está renderizada; tomar la imagen.
+        var dataUrl = canvas.toDataURL('image/png', 1.0);
+        var html = '<div style="text-align:center;margin:8px 0;">'
+                 + '<img src="'+dataUrl+'" style="max-width:100%;height:auto;" alt="'+ATT.weightChart.title+'">'
+                 + '<br><small>'+ATT.weightChart.title+'</small></div>';
+        var $ed = $('#editorInforme');
+        try {
+            var cur = $ed.summernote('code') || '';
+            $ed.summernote('code', cur + '<p><br></p>' + html);
+        } catch (e) {
+            try { $ed.summernote('pasteHTML', html); } catch (e2) {}
+        }
+        try { _chartEvolucion.destroy(); } catch(e){} _chartEvolucion = null;
+    })
+    .fail(function(){ alert(ATT.saveConnError); });
+}
 function insertarNcp(){
     var html = ncpBuildHtml(); if(!html) return;
     var el = document.getElementById('modalNcp');
