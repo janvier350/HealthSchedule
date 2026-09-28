@@ -113,6 +113,23 @@ if ($sp2 = $conexion->prepare(
     if ($rp2) { $prevPeso = (float)$rp2['PESO']; $prevTalla = (float)$rp2['TALLA']; $prevPesoFecha = (string)$rp2['FECHA_CITA']; }
 }
 
+// Serie completa de peso/IMC del paciente (para insertar la gráfica en el informe).
+$evolLabels = []; $evolPesos = []; $evolImcs = [];
+if ($sp3 = $conexion->prepare(
+    "SELECT C.FECHA_CITA fecha, H.PESO peso, H.IMC imc
+       FROM AG_HISTORIAL H INNER JOIN AG_CITA C ON C.IDCITA = H.IDCITA
+      WHERE C.IDPACIENTE = ? AND H.PESO IS NOT NULL AND H.PESO > 0
+      ORDER BY C.FECHA_CITA ASC, C.HORA_INICIO ASC")) {
+    $sp3->bind_param('i', $idPacienteA); $sp3->execute();
+    $rs3 = $sp3->get_result();
+    while ($r3 = $rs3->fetch_assoc()) {
+        $evolLabels[] = date('m/d/Y', strtotime($r3['fecha']));
+        $evolPesos[]  = ($r3['peso'] !== null) ? round((float)$r3['peso'], 1) : null;
+        $evolImcs[]   = ($r3['imc'] !== null && (float)$r3['imc'] > 0) ? round((float)$r3['imc'], 1) : null;
+    }
+    $sp3->close();
+}
+
 // ── Diagnósticos ICD-10: catálogo + los ya asignados al paciente ──────────
 $catIcd10 = [];
 $rc = $conexion->query("SELECT ID_ENFE_DIAG_COD AS id, CODIGO AS codigo, DESCRIPCION AS descripcion FROM ENFE_DIAG_COD ORDER BY CODIGO");
@@ -983,11 +1000,17 @@ function ncpPreview(){ var p=document.getElementById('ncpPreview'); if(p) p.inne
 
 // ── Insertar la gráfica de evolución de peso/IMC en el informe (como imagen) ──
 var _chartEvolucion = null;
+// Datos incrustados en la página (sin depender de una petición aparte).
+var EVOL_PESO = {
+    labels: <?php echo json_encode($evolLabels); ?>,
+    pesos:  <?php echo json_encode($evolPesos); ?>,
+    imcs:   <?php echo json_encode($evolImcs); ?>
+};
 function insertarEvolucionPeso(){
-    $.getJSON('get_evolucion_peso.php', { idPaciente: DATOS_CITA.idPaciente })
-    .done(function(d){
-        if (!d || !d.ok || !d.labels || d.labels.length === 0) { alert(ATT.weightChart.noData); return; }
-        if (typeof Chart === 'undefined') { alert('Chart.js'); return; }
+    (function(){
+        var d = EVOL_PESO;
+        if (!d || !d.labels || d.labels.length === 0) { alert(ATT.weightChart.noData); return; }
+        if (typeof Chart === 'undefined') { window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank'); return; }
         var canvas = document.getElementById('chartEvolucionOculto');
         if (_chartEvolucion) { try { _chartEvolucion.destroy(); } catch(e){} }
         // Plugin para fondo blanco (si no, la imagen sale con fondo transparente/negro al imprimir)
@@ -1016,8 +1039,7 @@ function insertarEvolucionPeso(){
             try { $ed.summernote('pasteHTML', html); } catch (e2) {}
         }
         try { _chartEvolucion.destroy(); } catch(e){} _chartEvolucion = null;
-    })
-    .fail(function(){ alert(ATT.saveConnError); });
+    })();
 }
 function insertarNcp(){
     var html = ncpBuildHtml(); if(!html) return;
