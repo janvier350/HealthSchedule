@@ -216,8 +216,17 @@ function accionBadge($a, $en) {
             </div></div>
 
             <div class="card shadow-sm"><div class="card-body">
+                <?php
+                    $qsExport = http_build_query([
+                        'usuario'=>$fUser, 'modulo'=>$fModulo, 'accion'=>$fAccion,
+                        'desde'=>$fDesde, 'hasta'=>$fHasta, 'q'=>$fQ,
+                    ]);
+                ?>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small"><?php echo ($en?'Showing ':'Mostrando ').count($rows).($en?' of ':' de ').$total.($en?' records (latest 500).':' registros (últimos 500).'); ?></span>
+                    <a href="auditoria_export.php?<?php echo htmlspecialchars($qsExport); ?>" class="btn btn-success btn-sm">
+                        <i class="bi bi-file-earmark-excel"></i> <?php echo $en?'Export to Excel':'Exportar a Excel'; ?>
+                    </a>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-hover align-middle">
