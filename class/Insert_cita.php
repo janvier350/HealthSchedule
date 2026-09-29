@@ -121,12 +121,18 @@ if ($recurrencia === 'none' || $recurrencia === '') {
     $fechasSerie = generarFechasSerie($fechafactura, $recurrencia, $recurEvery, $recurEndMode, $recurCount, $recurEndDate);
 }
 
-// Inserta cada fecha; salta las que choquen con otra cita activa.
+// Inserta cada fecha; salta las que choquen con otra cita activa DEL MISMO
+// DOCTOR (dos doctores distintos pueden atender a la misma hora). Además se
+// captura QUIÉN ocupa el horario, para informarlo con claridad.
 $idUsuario   = $_SESSION['iduser'] ?? 0;
 $stmt_valida = $conexion->prepare(
-    "SELECT IDCITA FROM AG_CITA
-     WHERE FECHA_CITA = ? AND HORA_INICIO = ? AND ESTADO = 'A'
-     AND ESTADO_CITA NOT IN ('Cancelada','Cancelado')"
+    "SELECT P.NOMBRES, P.APELLIDOS
+       FROM AG_CITA A
+       INNER JOIN AG_PACIENTE P ON P.IDPACIENTE = A.IDPACIENTE
+      WHERE A.FECHA_CITA = ? AND A.HORA_INICIO = ? AND A.ESTADO = 'A'
+        AND A.ESTADO_CITA NOT IN ('Cancelada','Cancelado')
+        AND A.IDDOCTOR = ?
+      LIMIT 1"
 );
 $stmt_insert = $conexion->prepare(
     "INSERT INTO AG_CITA (IDPACIENTE, IDTIPOCONSULTA, IDDOCTOR, IDUSUARIO,
@@ -138,18 +144,19 @@ $primeraIdCita     = 0;
 $primeraFechaOK    = '';
 $creadas           = 0;
 $saltadasPorChoque = [];
+$saltadasDetalle   = [];
 
 foreach ($fechasSerie as $f) {
-    // ¿ya hay cita en ese día y hora?
-    $stmt_valida->bind_param("ss", $f, $timeIni);
+    // ¿ya hay cita del mismo doctor ese día y hora?
+    $stmt_valida->bind_param("ssi", $f, $timeIni, $IdDoctor);
     $stmt_valida->execute();
-    $stmt_valida->store_result();
-    if ($stmt_valida->num_rows > 0) {
+    $rv = $stmt_valida->get_result();
+    if ($occ = $rv->fetch_assoc()) {
         $saltadasPorChoque[] = $f;
-        $stmt_valida->free_result();
+        $ocupa = trim(($occ['NOMBRES'] ?? '') . ' ' . ($occ['APELLIDOS'] ?? ''));
+        $saltadasDetalle[] = ['fecha' => $f, 'ocupa' => $ocupa];
         continue;
     }
-    $stmt_valida->free_result();
 
     $stmt_insert->bind_param("iiiisssi",
         $IdPaciente, $Idconsulta, $IdDoctor, $idUsuario,
@@ -168,7 +175,16 @@ $stmt_valida->close();
 $stmt_insert->close();
 
 if ($creadas === 0) {
-    echo "<script>alert('No se pudo crear ninguna cita: todas chocan con horarios ya ocupados.'); window.location.href = '../SCH_Calendar.php';</script>";
+    $lineas0 = [];
+    foreach ($saltadasDetalle as $s) {
+        $d0 = DateTime::createFromFormat('Y-m-d', $s['fecha']);
+        $f0 = $d0 ? $d0->format('m/d/Y') : $s['fecha'];
+        $oc0 = str_replace(["'", '"', "\\", "\n", "\r"], ' ', $s['ocupa']);
+        $lineas0[] = $f0 . ($oc0 !== '' ? ' (ocupado por ' . $oc0 . ')' : ' (ocupado)');
+    }
+    $det0 = $lineas0 ? "\\n\\nFechas ocupadas:\\n- " . implode("\\n- ", $lineas0) : '';
+    $msg0 = 'No se creó ninguna cita: el horario elegido ya está ocupado para ese doctor.' . $det0;
+    echo "<script>alert(" . json_encode($msg0, JSON_UNESCAPED_UNICODE) . "); window.location.href = '../SCH_Calendar.php';</script>";
     exit;
 }
 
@@ -237,8 +253,15 @@ $resumen = '';
 if ($creadas > 1) {
     $resumen = "\\nSerie recurrente: {$creadas} citas creadas.";
 }
-if (!empty($saltadasPorChoque)) {
-    $resumen .= "\\nSaltadas por conflicto de horario: " . count($saltadasPorChoque);
+if (!empty($saltadasDetalle)) {
+    $lineas = [];
+    foreach ($saltadasDetalle as $s) {
+        $d = DateTime::createFromFormat('Y-m-d', $s['fecha']);
+        $fstr = $d ? $d->format('m/d/Y') : $s['fecha'];
+        $oc = str_replace(["'", '"', "\\", "\n", "\r"], ' ', $s['ocupa']);
+        $lineas[] = $fstr . ($oc !== '' ? ' (ocupado por ' . $oc . ')' : ' (ocupado)');
+    }
+    $resumen .= "\\n\\nEstas fechas NO se crearon porque ya estaban ocupadas:\\n- " . implode("\\n- ", $lineas);
 }
 
 // ── Enviar correo ───────────────────────────────────────────────────
