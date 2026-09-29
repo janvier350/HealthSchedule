@@ -9,6 +9,7 @@ session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
+require_once(__DIR__ . "/class/permisos.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -412,6 +413,28 @@ if ($rSegCat) { while ($sc = $rSegCat->fetch_assoc()) { $segurosCat[] = $sc; } }
                     </div>
                 </div>
                 <div id="psLista"><div class="text-muted small">—</div></div>
+
+                <!-- 📄 Documentos del paciente (PDF / imágenes), almacenados de forma segura -->
+                <?php if (puede('pac.archivos')): ?>
+                <hr class="my-3">
+                <h6 class="text-muted mb-2">📄 <?php echo current_lang()==='en'?'Patient documents':'Documentos del paciente'; ?></h6>
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label small mb-1"><?php echo current_lang()==='en'?'File (PDF, JPG, PNG)':'Archivo (PDF, JPG, PNG)'; ?></label>
+                        <input type="file" id="pdArchivo" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1"><?php echo current_lang()==='en'?'Title (optional)':'Título (opcional)'; ?></label>
+                        <input type="text" id="pdTitulo" class="form-control form-control-sm" maxlength="255">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <button type="button" class="btn btn-sm btn-success w-100" id="pdBtnSubir" onclick="subirArchivoPaciente()">
+                            <i class="bi bi-upload"></i> <?php echo current_lang()==='en'?'Upload':'Subir'; ?>
+                        </button>
+                    </div>
+                </div>
+                <div id="pdLista"><div class="text-muted small">—</div></div>
+                <?php endif; ?>
             </div>
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php te('common.cancel'); ?></button>
@@ -538,6 +561,7 @@ function editarPaciente(id) {
             document.getElementById('pcValor').value = '';
             document.getElementById('pcEtiqueta').value = '';
             cargarContactos(id);
+            cargarArchivosPaciente(id);
             epModal.show();
         })
         .fail(function(xhr){ alert(T.loadHttp + xhr.status + ').'); });
@@ -545,6 +569,70 @@ function editarPaciente(id) {
 
 // ── Contactos adicionales (teléfonos / correos extra) ────────────────
 function _ctEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Documentos del paciente (PDF/imágenes, seguros) ──────────────────
+var PD_L = {
+    none:       <?php echo json_encode(current_lang()==='en'?'No documents yet.':'Aún no hay documentos.'); ?>,
+    loading:    <?php echo json_encode(current_lang()==='en'?'Loading…':'Cargando…'); ?>,
+    view:       <?php echo json_encode(current_lang()==='en'?'View':'Ver'); ?>,
+    download:   <?php echo json_encode(current_lang()==='en'?'Download':'Descargar'); ?>,
+    remove:     <?php echo json_encode(current_lang()==='en'?'Delete':'Eliminar'); ?>,
+    confirmDel: <?php echo json_encode(current_lang()==='en'?'Delete this document? This cannot be undone.':'¿Eliminar este documento? No se puede deshacer.'); ?>,
+    pickFile:   <?php echo json_encode(current_lang()==='en'?'Choose a file first.':'Elige un archivo primero.'); ?>,
+    err:        <?php echo json_encode(current_lang()==='en'?'Could not upload: ':'No se pudo subir: '); ?>
+};
+function _pdBytes(n){ n=+n||0; if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(0)+' KB'; return (n/1048576).toFixed(1)+' MB'; }
+function cargarArchivosPaciente(idPaciente){
+    var cont=document.getElementById('pdLista'); if(!cont) return;
+    cont.innerHTML='<div class="text-muted small">'+_ctEsc(PD_L.loading)+'</div>';
+    $.getJSON('paciente_archivo_listar.php',{idPaciente:idPaciente})
+     .done(function(res){
+        if(!res||!res.ok||!res.lista||!res.lista.length){ cont.innerHTML='<div class="text-muted small">'+_ctEsc(PD_L.none)+'</div>'; return; }
+        var html='<ul class="list-group list-group-flush">';
+        res.lista.forEach(function(a){
+            var icon=(a.mime==='application/pdf')?'bi-file-earmark-pdf text-danger':'bi-file-earmark-image text-primary';
+            var id=parseInt(a.id,10);
+            html+='<li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center">'
+               + '<span class="text-truncate" style="max-width:58%"><i class="bi '+icon+' me-2"></i>'+_ctEsc(a.titulo||a.nombre)
+               + ' <span class="text-muted small">('+_pdBytes(a.tamano)+' · '+_ctEsc(a.fecha)+')</span></span>'
+               + '<span class="d-flex gap-1">'
+               + '<a class="btn btn-sm btn-outline-primary py-0 px-2" target="_blank" href="paciente_archivo_ver.php?id='+id+'" title="'+_ctEsc(PD_L.view)+'"><i class="bi bi-eye"></i></a>'
+               + '<a class="btn btn-sm btn-outline-secondary py-0 px-2" href="paciente_archivo_ver.php?id='+id+'&dl=1" title="'+_ctEsc(PD_L.download)+'"><i class="bi bi-download"></i></a>'
+               + '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="'+_ctEsc(PD_L.remove)+'" onclick="eliminarArchivoPaciente('+id+')"><i class="bi bi-x"></i></button>'
+               + '</span></li>';
+        });
+        html+='</ul>'; cont.innerHTML=html;
+     })
+     .fail(function(){ cont.innerHTML='<div class="text-danger small">'+_ctEsc(T.connError)+'</div>'; });
+}
+function subirArchivoPaciente(){
+    var idPaciente=document.getElementById('epId').value;
+    var inp=document.getElementById('pdArchivo');
+    if(!idPaciente) return;
+    if(!inp||!inp.files||!inp.files.length){ alert(PD_L.pickFile); return; }
+    var fd=new FormData();
+    fd.append('idPaciente',idPaciente);
+    fd.append('titulo',(document.getElementById('pdTitulo').value||'').trim());
+    fd.append('archivo',inp.files[0]);
+    var btn=document.getElementById('pdBtnSubir'); var prev=btn.innerHTML;
+    btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span>';
+    fetch('paciente_archivo_subir.php',{method:'POST',body:fd})
+     .then(function(r){return r.json();})
+     .then(function(res){
+        btn.disabled=false; btn.innerHTML=prev;
+        if(res&&res.ok){ inp.value=''; document.getElementById('pdTitulo').value=''; cargarArchivosPaciente(idPaciente); }
+        else { alert(PD_L.err+(res&&res.error?res.error:'')); }
+     })
+     .catch(function(){ btn.disabled=false; btn.innerHTML=prev; alert(T.connError); });
+}
+function eliminarArchivoPaciente(id){
+    if(!confirm(PD_L.confirmDel)) return;
+    var idPaciente=document.getElementById('epId').value;
+    $.post('paciente_archivo_eliminar.php',{id:id},function(res){
+        if(res&&res.ok){ cargarArchivosPaciente(idPaciente); }
+        else { alert(PD_L.err+(res&&res.error?res.error:'')); }
+    },'json').fail(function(){ alert(T.connError); });
+}
 function renderContactos(list){
     const cont = document.getElementById('pcLista'); if(!cont) return;
     if(!list || !list.length){ cont.innerHTML = '<div class="text-muted small">'+_ctEsc(T.ctNone)+'</div>'; return; }

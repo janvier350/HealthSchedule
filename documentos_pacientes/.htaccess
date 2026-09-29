@@ -1,0 +1,9 @@
+# Documentos clínicos de pacientes (PHI). Prohibido el acceso web directo.
+# Sólo se sirven a través de paciente_archivo_ver.php (sesión + permiso + auditoría).
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
