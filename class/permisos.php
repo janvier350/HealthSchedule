@@ -25,6 +25,7 @@ function permisos_catalogo() {
         'agenda.weightplanner' => ['Planificador de peso',          'Agenda',        ['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>0]],
         'agenda.notificacion'  => ['Enviar notificación (correo)',  'Agenda',        ['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>1]],
         'agenda.ausencias'     => ['Vacaciones / no disponibilidad','Agenda',        ['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>1]],
+        'agenda.revision'      => ['Revisión de citas por fecha',    'Agenda',        ['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>1]],
         // Pacientes
         'pac.eliminados'       => ['Pacientes eliminados',          'Pacientes',     ['SISTEMA'=>1,'DOCTOR'=>1,'USUARIO'=>0,'ASISTENTE'=>0]],
         'pac.fusionar'         => ['Fusionar duplicados',           'Pacientes',     ['SISTEMA'=>1,'DOCTOR'=>0,'USUARIO'=>0,'ASISTENTE'=>0]],

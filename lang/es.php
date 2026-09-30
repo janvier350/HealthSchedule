@@ -957,6 +957,7 @@ return array(
     'help.centerSub'          => 'Guías rápidas para usar la app.',
     'menu.help'               => 'Guías de uso',
     'menu.ausencias'          => 'Vacaciones del doctor',
+    'menu.citasRevision'      => 'Citas por fecha',
     'aus.title'               => 'Vacaciones / disponibilidad del doctor',
     'aus.subtitle'            => 'Vacaciones (días completos) y bloqueo de horas por doctor.',
     'aus.addTitle'            => 'Agregar ausencia',

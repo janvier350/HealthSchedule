@@ -703,7 +703,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
                             </div>
                             <div class="col-md-7" id="recurCountWrap">
                                 <div class="input-group">
-                                    <input type="number" class="form-control" name="recurCount" id="recurCount" min="1" max="12" value="4">
+                                    <input type="number" class="form-control" name="recurCount" id="recurCount" min="1" max="260" value="4">
                                     <span class="input-group-text"><?php te('cal.recur.sessions'); ?></span>
                                 </div>
                             </div>
@@ -746,7 +746,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
           <ol style="line-height:1.9;">
             <li>Click a <b>day</b> on the calendar (or the schedule button) to open the form.</li>
             <li>Choose <b>date, patient, time, consultation type, doctor and location</b>.</li>
-            <li><b>Recurrence:</b> leave <b>"Do not repeat"</b> for a single appointment. For a series pick <b>weekly / biweekly / monthly</b> and how many (up to 12). It asks you to confirm how many will be created.</li>
+            <li><b>Recurrence:</b> leave <b>"Do not repeat"</b> for a single appointment. For a series pick <b>weekly / biweekly / monthly</b> and how many. It asks you to confirm how many will be created.</li>
           </ol>
           <div class="alert alert-warning py-2">To schedule, the patient must already have <b>at least one ICD-10 diagnosis</b> and a <b>complete address</b> (street, or city + state).</div>
           <h6 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-1"></i>Move / change an appointment</h6>
@@ -764,7 +764,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
           <ol style="line-height:1.9;">
             <li>Haz clic en un <b>día</b> del calendario (o en el botón de agendar) para abrir el formulario.</li>
             <li>Elige <b>fecha, paciente, hora, tipo de consulta, doctor y location</b>.</li>
-            <li><b>Recurrencia:</b> deja <b>"No repetir"</b> para una sola cita. Para una serie elige <b>semanal / quincenal / mensual</b> y cuántas (hasta 12). Te pide confirmar cuántas se crearán.</li>
+            <li><b>Recurrencia:</b> deja <b>"No repetir"</b> para una sola cita. Para una serie elige <b>semanal / quincenal / mensual</b> y cuántas. Te pide confirmar cuántas se crearán.</li>
           </ol>
           <div class="alert alert-warning py-2">Para agendar, el paciente debe tener ya <b>al menos un diagnóstico ICD-10</b> y la <b>dirección completa</b> (calle, o ciudad + estado).</div>
           <h6 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-1"></i>Mover / cambiar una cita</h6>
@@ -2402,7 +2402,7 @@ function confirmarRecurrencia() {
         var msg;
         if (modo === 'count') {
             var n = parseInt((document.getElementById('recurCount') || {}).value || '1', 10);
-            n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 12));
+            n = Math.max(1, Math.min(isNaN(n) ? 1 : n, 260));
             msg = TC.recurConfirm.replace('{n}', n).replace('{tipo}', tipo);
         } else {
             msg = TC.recurConfirmDate.replace('{tipo}', tipo);

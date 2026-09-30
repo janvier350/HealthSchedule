@@ -82,7 +82,7 @@ $en = (current_lang() === 'en');
                     <h6>Schedule a new appointment</h6>
                     <ol><li>Click a day on the calendar (or the schedule button).</li>
                     <li>Choose date, patient, time, consultation type, doctor and location.</li>
-                    <li>Recurrence: leave "Do not repeat" for a single appointment; for a series pick weekly/biweekly/monthly (up to 12) and confirm the count.</li></ol>
+                    <li>Recurrence: leave "Do not repeat" for a single appointment; for a series pick weekly/biweekly/monthly and confirm the count.</li></ol>
                     <div class="alert alert-warning py-2">To schedule, the patient must already have at least one ICD-10 diagnosis and a complete address.</div>
                     <h6>Move / change &amp; status</h6>
                     <ul><li>Drag the appointment or open it and use Reschedule (a confirmation appears before saving); the patient is emailed. For a series choose "all future visits" to move the whole series to the new weekday.</li>
@@ -91,7 +91,7 @@ $en = (current_lang() === 'en');
                     <h6>Agendar una cita nueva</h6>
                     <ol><li>Haz clic en un día del calendario (o en el botón de agendar).</li>
                     <li>Elige fecha, paciente, hora, tipo de consulta, doctor y location.</li>
-                    <li>Recurrencia: deja "No repetir" para una sola cita; para una serie elige semanal/quincenal/mensual (hasta 12) y confirma la cantidad.</li></ol>
+                    <li>Recurrencia: deja "No repetir" para una sola cita; para una serie elige semanal/quincenal/mensual y confirma la cantidad.</li></ol>
                     <div class="alert alert-warning py-2">Para agendar, el paciente debe tener ya al menos un diagnóstico ICD-10 y la dirección completa.</div>
                     <h6>Mover / cambiar y estados</h6>
                     <ul><li>Arrastra la cita o ábrela y usa Reagendar (sale una confirmación antes de guardar); al paciente le llega correo. En una serie elige "todas las futuras" para mover toda la serie al nuevo día.</li>

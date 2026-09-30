@@ -157,6 +157,13 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
                 </a>
             </li>
             <?php endif; ?>
+            <?php if (puede('agenda.revision')): ?>
+            <li>
+                <a href="citas_por_fecha.php" class="<?php echo menuActivo('citas_por_fecha.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-calendar2-week"></i> <?php te('menu.citasRevision'); ?>
+                </a>
+            </li>
+            <?php endif; ?>
 
             <!-- ══ PACIENTES ═══════════════════════════════════════════ -->
             <li class="app-sidebar__heading"><?php te('menu.heading.patients'); ?></li>

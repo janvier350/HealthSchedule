@@ -957,6 +957,7 @@ return array(
     'help.centerSub'          => 'Quick guides for using the app.',
     'menu.help'               => 'User guides',
     'menu.ausencias'          => 'Doctor time off',
+    'menu.citasRevision'      => 'Appointments by date',
     'aus.title'               => 'Doctor time off / availability',
     'aus.subtitle'            => 'Vacations (full days) and blocked hours per doctor.',
     'aus.addTitle'            => 'Add time off',
