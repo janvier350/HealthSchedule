@@ -947,6 +947,7 @@ return array(
     'help.scheduleTitle'      => 'How to schedule appointments',
     'help.attendTitle'        => 'How to attend a visit',
     'help.patientsTitle'      => 'How to manage patients',
+    'help.documentsTitle'     => 'How to send documents to patients',
     'help.billingTitle'       => 'How billing works',
     'help.calcTitle'          => 'How to use the calculator',
     'help.adminTitle'         => 'Administration (System)',
