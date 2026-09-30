@@ -28,6 +28,10 @@ $recurEndMode  = strtolower(trim($_POST['recurEndMode']  ?? 'count'));
 $recurCount    = (int)($_POST['recurCount']              ?? 1);
 $recurEndDate  = trim($_POST['recurEndDate']             ?? '');
 
+// Doble reserva: si está activo, se agenda aunque el horario ya esté ocupado
+// (las asistentes resuelven los choques manualmente).
+$dobleReserva  = !empty($_POST['dobleReserva']);
+
 if (!$fechafactura || !$IdPaciente || !$timeIni || !$Idconsulta || !$IdDoctor) {
     echo "<script>alert('Datos incompletos. Por favor complete todos los campos.'); history.back();</script>";
     exit;
@@ -147,15 +151,18 @@ $saltadasPorChoque = [];
 $saltadasDetalle   = [];
 
 foreach ($fechasSerie as $f) {
-    // ¿ya hay cita del mismo doctor ese día y hora?
-    $stmt_valida->bind_param("ssi", $f, $timeIni, $IdDoctor);
-    $stmt_valida->execute();
-    $rv = $stmt_valida->get_result();
-    if ($occ = $rv->fetch_assoc()) {
-        $saltadasPorChoque[] = $f;
-        $ocupa = trim(($occ['NOMBRES'] ?? '') . ' ' . ($occ['APELLIDOS'] ?? ''));
-        $saltadasDetalle[] = ['fecha' => $f, 'ocupa' => $ocupa];
-        continue;
+    // Salvo que se permita la doble reserva, saltar si el mismo doctor ya
+    // tiene una cita ese día y hora (y registrar quién la ocupa).
+    if (!$dobleReserva) {
+        $stmt_valida->bind_param("ssi", $f, $timeIni, $IdDoctor);
+        $stmt_valida->execute();
+        $rv = $stmt_valida->get_result();
+        if ($occ = $rv->fetch_assoc()) {
+            $saltadasPorChoque[] = $f;
+            $ocupa = trim(($occ['NOMBRES'] ?? '') . ' ' . ($occ['APELLIDOS'] ?? ''));
+            $saltadasDetalle[] = ['fecha' => $f, 'ocupa' => $ocupa];
+            continue;
+        }
     }
 
     $stmt_insert->bind_param("iiiisssi",
