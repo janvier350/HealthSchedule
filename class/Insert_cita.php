@@ -90,7 +90,7 @@ function generarFechasSerie($primera, $patron, $intervaloCustom, $modo, $cuenta,
     $fechas   = [];
     $baseDT   = DateTime::createFromFormat('Y-m-d', $primera);
     if (!$baseDT) return [$primera];
-    $limite   = 12;   // tope de seguridad de citas por serie
+    $limite   = 260;  // tope de seguridad (≈5 años semanal); evita series enormes por error
     $endDT    = $fechaFin ? DateTime::createFromFormat('Y-m-d', $fechaFin) : null;
     if ($modo === 'count') {
         $cuenta = max(1, min($cuenta, $limite));
