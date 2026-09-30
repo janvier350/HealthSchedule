@@ -177,6 +177,43 @@ $en = (current_lang() === 'en');
                 </div></div>
               </div>
 
+              <!-- Documentos a pacientes -->
+              <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hdoc">
+                    <i class="bi bi-file-earmark-text me-2"></i><?php te('help.documentsTitle'); ?></button></h2>
+                <div id="hdoc" class="accordion-collapse collapse" data-bs-parent="#accAyuda"><div class="accordion-body">
+                  <?php if ($en): ?>
+                    <p><b>1) Templates — "Documents" menu.</b> Here you keep the reusable documents/policies you send patients to sign (consent, HIPAA notice, credit-card authorization, etc.).</p>
+                    <ul>
+                      <li><b>New Document</b> creates a template; the pencil edits one.</li>
+                      <li>The <i class="bi bi-send"></i> (send) icon sends that document to a patient.</li>
+                    </ul>
+                    <p><b>2) Send to a patient.</b> Click the send icon, choose the patient, and send. The patient gets an email with a link to read and <b>sign</b> the document online.</p>
+                    <p><b>3) Track them — "Sent Documents" menu.</b> Every send is listed with the patient, the document, the <b>status</b> (Pending / Signed), and the sent &amp; signed dates.</p>
+                    <ul>
+                      <li><b>Pending</b> = sent but not signed yet. <b>Signed</b> = the patient already signed (with the date/time).</li>
+                      <li><b>View</b> opens the document to see it or the signed copy.</li>
+                      <li>Use the search box to filter by patient, document or status.</li>
+                    </ul>
+                    <p class="text-muted small mb-0">Tip: signed documents are the proof of consent for billing/compliance — check "Sent Documents" before the first visit.</p>
+                  <?php else: ?>
+                    <p><b>1) Plantillas — menú "Documentos".</b> Aquí guardas los documentos/políticas reutilizables que envías a los pacientes para firmar (consentimiento, aviso HIPAA, autorización de tarjeta, etc.).</p>
+                    <ul>
+                      <li><b>Nuevo Documento</b> crea una plantilla; el lápiz la edita.</li>
+                      <li>El ícono <i class="bi bi-send"></i> (enviar) manda ese documento a un paciente.</li>
+                    </ul>
+                    <p><b>2) Enviar a un paciente.</b> Da clic en el ícono de enviar, elige al paciente y envía. El paciente recibe un correo con un enlace para leer y <b>firmar</b> el documento en línea.</p>
+                    <p><b>3) Darles seguimiento — menú "Documentos Enviados".</b> Cada envío aparece con el paciente, el documento, el <b>estado</b> (Pendiente / Firmado) y las fechas de envío y firma.</p>
+                    <ul>
+                      <li><b>Pendiente</b> = enviado pero aún sin firmar. <b>Firmado</b> = el paciente ya firmó (con fecha y hora).</li>
+                      <li><b>Ver</b> abre el documento para revisarlo o ver la copia firmada.</li>
+                      <li>Usa el buscador para filtrar por paciente, documento o estado.</li>
+                    </ul>
+                    <p class="text-muted small mb-0">Consejo: los documentos firmados son la constancia de consentimiento para facturación/cumplimiento — revisa "Documentos Enviados" antes de la primera consulta.</p>
+                  <?php endif; ?>
+                </div></div>
+              </div>
+
               <!-- Facturación -->
               <div class="accordion-item">
                 <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#h5">

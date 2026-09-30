@@ -947,6 +947,7 @@ return array(
     'help.scheduleTitle'      => 'Cómo agendar citas',
     'help.attendTitle'        => 'Cómo atender una cita',
     'help.patientsTitle'      => 'Cómo gestionar pacientes',
+    'help.documentsTitle'     => 'Cómo enviar documentos a pacientes',
     'help.billingTitle'       => 'Cómo funciona la facturación',
     'help.calcTitle'          => 'Cómo usar la calculadora',
     'help.adminTitle'         => 'Administración (Sistema)',
