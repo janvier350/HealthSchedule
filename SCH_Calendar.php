@@ -716,6 +716,13 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
 
                     <div id="ausAviso" class="alert alert-warning py-2 d-none"></div>
 
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="dobleReserva" id="dobleReserva" value="1">
+                        <label class="form-check-label small" for="dobleReserva">
+                            <i class="bi bi-layers me-1"></i><?php te('cal.allowOverlap'); ?>
+                        </label>
+                    </div>
+
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-calendar-check"></i> <?php te('cal.scheduleBtn'); ?>
                     </button>
@@ -1135,6 +1142,7 @@ const TC = <?php echo json_encode(array(
     'timeRange'       => t('cal.js.timeRange'),
     'apptGone'        => t('cal.js.apptGone'),
     'slotTaken'       => t('cal.js.slotTaken'),
+    'slotTakenAsk'    => t('cal.js.slotTakenAsk'),
     'apptGonePrev'    => t('cal.js.apptGonePrev'),
     'reschedule'      => t('cal.reschedule'),
     'editAppt'        => t('cal.editAppt'),
@@ -1371,6 +1379,10 @@ async function guardarEdicion() {
         if (!alcance) return;
     }
 
+    _postEdicionCita(id, fecha, hora, tipo, doctor, agencia, alcance, false);
+}
+
+function _postEdicionCita(id, fecha, hora, tipo, doctor, agencia, alcance, dobleReserva) {
     $.post('editar_cita.php', {
         idCita: id,
         fecha: fecha,
@@ -1378,7 +1390,8 @@ async function guardarEdicion() {
         idTipoConsulta: tipo,
         idDoctor: doctor,
         idAgencia: agencia,
-        alcance: alcance
+        alcance: alcance,
+        dobleReserva: dobleReserva ? 1 : 0
     }, function(res) {
         res = res.trim();
         if (res === 'OK') {
@@ -1391,7 +1404,10 @@ async function guardarEdicion() {
             alert(TC.updatedNoEmail);
             location.reload();
         } else if (res === 'HORARIO_OCUPADO') {
-            alert(TC.slotTaken);
+            // Ofrecer doble reserva (las asistentes resuelven los choques).
+            if (confirm(TC.slotTakenAsk)) {
+                _postEdicionCita(id, fecha, hora, tipo, doctor, agencia, alcance, true);
+            }
         } else if (res === 'HORA_FUERA_RANGO') {
             alert(TC.timeRange);
         } else if (res === 'NO_ENCONTRADA') {

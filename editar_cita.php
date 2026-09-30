@@ -26,6 +26,7 @@ $idDoctor       = isset($_POST['idDoctor'])       ? (int)$_POST['idDoctor']     
 $idAgencia      = isset($_POST['idAgencia'])      ? (int)$_POST['idAgencia']      : 0;
 $alcance        = isset($_POST['alcance'])        ? trim($_POST['alcance'])        : 'solo';
 if ($alcance !== 'todas') $alcance = 'solo';
+$dobleReserva   = !empty($_POST['dobleReserva']) && $_POST['dobleReserva'] != '0';
 
 if (!$idCita || !$fecha || !$hora || !$idTipoConsulta || !$idDoctor) {
     echo 'DATOS_INCOMPLETOS';
@@ -47,27 +48,29 @@ if ($hora < '07:00' || $hora > '22:30') {
 // Hora fin = 30 minutos después
 $horaFin = date('H:i', strtotime($hora) + 30 * 60);
 
-// Verificar que la cita no se solape con otra cita activa del mismo día
-// (excluyendo esta misma cita). Al permitir minutos libres ya no basta
-// comparar la hora exacta: dos citas chocan si sus rangos se cruzan.
-$stmt_valida = $conexion->prepare(
-    "SELECT IDCITA FROM AG_CITA
-     WHERE FECHA_CITA = ? AND ESTADO = 'A'
-       AND ESTADO_CITA NOT IN ('Cancelada','Cancelado')
-       AND IDCITA <> ?
-       AND TIME(HORA_INICIO) < TIME(?)
-       AND TIME(HORA_FIN)    > TIME(?)"
-);
-$stmt_valida->bind_param("siss", $fecha, $idCita, $horaFin, $hora);
-$stmt_valida->execute();
-$stmt_valida->store_result();
-
-if ($stmt_valida->num_rows > 0) {
+// Verificar que la cita no se solape con otra cita activa DEL MISMO DOCTOR el
+// mismo día (excluyendo esta misma cita). Al permitir minutos libres, dos
+// citas chocan si sus rangos se cruzan. Si se pide doble reserva, se omite.
+if (!$dobleReserva) {
+    $stmt_valida = $conexion->prepare(
+        "SELECT IDCITA FROM AG_CITA
+         WHERE FECHA_CITA = ? AND ESTADO = 'A'
+           AND ESTADO_CITA NOT IN ('Cancelada','Cancelado')
+           AND IDCITA <> ?
+           AND IDDOCTOR = ?
+           AND TIME(HORA_INICIO) < TIME(?)
+           AND TIME(HORA_FIN)    > TIME(?)"
+    );
+    $stmt_valida->bind_param("siiss", $fecha, $idCita, $idDoctor, $horaFin, $hora);
+    $stmt_valida->execute();
+    $stmt_valida->store_result();
+    if ($stmt_valida->num_rows > 0) {
+        $stmt_valida->close();
+        echo 'HORARIO_OCUPADO';
+        exit;
+    }
     $stmt_valida->close();
-    echo 'HORARIO_OCUPADO';
-    exit;
 }
-$stmt_valida->close();
 
 // ¿Existe la columna IDSERIE?
 $dbName = $conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db'];
