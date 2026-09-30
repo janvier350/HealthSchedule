@@ -30,12 +30,20 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta)) $hasta = $desde;
 $fDoctor = (int)($_GET['doctor'] ?? 0);
 $fQ      = trim($_GET['q'] ?? '');
 
-// Doctores para el filtro
+// Doctores para el filtro y la edición
 $doctores = [];
 $rd = $conexion->query("SELECT U.IDADM_USUARIO, U.NOMBRES, U.APELLIDOS
                          FROM ADM_USUARIO U INNER JOIN ADM_ROL R ON U.IDADM_ROL=R.IDADM_ROL
                         WHERE R.CARGO='DOCTOR' AND U.ESTADO='A' ORDER BY U.NOMBRES");
 if ($rd) while ($d = $rd->fetch_assoc()) $doctores[] = $d;
+
+// Catálogos para editar
+$tiposConsulta = [];
+$rt = $conexion->query("SELECT IDTIPOCONSULTA, NOMBRES FROM AG_TIPOCONSULTA WHERE ESTADO='A' ORDER BY NOMBRES");
+if ($rt) while ($t = $rt->fetch_assoc()) $tiposConsulta[] = $t;
+$agencias = [];
+$ra = $conexion->query("SELECT IDAGENCIA, DESCRIPCION FROM ADM_AGENCIA WHERE ESTADO=1 ORDER BY DESCRIPCION");
+if ($ra) while ($a = $ra->fetch_assoc()) $agencias[] = $a;
 
 // Consulta de citas activas en el rango
 $colSerie = $tieneSerie ? 'A.IDSERIE' : '0 AS IDSERIE';
@@ -45,6 +53,7 @@ if ($fDoctor > 0) { $where .= " AND A.IDDOCTOR = ?"; $tipos .= 'i'; $vals[] = $f
 if ($fQ !== '')   { $where .= " AND CONCAT(P.NOMBRES,' ',P.APELLIDOS) LIKE ?"; $tipos .= 's'; $vals[] = '%'.$fQ.'%'; }
 
 $sql = "SELECT A.IDCITA, $colSerie, A.FECHA_CITA, A.HORA_INICIO, A.HORA_FIN, A.ESTADO_CITA,
+               A.IDTIPOCONSULTA, A.IDDOCTOR, A.IDAGENCIA,
                CONCAT(P.NOMBRES,' ',P.APELLIDOS) AS paciente,
                TC.NOMBRES AS tipo,
                CONCAT(D.NOMBRES,' ',D.APELLIDOS) AS doctor,
@@ -181,7 +190,15 @@ function estBadge($e) {
                         <?php if (!$rows): ?>
                             <tr><td colspan="8" class="text-center text-muted py-4"><?php echo $en?'No appointments for these filters.':'No hay citas para estos filtros.'; ?></td></tr>
                         <?php else: foreach ($rows as $r): $serie=(int)$r['IDSERIE']; ?>
-                            <tr id="fila-<?php echo (int)$r['IDCITA']; ?>">
+                            <tr id="fila-<?php echo (int)$r['IDCITA']; ?>"
+                                data-id="<?php echo (int)$r['IDCITA']; ?>"
+                                data-fecha="<?php echo htmlspecialchars($r['FECHA_CITA']); ?>"
+                                data-hora="<?php echo htmlspecialchars(substr($r['HORA_INICIO'],0,5)); ?>"
+                                data-tipo="<?php echo (int)$r['IDTIPOCONSULTA']; ?>"
+                                data-doctor="<?php echo (int)$r['IDDOCTOR']; ?>"
+                                data-agencia="<?php echo (int)$r['IDAGENCIA']; ?>"
+                                data-serie="<?php echo $serie; ?>"
+                                data-paciente="<?php echo htmlspecialchars($r['paciente']); ?>">
                                 <td><input type="checkbox" class="chkCita" value="<?php echo (int)$r['IDCITA']; ?>"></td>
                                 <td class="small text-nowrap"><?php echo htmlspecialchars(date('m/d/Y', strtotime($r['FECHA_CITA']))); ?></td>
                                 <td class="small text-nowrap"><?php echo htmlspecialchars(substr($r['HORA_INICIO'],0,5)); ?><?php echo $r['HORA_FIN']?'–'.htmlspecialchars(substr($r['HORA_FIN'],0,5)):''; ?></td>
@@ -190,6 +207,7 @@ function estBadge($e) {
                                 <td class="small"><?php echo htmlspecialchars(trim($r['doctor']) ?: '—'); ?></td>
                                 <td><?php echo estBadge($r['ESTADO_CITA']); ?></td>
                                 <td class="text-end text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="abrirEditar(<?php echo (int)$r['IDCITA']; ?>)"><i class="bi bi-pencil"></i> <?php echo $en?'Edit':'Editar'; ?></button>
                                     <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="darBaja(<?php echo (int)$r['IDCITA']; ?>,'solo')"><?php echo $en?'Cancel':'Baja'; ?></button>
                                     <?php if ($serie>0): ?>
                                     <button type="button" class="btn btn-sm btn-outline-dark py-0 px-2" onclick="darBaja(<?php echo (int)$r['IDCITA']; ?>,'todas')"><?php echo $en?'Cancel series':'Baja serie'; ?></button>
@@ -205,6 +223,53 @@ function estBadge($e) {
         </div></div>
     </div>
 </div>
+<!-- Modal editar cita / serie -->
+<div class="modal fade" id="modalEditarSerie" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><?php echo $en?'Edit appointment':'Editar cita'; ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edId">
+        <div class="mb-2"><span class="text-muted small"><?php echo $en?'Patient':'Paciente'; ?>:</span> <span id="edPaciente" class="fw-semibold"></span></div>
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label small mb-1"><?php echo $en?'Date':'Fecha'; ?></label><input type="date" id="edFecha" class="form-control form-control-sm"></div>
+          <div class="col-6"><label class="form-label small mb-1"><?php echo $en?'Time':'Hora'; ?></label><input type="time" id="edHora" class="form-control form-control-sm" min="07:00" max="22:30"></div>
+          <div class="col-12"><label class="form-label small mb-1"><?php echo $en?'Type':'Tipo de consulta'; ?></label>
+            <select id="edTipo" class="form-select form-select-sm">
+              <?php foreach ($tiposConsulta as $t): ?><option value="<?php echo (int)$t['IDTIPOCONSULTA']; ?>"><?php echo htmlspecialchars($t['NOMBRES']); ?></option><?php endforeach; ?>
+            </select></div>
+          <div class="col-12"><label class="form-label small mb-1"><?php echo $en?'Doctor':'Doctor'; ?></label>
+            <select id="edDoctor" class="form-select form-select-sm">
+              <?php foreach ($doctores as $d): ?><option value="<?php echo (int)$d['IDADM_USUARIO']; ?>"><?php echo htmlspecialchars($d['NOMBRES'].' '.$d['APELLIDOS']); ?></option><?php endforeach; ?>
+            </select></div>
+          <div class="col-12"><label class="form-label small mb-1"><?php echo $en?'Location':'Lugar'; ?></label>
+            <select id="edAgencia" class="form-select form-select-sm">
+              <option value="0">—</option>
+              <?php foreach ($agencias as $a): ?><option value="<?php echo (int)$a['IDAGENCIA']; ?>"><?php echo htmlspecialchars($a['DESCRIPCION']); ?></option><?php endforeach; ?>
+            </select></div>
+        </div>
+        <div id="edSerieWrap" class="mt-3 d-none">
+          <label class="form-label small mb-1"><?php echo $en?'Apply to':'Aplicar a'; ?></label>
+          <div class="btn-group btn-group-sm w-100" role="group">
+            <input type="radio" class="btn-check" name="edAlcance" id="edSolo" value="solo" checked>
+            <label class="btn btn-outline-primary" for="edSolo"><?php echo $en?'Only this one':'Solo esta'; ?></label>
+            <input type="radio" class="btn-check" name="edAlcance" id="edTodas" value="todas">
+            <label class="btn btn-outline-primary" for="edTodas"><?php echo $en?'Whole series (future)':'Toda la serie (futuras)'; ?></label>
+          </div>
+          <div class="form-text"><?php echo $en?'"Whole series" moves this and all future appointments in the series.':'"Toda la serie" mueve esta y todas las futuras de la serie.'; ?></div>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php echo $en?'Cancel':'Cancelar'; ?></button>
+        <button type="button" class="btn btn-primary btn-sm" id="edGuardar" onclick="guardarEditar(false)"><i class="bi bi-check-lg"></i> <?php echo $en?'Save':'Guardar'; ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 var L = {
@@ -213,8 +278,51 @@ var L = {
     confirmBulk:  <?php echo json_encode($en?'Cancel the selected appointments? (no email is sent)':'¿Dar de baja las citas seleccionadas? (no envía correo)'); ?>,
     none:         <?php echo json_encode($en?'Select at least one appointment.':'Selecciona al menos una cita.'); ?>,
     err:          <?php echo json_encode($en?'Could not cancel: ':'No se pudo dar de baja: '); ?>,
-    connErr:      <?php echo json_encode($en?'Connection error.':'Error de conexión.'); ?>
+    connErr:      <?php echo json_encode($en?'Connection error.':'Error de conexión.'); ?>,
+    edFields:     <?php echo json_encode($en?'Complete date, time, type and doctor.':'Completa fecha, hora, tipo y doctor.'); ?>,
+    edConfirm:    <?php echo json_encode($en?'Save these changes?':'¿Guardar estos cambios?'); ?>,
+    edOk:         <?php echo json_encode($en?'Appointment updated.':'Cita actualizada.'); ?>,
+    edErr:        <?php echo json_encode($en?'Could not save: ':'No se pudo guardar: '); ?>,
+    slotTakenAsk: <?php echo json_encode($en?'The time is already taken. Schedule anyway (double-booking)?':'El horario ya está ocupado. ¿Agendar de todos modos (doble reserva)?'); ?>
 };
+var edModal = null;
+function abrirEditar(id){
+    var fila = document.getElementById('fila-'+id); if(!fila) return;
+    document.getElementById('edId').value        = id;
+    document.getElementById('edPaciente').textContent = fila.getAttribute('data-paciente') || '';
+    document.getElementById('edFecha').value      = fila.getAttribute('data-fecha') || '';
+    document.getElementById('edHora').value       = fila.getAttribute('data-hora') || '';
+    document.getElementById('edTipo').value       = fila.getAttribute('data-tipo') || '';
+    document.getElementById('edDoctor').value     = fila.getAttribute('data-doctor') || '';
+    document.getElementById('edAgencia').value    = fila.getAttribute('data-agencia') || '0';
+    var serie = parseInt(fila.getAttribute('data-serie')||'0',10) > 0;
+    document.getElementById('edSerieWrap').classList.toggle('d-none', !serie);
+    var solo = document.getElementById('edSolo'); if(solo) solo.checked = true;
+    if(!edModal) edModal = new bootstrap.Modal(document.getElementById('modalEditarSerie'));
+    edModal.show();
+}
+function guardarEditar(dobleReserva){
+    var id     = document.getElementById('edId').value;
+    var fecha  = document.getElementById('edFecha').value;
+    var hora   = document.getElementById('edHora').value;
+    var tipo   = document.getElementById('edTipo').value;
+    var doctor = document.getElementById('edDoctor').value;
+    var agencia= document.getElementById('edAgencia').value;
+    if(!fecha || !hora || !tipo || !doctor){ alert(L.edFields); return; }
+    var alcance = 'solo';
+    var rTodas = document.getElementById('edTodas');
+    if(rTodas && rTodas.checked && !document.getElementById('edSerieWrap').classList.contains('d-none')) alcance='todas';
+    if(!dobleReserva && !confirm(L.edConfirm)) return;
+    $.post('editar_cita.php', {
+        idCita:id, fecha:fecha, hora:hora, idTipoConsulta:tipo, idDoctor:doctor,
+        idAgencia:agencia, alcance:alcance, dobleReserva: dobleReserva ? 1 : 0
+    }, function(res){
+        res = (res||'').trim();
+        if(res==='OK' || res==='OK_MODIFICADA' || res==='OK_SIN_CORREO'){ alert(L.edOk); location.reload(); }
+        else if(res==='HORARIO_OCUPADO'){ if(confirm(L.slotTakenAsk)) guardarEditar(true); }
+        else { alert(L.edErr + res); }
+    }).fail(function(){ alert(L.connErr); });
+}
 function toggleAll(cb){ document.querySelectorAll('.chkCita').forEach(function(c){ c.checked = cb.checked; }); }
 function darBaja(id, alcance){
     if(!confirm(alcance==='todas'?L.confirmSerie:L.confirmSolo)) return;
