@@ -1060,6 +1060,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
 
 <!-- Scripts — cargados UNA sola vez, en orden correcto -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/modal_stack.js?v=<?php echo @filemtime(__DIR__.'/js/modal_stack.js'); ?>"></script>
 <script src="./fullcalendar/main.js"></script>
 <script src="./fullcalendar/locales/es.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
