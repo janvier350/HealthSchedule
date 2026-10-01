@@ -305,6 +305,8 @@ return array(
     'cal.js.apptGone'          => 'The appointment no longer exists or was deleted.',
     'cal.js.slotTaken'         => 'The chosen time overlaps another existing appointment. Choose a different time.',
     'cal.js.slotTakenAsk'      => 'The time is already taken. Schedule anyway (double-booking)?',
+    'cal.js.apptDiagLabel'     => 'Patient ICD-10 diagnosis:',
+    'cal.js.apptDiagNone'      => 'This patient has no ICD-10. Add it in Manage Patients to be able to schedule.',
     'cal.js.recurConfirm'      => 'You are about to create a recurring series ({tipo}): {n} appointments. Continue?',
     'cal.js.recurConfirmDate'  => 'You are about to create a recurring series ({tipo}) up to the end date. Continue?',
     'cal.js.dragClosed'        => 'This appointment is closed and cannot be moved.',
