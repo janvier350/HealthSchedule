@@ -947,6 +947,7 @@ return array(
     'att.helpBtn'             => 'Dictation help',
     'help.howItWorks'         => 'How it works',
     'help.scheduleTitle'      => 'How to schedule appointments',
+    'help.recurringTitle'     => 'Recurring appointments & review by date',
     'help.attendTitle'        => 'How to attend a visit',
     'help.patientsTitle'      => 'How to manage patients',
     'help.documentsTitle'     => 'How to send documents to patients',

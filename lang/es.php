@@ -947,6 +947,7 @@ return array(
     'att.helpBtn'             => 'Ayuda dictado',
     'help.howItWorks'         => '¿Cómo funciona?',
     'help.scheduleTitle'      => 'Cómo agendar citas',
+    'help.recurringTitle'     => 'Citas recurrentes y revisión por fecha',
     'help.attendTitle'        => 'Cómo atender una cita',
     'help.patientsTitle'      => 'Cómo gestionar pacientes',
     'help.documentsTitle'     => 'Cómo enviar documentos a pacientes',

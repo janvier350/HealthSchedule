@@ -100,6 +100,53 @@ $en = (current_lang() === 'en');
                 </div></div>
               </div>
 
+              <!-- Citas recurrentes y revisión -->
+              <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hrec">
+                    <i class="bi bi-arrow-repeat me-2"></i><?php te('help.recurringTitle'); ?></button></h2>
+                <div id="hrec" class="accordion-collapse collapse" data-bs-parent="#accAyuda"><div class="accordion-body">
+                  <?php if ($en): ?>
+                    <h6>Create a recurring series</h6>
+                    <ol>
+                      <li>In the schedule form set the <b>first date, time, patient, type, doctor and location</b>.</li>
+                      <li>In <b>Repeat appointment</b> choose <b>Weekly / Biweekly / Monthly</b> (or "Do not repeat" for one).</li>
+                      <li>In <b>End…</b> choose <b>after N sessions</b> or <b>on a date</b>. It confirms how many will be created.</li>
+                    </ol>
+                    <h6>Double-booking</h6>
+                    <ul>
+                      <li>If the slot is already taken for that doctor, by default those dates are <b>skipped</b> and the message tells you <b>which date and which patient</b> occupies each.</li>
+                      <li>Tick <b>"Allow double-booking"</b> to schedule anyway (overlap). Assistants then resolve clashes.</li>
+                    </ul>
+                    <h6>Review, edit or cancel — "Appointments by date"</h6>
+                    <ul>
+                      <li>Open <b>Agenda → Appointments by date</b> and pick a <b>date range</b> (and optionally doctor/patient).</li>
+                      <li><b>Edit</b> a row to change date/time/type/doctor/location — for a series choose <b>only this one</b> or the <b>whole future series</b>.</li>
+                      <li><b>Cancel</b> / <b>Cancel series</b>, or tick several and <b>Cancel selected</b>. This cleanup <b>does not email</b> the patient. Everything is saved in the audit log.</li>
+                    </ul>
+                    <p class="text-muted small mb-0">Note: the calendar shows the last 3 months plus the future; to review older dates use "Appointments by date".</p>
+                  <?php else: ?>
+                    <h6>Crear una serie recurrente</h6>
+                    <ol>
+                      <li>En el formulario de agendar pon la <b>primera fecha, hora, paciente, tipo, doctor y lugar</b>.</li>
+                      <li>En <b>Repetir cita</b> elige <b>Semanal / Quincenal / Mensual</b> (o "No repetir" para una sola).</li>
+                      <li>En <b>Terminar…</b> elige <b>después de N sesiones</b> o <b>en una fecha</b>. Te confirma cuántas se van a crear.</li>
+                    </ol>
+                    <h6>Doble reserva</h6>
+                    <ul>
+                      <li>Si el horario ya está ocupado para ese doctor, por defecto esas fechas se <b>saltan</b> y el aviso te dice <b>qué fecha y qué paciente</b> la ocupa.</li>
+                      <li>Marca <b>"Permitir doble reserva"</b> para agendar de todos modos (encimado). Las asistentes luego resuelven los choques.</li>
+                    </ul>
+                    <h6>Revisar, editar o dar de baja — "Citas por fecha"</h6>
+                    <ul>
+                      <li>Entra a <b>Agenda → Citas por fecha</b> y elige un <b>rango de fechas</b> (y opcional doctor/paciente).</li>
+                      <li><b>Editar</b> una fila para cambiar fecha/hora/tipo/doctor/lugar — en una serie elige <b>solo esta</b> o <b>toda la serie futura</b>.</li>
+                      <li><b>Baja</b> / <b>Baja serie</b>, o marca varias y <b>Dar de baja seleccionadas</b>. Esta limpieza <b>no envía correo</b> al paciente. Todo queda en la bitácora.</li>
+                    </ul>
+                    <p class="text-muted small mb-0">Nota: el calendario muestra los últimos 3 meses y el futuro; para revisar fechas más antiguas usa "Citas por fecha".</p>
+                  <?php endif; ?>
+                </div></div>
+              </div>
+
               <!-- Consulta -->
               <div class="accordion-item">
                 <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#h2">
