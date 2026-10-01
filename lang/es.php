@@ -305,6 +305,8 @@ return array(
     'cal.js.apptGone'          => 'La cita ya no existe o fue eliminada.',
     'cal.js.slotTaken'         => 'El horario elegido se cruza con otra cita existente. Elija otra hora.',
     'cal.js.slotTakenAsk'      => 'El horario ya está ocupado. ¿Agendar de todos modos (doble reserva)?',
+    'cal.js.apptDiagLabel'     => 'Diagnóstico ICD-10 del paciente:',
+    'cal.js.apptDiagNone'      => 'Este paciente no tiene ICD-10. Agrégalo en Gestionar Pacientes para poder agendar.',
     'cal.js.recurConfirm'      => 'Vas a crear una serie recurrente ({tipo}): {n} citas. ¿Continuar?',
     'cal.js.recurConfirmDate'  => 'Vas a crear una serie recurrente ({tipo}) hasta la fecha final. ¿Continuar?',
     'cal.js.dragClosed'        => 'Esta cita está cerrada y no se puede mover.',

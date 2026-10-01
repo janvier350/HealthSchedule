@@ -625,6 +625,7 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
                             <option value="<?php echo $v['IDPACIENTE']; ?>"><?php echo htmlspecialchars($v['NOMBRES'].' '.$v['APELLIDOS']); ?></option>
                             <?php endwhile; ?>
                         </select>
+                        <div id="citaIcd10Info" class="small mt-1"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><?php te('cal.startTime'); ?></label>
@@ -1143,6 +1144,8 @@ const TC = <?php echo json_encode(array(
     'apptGone'        => t('cal.js.apptGone'),
     'slotTaken'       => t('cal.js.slotTaken'),
     'slotTakenAsk'    => t('cal.js.slotTakenAsk'),
+    'apptDiagLabel'   => t('cal.js.apptDiagLabel'),
+    'apptDiagNone'    => t('cal.js.apptDiagNone'),
     'apptGonePrev'    => t('cal.js.apptGonePrev'),
     'reschedule'      => t('cal.reschedule'),
     'editAppt'        => t('cal.editAppt'),
@@ -2342,9 +2345,36 @@ function _initSelect2Agendar() {
         width: '100%'
     });
 }
+// Muestra el diagnóstico ICD-10 del paciente al elegirlo en el formulario de
+// agendar (así "se conecta" el diagnóstico con la cita). Sólo informativo.
+function _cargarIcd10Cita() {
+    var sel  = document.querySelector('#editModal [name="IdPaciente"]');
+    var cont = document.getElementById('citaIcd10Info');
+    if (!sel || !cont) return;
+    var id = sel.value;
+    if (!id) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<span class="text-muted">…</span>';
+    $.getJSON('paciente_icd10.php', { accion: 'listar', idPaciente: id })
+      .done(function (res) {
+          if (res && res.ok && res.lista && res.lista.length) {
+              var chips = res.lista.map(function (d) {
+                  return '<span class="badge bg-info text-dark me-1 mb-1">' + escHtml(d.codigo) + ' — ' + escHtml(d.descripcion || '') + '</span>';
+              }).join('');
+              cont.innerHTML = '<div class="text-muted mb-1"><i class="bi bi-clipboard2-pulse me-1"></i>' + escHtml(TC.apptDiagLabel) + '</div>' + chips;
+          } else {
+              cont.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>' + escHtml(TC.apptDiagNone) + '</span>';
+          }
+      })
+      .fail(function () { cont.innerHTML = ''; });
+}
 $(document).ready(function () {
     $('#editModal').on('shown.bs.modal', _initSelect2Agendar);
-    $('#editModal').on('hidden.bs.modal', _destruirSelect2Agendar);
+    $('#editModal').on('hidden.bs.modal', function () {
+        _destruirSelect2Agendar();
+        var c = document.getElementById('citaIcd10Info'); if (c) c.innerHTML = '';
+    });
+    // Al cambiar el paciente (select2 dispara change en el <select>), mostrar su ICD-10.
+    $(document).on('change', '#editModal [name="IdPaciente"]', _cargarIcd10Cita);
 });
 
 // ── Recurrencia (mostrar/ocultar controles) ──────────────────────────
