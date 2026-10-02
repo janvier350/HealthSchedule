@@ -637,6 +637,7 @@ return array(
     'plist.js.reportEmpty'     => 'The report cannot be empty.',
     'plist.js.confirmCancelEdit'=> 'Discard your changes to the report?',
     'plist.reportCancel'       => 'Cancel',
+    'plist.exportPdf'          => 'Export to PDF',
 
     // ── Encabezado legacy (dropdowns) ──────────────────────────────────
     'hdr.statistics'           => 'Statistics',

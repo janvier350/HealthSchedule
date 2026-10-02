@@ -637,6 +637,7 @@ return array(
     'plist.js.reportEmpty'     => 'El informe no puede estar vacío.',
     'plist.js.confirmCancelEdit'=> '¿Descartar los cambios del informe?',
     'plist.reportCancel'       => 'Cancelar',
+    'plist.exportPdf'          => 'Exportar a PDF',
 
     // ── Encabezado legacy (dropdowns) ──────────────────────────────────
     'hdr.statistics'           => 'Estadística',

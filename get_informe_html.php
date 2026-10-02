@@ -1,7 +1,10 @@
 <?php
+session_start();
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
+
+if (!isset($_SESSION["rol"])) { http_response_code(403); echo '<div class="alert alert-danger">No autorizado.</div>'; exit; }
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     http_response_code(400);
