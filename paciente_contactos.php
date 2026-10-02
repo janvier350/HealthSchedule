@@ -21,7 +21,21 @@ if ($idPaciente <= 0) { echo json_encode(['ok'=>false,'error'=>'PACIENTE_INVALID
 
 $dbEsc = $conexion->real_escape_string($conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db']);
 $tabla = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='paciente_contactos'")->fetch_assoc()['c']>0;
-if (!$tabla) { echo json_encode(['ok'=>false,'error'=>'FALTA_MIGRACION']); exit; }
+if (!$tabla) {
+    // Auto-crear la tabla si no existe (evita depender de correr la migración).
+    @$conexion->query("CREATE TABLE IF NOT EXISTS paciente_contactos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        IDPACIENTE INT NOT NULL,
+        tipo VARCHAR(10) NOT NULL,
+        valor VARCHAR(160) NOT NULL,
+        etiqueta VARCHAR(60) NULL,
+        fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+        id_usuario INT NULL,
+        INDEX idx_pac (IDPACIENTE)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $tabla = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='paciente_contactos'")->fetch_assoc()['c']>0;
+    if (!$tabla) { echo json_encode(['ok'=>false,'error'=>'FALTA_MIGRACION']); exit; }
+}
 
 function listar($conexion,$idPaciente){
     $out=[]; $st=$conexion->prepare("SELECT id, tipo, valor, etiqueta FROM paciente_contactos WHERE IDPACIENTE=? ORDER BY id ASC");
