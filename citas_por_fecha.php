@@ -208,6 +208,9 @@ function estBadge($e) {
                                 <td><?php echo estBadge($r['ESTADO_CITA']); ?></td>
                                 <td class="text-end text-nowrap">
                                     <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="abrirEditar(<?php echo (int)$r['IDCITA']; ?>)"><i class="bi bi-pencil"></i> <?php echo $en?'Edit':'Editar'; ?></button>
+                                    <?php if ($serie>0): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-info py-0 px-2" onclick="abrirSerie(<?php echo (int)$r['IDCITA']; ?>)"><i class="bi bi-arrow-repeat"></i> <?php echo $en?'Series':'Serie'; ?></button>
+                                    <?php endif; ?>
                                     <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="darBaja(<?php echo (int)$r['IDCITA']; ?>,'solo')"><?php echo $en?'Cancel':'Baja'; ?></button>
                                     <?php if ($serie>0): ?>
                                     <button type="button" class="btn btn-sm btn-outline-dark py-0 px-2" onclick="darBaja(<?php echo (int)$r['IDCITA']; ?>,'todas')"><?php echo $en?'Cancel series':'Baja serie'; ?></button>
@@ -265,6 +268,50 @@ function estBadge($e) {
       <div class="modal-footer py-2">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?php echo $en?'Cancel':'Cancelar'; ?></button>
         <button type="button" class="btn btn-primary btn-sm" id="edGuardar" onclick="guardarEditar(false)"><i class="bi bi-check-lg"></i> <?php echo $en?'Save':'Guardar'; ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal gestionar serie: cambiar frecuencia + dar de baja por fila -->
+<div class="modal fade" id="modalSerie" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2"></i><?php echo $en?'Manage series':'Gestionar serie'; ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="seCitaRef">
+        <div class="mb-2"><span class="text-muted small"><?php echo $en?'Patient':'Paciente'; ?>:</span> <span id="sePaciente" class="fw-semibold"></span></div>
+
+        <div class="card card-body bg-light mb-3">
+          <label class="form-label small mb-1"><i class="bi bi-calendar-range me-1"></i><?php echo $en?'Change frequency of FUTURE appointments':'Cambiar frecuencia de las citas FUTURAS'; ?></label>
+          <div class="d-flex gap-2 align-items-end flex-wrap">
+            <div>
+              <select id="seFrec" class="form-select form-select-sm" onchange="document.getElementById('seFrecCustomWrap').classList.toggle('d-none', this.value!=='custom')">
+                <option value="7"><?php echo $en?'Weekly (7 days)':'Semanal (7 días)'; ?></option>
+                <option value="14"><?php echo $en?'Every 2 weeks (14 days)':'Cada 2 semanas (14 días)'; ?></option>
+                <option value="21"><?php echo $en?'Every 3 weeks (21 days)':'Cada 3 semanas (21 días)'; ?></option>
+                <option value="30"><?php echo $en?'Monthly (30 days)':'Mensual (30 días)'; ?></option>
+                <option value="custom"><?php echo $en?'Custom…':'Personalizado…'; ?></option>
+              </select>
+            </div>
+            <div id="seFrecCustomWrap" class="d-none">
+              <div class="input-group input-group-sm">
+                <input type="number" id="seFrecDias" class="form-control" min="1" max="90" value="10" style="max-width:90px;">
+                <span class="input-group-text"><?php echo $en?'days':'días'; ?></span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="aplicarFrecuencia()"><?php echo $en?'Apply':'Aplicar'; ?></button>
+          </div>
+          <div class="form-text"><?php echo $en?'Keeps the first future appointment and re-spaces the rest. Does not touch past or attended ones.':'Mantiene la primera cita futura y re-espacia las demás. No toca las pasadas ni las atendidas.'; ?></div>
+        </div>
+
+        <div id="seLista"><div class="text-muted small py-2"><span class="spinner-border spinner-border-sm"></span></div></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" onclick="location.reload()"><?php echo $en?'Close':'Cerrar'; ?></button>
       </div>
     </div>
   </div>
@@ -344,6 +391,66 @@ function bajaSeleccionadas(){
             if(pendientes===0){ if(errores) alert(L.err+errores); location.reload(); }
         });
     });
+}
+
+// ── Gestión de serie (cambiar frecuencia + baja por fila) ────────────
+var seModal = null;
+var SE_T = {
+    future:   <?php echo json_encode($en?'future':'futura'); ?>,
+    baja:     <?php echo json_encode($en?'Cancel':'Baja'); ?>,
+    confirmBaja: <?php echo json_encode($en?'Cancel this appointment? (no email)':'¿Dar de baja esta cita? (no envía correo)'); ?>,
+    confirmFrec: <?php echo json_encode($en?'Re-space the future appointments to the chosen frequency?':'¿Re-espaciar las citas futuras a la frecuencia elegida?'); ?>,
+    freqOk:   <?php echo json_encode($en?'Frequency updated. Appointments moved: ':'Frecuencia actualizada. Citas reubicadas: '); ?>,
+    freqFew:  <?php echo json_encode($en?'There must be at least 2 future pending appointments to re-space.':'Debe haber al menos 2 citas futuras pendientes para re-espaciar.'); ?>,
+    none:     <?php echo json_encode($en?'No appointments.':'Sin citas.'); ?>
+};
+function abrirSerie(idCita){
+    document.getElementById('seCitaRef').value = idCita;
+    document.getElementById('sePaciente').textContent = '';
+    document.getElementById('seLista').innerHTML = '<div class="text-muted small py-2"><span class="spinner-border spinner-border-sm"></span></div>';
+    if(!seModal) seModal = new bootstrap.Modal(document.getElementById('modalSerie'));
+    seModal.show();
+    cargarSerie(idCita);
+}
+function cargarSerie(idCita){
+    $.getJSON('serie_listar.php', { idCita: idCita })
+    .done(function(res){
+        if(!res || !res.ok){ document.getElementById('seLista').innerHTML = '<div class="text-danger small">'+L.err+(res&&res.error?res.error:'')+'</div>'; return; }
+        document.getElementById('sePaciente').textContent = res.paciente || '';
+        if(!res.lista || !res.lista.length){ document.getElementById('seLista').innerHTML = '<div class="text-muted small">'+SE_T.none+'</div>'; return; }
+        var html = '<div class="table-responsive"><table class="table table-sm align-middle"><thead class="table-light"><tr>'
+                 + '<th><?php echo $en?"Date":"Fecha"; ?></th><th><?php echo $en?"Time":"Hora"; ?></th><th><?php echo $en?"Status":"Estado"; ?></th><th></th></tr></thead><tbody>';
+        res.lista.forEach(function(c){
+            var fut = c.futura ? ' <span class="badge bg-light text-dark border">'+SE_T.future+'</span>' : '';
+            html += '<tr><td class="small text-nowrap">'+c.fecha+'</td>'
+                 +  '<td class="small text-nowrap">'+_esc(c.hora)+'</td>'
+                 +  '<td class="small">'+_esc(c.estado)+fut+'</td>'
+                 +  '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="bajaDeSerie('+parseInt(c.id,10)+')">'+SE_T.baja+'</button></td></tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('seLista').innerHTML = html;
+    })
+    .fail(function(){ document.getElementById('seLista').innerHTML = '<div class="text-danger small">'+L.connErr+'</div>'; });
+}
+function _esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function bajaDeSerie(id){
+    if(!confirm(SE_T.confirmBaja)) return;
+    $.post('cita_baja.php',{idCita:id, alcance:'solo'}, function(res){
+        if(res && res.ok){ cargarSerie(document.getElementById('seCitaRef').value); }
+        else { alert(L.err + (res && res.error ? res.error : '')); }
+    },'json').fail(function(){ alert(L.connErr); });
+}
+function aplicarFrecuencia(){
+    var idCita = document.getElementById('seCitaRef').value;
+    var sel = document.getElementById('seFrec').value;
+    var dias = sel === 'custom' ? parseInt(document.getElementById('seFrecDias').value||'0',10) : parseInt(sel,10);
+    if(!dias || dias < 1){ return; }
+    if(!confirm(SE_T.confirmFrec)) return;
+    $.post('serie_refrecuencia.php', { idCita: idCita, dias: dias }, function(res){
+        if(res && res.ok){ alert(SE_T.freqOk + res.cambiadas); cargarSerie(idCita); }
+        else if(res && res.error === 'POCAS_FUTURAS'){ alert(SE_T.freqFew); }
+        else { alert(L.err + (res && res.error ? res.error : '')); }
+    },'json').fail(function(){ alert(L.connErr); });
 }
 </script>
 </body>
