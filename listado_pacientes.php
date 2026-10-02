@@ -436,6 +436,9 @@ $totalRows = $result ? $result->num_rows : 0;
                 <button id="btnCancelarInforme" type="button" class="btn btn-outline-secondary btn-sm d-none" onclick="cancelarEdicionInforme()">
                     <?php te('plist.reportCancel'); ?>
                 </button>
+                <button type="button" onclick="exportarInformePDF()" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-filetype-pdf"></i> <?php te('plist.exportPdf'); ?>
+                </button>
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-printer"></i> <?php te('common.print'); ?>
                 </button>
@@ -593,6 +596,11 @@ function _resetBotonesInforme() {
     body.contentEditable = 'false';
     body.style.outline = '';
     body.style.background = '';
+}
+
+function exportarInformePDF() {
+    if (!informeIdActual) return;
+    window.open('informe_pdf.php?id=' + encodeURIComponent(informeIdActual), '_blank');
 }
 
 function verInforme(idHistorial) {
