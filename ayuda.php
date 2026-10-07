@@ -278,6 +278,73 @@ $en = (current_lang() === 'en');
                 </div></div>
               </div>
 
+              <!-- Solicitudes / Tickets -->
+              <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#htk">
+                    <i class="bi bi-ticket-detailed me-2"></i><?php echo $en?'Requests / Tickets':'Solicitudes / Tickets'; ?></button></h2>
+                <div id="htk" class="accordion-collapse collapse" data-bs-parent="#accAyuda"><div class="accordion-body">
+                  <?php if ($en): ?>
+                    <h6>What it's for</h6>
+                    <p>A single, centralized place to report and track everything about the app — <b>bugs, fixes, improvements and questions</b> — instead of WhatsApp messages or voice notes. Nothing gets lost, each request keeps its own history, and anyone can see its status.</p>
+                    <h6>Create a request</h6>
+                    <ol>
+                      <li>Open <b>Support → Requests / Tickets</b> and click <b>New request</b>.</li>
+                      <li>Write a <b>Title</b> and choose the <b>Module</b> (Schedule, Patients, Reports, Documents, Billing, ICD-10, Session/Access, Other), the <b>Type</b> (Bug, Fix, Improvement, Question) and the <b>Priority</b> (Low / Medium / High).</li>
+                      <li>Write the <b>Description</b>. Tip: use the <b>microphone</b> <i class="bi bi-mic"></i> to dictate instead of typing — on a phone, the keyboard's mic also works in any field.</li>
+                      <li><b>Attach screenshots</b>: choose files, drag them in, or click the box and press <b>Ctrl+V</b> to paste a screenshot directly. Images or PDF, up to 10 MB each.</li>
+                      <li>Click <b>Send</b>.</li>
+                    </ol>
+                    <h6>Follow up on a request</h6>
+                    <ul>
+                      <li>Open a request to see the full detail. <b>Click any image</b> to view it in a <b>carousel</b> (arrows to move between images, and a download button) without leaving the page.</li>
+                      <li>Add <b>comments</b> (also with voice and screenshots) to give more detail or answer a question. The whole conversation stays in one place.</li>
+                    </ul>
+                    <h6>Statuses</h6>
+                    <p><b>Open → In progress → Resolved → Closed.</b> The person in charge updates the status so everyone knows where each request stands.</p>
+                    <h6>Find things</h6>
+                    <ul>
+                      <li>Filter by <b>status, module, type, free text</b> and a <b>date range</b> (From / To).</li>
+                      <li>There is a <b>history</b> of everything already resolved — before asking "was this already handled?" (phone numbers, ZIP, fixing fields, etc.) you can search and confirm it's done.</li>
+                    </ul>
+                    <h6>Who sees what</h6>
+                    <ul>
+                      <li><b>Anyone</b> can create and see <b>their own</b> requests.</li>
+                      <li>The <b>Doctor</b> and the <b>administrator</b> see and manage <b>all</b> of them.</li>
+                    </ul>
+                    <div class="alert alert-info py-2 mb-0">The goal: keep every request in one centralized place, instead of spreading them across WhatsApp.</div>
+                  <?php else: ?>
+                    <h6>Para qué sirve</h6>
+                    <p>Un solo lugar centralizado para reportar y dar seguimiento a todo lo de la app — <b>errores, correcciones, mejoras y preguntas</b> — en vez de mensajes o audios de WhatsApp. Nada se pierde, cada solicitud guarda su propio historial y todos pueden ver su estado.</p>
+                    <h6>Crear una solicitud</h6>
+                    <ol>
+                      <li>Entra a <b>Soporte → Solicitudes / Tickets</b> y haz clic en <b>Nueva solicitud</b>.</li>
+                      <li>Escribe un <b>Título</b> y elige el <b>Módulo</b> (Agenda, Pacientes, Informes, Documentos, Facturación, ICD-10, Sesión/Acceso, Otro), el <b>Tipo</b> (Error, Corrección, Mejora, Pregunta) y la <b>Prioridad</b> (Baja / Media / Alta).</li>
+                      <li>Escribe la <b>Descripción</b>. Tip: usa el <b>micrófono</b> <i class="bi bi-mic"></i> para dictar en vez de escribir — en el celular, el micrófono del teclado también funciona en cualquier campo.</li>
+                      <li><b>Adjunta capturas</b>: elige archivos, arrástralos, o haz clic en el recuadro y presiona <b>Ctrl+V</b> para pegar una captura directamente. Imágenes o PDF, hasta 10 MB cada uno.</li>
+                      <li>Haz clic en <b>Enviar</b>.</li>
+                    </ol>
+                    <h6>Dar seguimiento a una solicitud</h6>
+                    <ul>
+                      <li>Abre una solicitud para ver el detalle completo. <b>Haz clic en cualquier imagen</b> para verla en un <b>carrusel</b> (flechas para moverte entre imágenes y botón de descarga), sin salir de la página.</li>
+                      <li>Agrega <b>comentarios</b> (también con voz y capturas) para dar más detalle o responder una pregunta. Toda la conversación queda en un solo lugar.</li>
+                    </ul>
+                    <h6>Estados</h6>
+                    <p><b>Abierto → En progreso → Resuelto → Cerrado.</b> La persona a cargo actualiza el estado para que todos sepan en qué va cada solicitud.</p>
+                    <h6>Buscar</h6>
+                    <ul>
+                      <li>Filtra por <b>estado, módulo, tipo, texto libre</b> y un <b>rango de fechas</b> (Desde / Hasta).</li>
+                      <li>Hay un <b>historial</b> de todo lo que ya se resolvió — antes de preguntar "¿esto ya se atendió?" (números de teléfono, ZIP, corregir campos, etc.) puedes buscarlo y confirmar que ya está hecho.</li>
+                    </ul>
+                    <h6>Quién ve qué</h6>
+                    <ul>
+                      <li><b>Cualquiera</b> puede crear y ver <b>sus propias</b> solicitudes.</li>
+                      <li>La <b>Dra.</b> y el <b>administrador</b> ven y gestionan <b>todas</b>.</li>
+                    </ul>
+                    <div class="alert alert-info py-2 mb-0">El objetivo: tener todas las solicitudes en un solo lugar centralizado, en vez de repartirlas por WhatsApp.</div>
+                  <?php endif; ?>
+                </div></div>
+              </div>
+
               <?php if (strtoupper($_SESSION['rol'] ?? '') === 'SISTEMA'): ?>
               <!-- Administración (solo SISTEMA) -->
               <div class="accordion-item">
