@@ -488,7 +488,8 @@ if (!isset($_SESSION["rol"])) {
                                                             <select name="idicd10" id="pcIcd10" class="form-control">
                                                                 <option value="">—</option>
                                                                 <?php
-                                                                    $resIcd = $conexion->query("SELECT ID_ENFE_DIAG_COD, CODIGO, DESCRIPCION FROM ENFE_DIAG_COD ORDER BY CODIGO");
+                                                                    $icdActCol = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ENFE_DIAG_COD' AND COLUMN_NAME='ACTIVO'")->fetch_assoc()['c'] > 0;
+                                                                    $resIcd = $conexion->query("SELECT ID_ENFE_DIAG_COD, CODIGO, DESCRIPCION FROM ENFE_DIAG_COD " . ($icdActCol ? "WHERE COALESCE(ACTIVO,1)=1 " : "") . "ORDER BY CODIGO");
                                                                     if ($resIcd) {
                                                                         while ($ic = $resIcd->fetch_assoc()) {
                                                                             echo '<option value="' . (int)$ic['ID_ENFE_DIAG_COD'] . '">'

@@ -132,7 +132,9 @@ if ($sp3 = $conexion->prepare(
 
 // ── Diagnósticos ICD-10: catálogo + los ya asignados al paciente ──────────
 $catIcd10 = [];
-$rc = $conexion->query("SELECT ID_ENFE_DIAG_COD AS id, CODIGO AS codigo, DESCRIPCION AS descripcion FROM ENFE_DIAG_COD ORDER BY CODIGO");
+$icdTieneActivo = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ENFE_DIAG_COD' AND COLUMN_NAME='ACTIVO'")->fetch_assoc()['c'] > 0;
+$icdFiltro = $icdTieneActivo ? "WHERE COALESCE(ACTIVO,1)=1" : "";
+$rc = $conexion->query("SELECT ID_ENFE_DIAG_COD AS id, CODIGO AS codigo, DESCRIPCION AS descripcion FROM ENFE_DIAG_COD $icdFiltro ORDER BY CODIGO");
 if ($rc) while ($x = $rc->fetch_assoc()) $catIcd10[] = $x;
 
 $icd10Paciente = [];
