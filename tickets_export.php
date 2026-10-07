@@ -22,11 +22,15 @@ $fEstado = trim($_GET['estado'] ?? '');
 $fModulo = trim($_GET['modulo'] ?? '');
 $fTipo   = trim($_GET['tipo']   ?? '');
 $fQ      = trim($_GET['q']      ?? '');
+$fDesde  = trim($_GET['desde']  ?? '');
+$fHasta  = trim($_GET['hasta']  ?? '');
 
 $where = "WHERE 1=1"; $tipos=''; $vals=[];
 if ($fEstado !== '') { $where.=" AND estado=?"; $tipos.='s'; $vals[]=$fEstado; }
 if ($fModulo !== '') { $where.=" AND modulo=?"; $tipos.='s'; $vals[]=$fModulo; }
 if ($fTipo   !== '') { $where.=" AND tipo=?";   $tipos.='s'; $vals[]=$fTipo; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fDesde)) { $where.=" AND fecha>=?"; $tipos.='s'; $vals[]=$fDesde.' 00:00:00'; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fHasta)) { $where.=" AND fecha<=?"; $tipos.='s'; $vals[]=$fHasta.' 23:59:59'; }
 if ($fQ !== '') { $where.=" AND (titulo LIKE ? OR descripcion LIKE ? OR solicitante LIKE ?)"; $tipos.='sss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like); }
 
 $sql = "SELECT id, titulo, modulo, tipo, prioridad, estado, solicitante, rol_solicitante, fecha, fecha_cierre
