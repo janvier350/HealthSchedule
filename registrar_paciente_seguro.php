@@ -15,9 +15,10 @@ $seguros = [];
 $rSeg = $conexion->query("SELECT Id_seguro, Empresa_seguro FROM seguros WHERE estado = 1 ORDER BY Empresa_seguro");
 if ($rSeg) { while ($s = $rSeg->fetch_assoc()) { $seguros[] = $s; } }
 
-// Catálogo ICD-10
+// Catálogo ICD-10 (sólo activos si la columna existe)
 $icd10 = [];
-$rIcd = $conexion->query("SELECT ID_ENFE_DIAG_COD, CODIGO, DESCRIPCION FROM ENFE_DIAG_COD ORDER BY CODIGO");
+$icdActCol = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ENFE_DIAG_COD' AND COLUMN_NAME='ACTIVO'")->fetch_assoc()['c'] > 0;
+$rIcd = $conexion->query("SELECT ID_ENFE_DIAG_COD, CODIGO, DESCRIPCION FROM ENFE_DIAG_COD " . ($icdActCol ? "WHERE COALESCE(ACTIVO,1)=1 " : "") . "ORDER BY CODIGO");
 if ($rIcd) { while ($ic = $rIcd->fetch_assoc()) { $icd10[] = $ic; } }
 
 $okMsg  = (isset($_GET['ok']) && $_GET['ok'] === '1');
