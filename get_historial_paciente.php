@@ -320,17 +320,17 @@ function imcColor($imc) {
 <div class="mx-4 mt-2 mb-1 row g-2">
     <?php if ($notasTxt !== ''): ?>
     <div class="col-md-6">
-        <div class="border rounded p-2 h-100" style="background:#fff;">
+        <div class="border rounded p-2" style="background:#fff;">
             <div class="info-label mb-1"><i class="bi bi-journal-text"></i> <?php te('hp.important'); ?></div>
-            <div style="font-size:.83em;white-space:pre-wrap;"><?php echo htmlspecialchars($notasTxt); ?></div>
+            <div style="font-size:.83em;white-space:pre-wrap;word-break:break-word;"><?php echo htmlspecialchars($notasTxt); ?></div>
         </div>
     </div>
     <?php endif; ?>
     <?php if ($factNotasTxt !== ''): ?>
     <div class="col-md-6">
-        <div class="border rounded p-2 h-100" style="background:#fff;">
+        <div class="border rounded p-2" style="background:#fff;">
             <div class="info-label mb-1"><i class="bi bi-receipt"></i> <?php te('hp.billing'); ?></div>
-            <div style="font-size:.83em;white-space:pre-wrap;"><?php echo htmlspecialchars($factNotasTxt); ?></div>
+            <div style="font-size:.83em;white-space:pre-wrap;word-break:break-word;"><?php echo htmlspecialchars($factNotasTxt); ?></div>
         </div>
     </div>
     <?php endif; ?>
