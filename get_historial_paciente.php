@@ -20,11 +20,17 @@ $colExistePac = function ($col) use ($conexion, $dbName) {
 };
 $tieneAlerta = $colExistePac('ALERTA');
 $tieneIcd10  = $colExistePac('IDICD10');
+$tieneCity   = $colExistePac('CITY');
+$tieneState  = $colExistePac('STATE');
+$tieneZip    = $colExistePac('ZIP');
 
 // Datos del paciente
-$colsPac = "NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, FECHA_REGISTRO, NOTES, ADDNOTES"
+$colsPac = "NOMBRES, APELLIDOS, CEDULA, TELEFONO, EMAIL, FECHANACIMIENTO, SEX, GENDER, FECHA_REGISTRO, NOTES, ADDNOTES, ADDRESS"
          . ($tieneAlerta ? ", ALERTA"  : "")
-         . ($tieneIcd10  ? ", IDICD10" : "");
+         . ($tieneIcd10  ? ", IDICD10" : "")
+         . ($tieneCity   ? ", CITY"    : "")
+         . ($tieneState  ? ", STATE"   : "")
+         . ($tieneZip    ? ", ZIP"     : "");
 $stmtP = $conexion->prepare(
     "SELECT $colsPac FROM AG_PACIENTE WHERE IDPACIENTE = ? LIMIT 1"
 );
@@ -235,6 +241,21 @@ function imcColor($imc) {
                 <?php if (!empty($pac['FECHA_REGISTRO'])): ?>
                     <span><i class="bi bi-calendar-plus text-muted me-1"></i><?php te('hp.registered'); ?>: <?php echo date('m/d/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
                 <?php endif; ?>
+            </div>
+            <?php
+                $addr  = trim((string)($pac['ADDRESS'] ?? ''));
+                $city  = trim((string)($pac['CITY']  ?? ''));
+                $state = trim((string)($pac['STATE'] ?? ''));
+                $zip   = trim((string)($pac['ZIP']   ?? ''));
+                $cityState = trim($city . (($city && $state) ? ', ' : ' ') . $state);
+                $tail = trim($cityState . ' ' . $zip);
+                $full = trim($addr . (($addr && $tail) ? ' · ' : '') . $tail);
+            ?>
+            <div class="mt-1" style="font-size:.85em;">
+                <i class="bi bi-geo-alt text-muted me-1"></i>
+                <?php echo $full !== ''
+                    ? htmlspecialchars($full)
+                    : '<span class="text-danger">'.(current_lang()==='en'?'No address on file':'Sin dirección registrada').'</span>'; ?>
             </div>
             <?php if ($icd10Codigo !== ''): ?>
                 <div class="mt-2" style="font-size:.85em;">
