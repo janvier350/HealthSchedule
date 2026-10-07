@@ -29,12 +29,16 @@ $fEstado = trim($_GET['estado'] ?? '');
 $fModulo = trim($_GET['modulo'] ?? '');
 $fTipo   = trim($_GET['tipo']   ?? '');
 $fQ      = trim($_GET['q']      ?? '');
+$fDesde  = trim($_GET['desde']  ?? '');
+$fHasta  = trim($_GET['hasta']  ?? '');
 
 $where = "WHERE 1=1"; $tipos=''; $vals=[];
 if (!$gestiona) { $where .= " AND id_solicitante=?"; $tipos.='i'; $vals[]=$idUser; }
 if ($fEstado !== '') { $where.=" AND estado=?"; $tipos.='s'; $vals[]=$fEstado; }
 if ($fModulo !== '') { $where.=" AND modulo=?"; $tipos.='s'; $vals[]=$fModulo; }
 if ($fTipo   !== '') { $where.=" AND tipo=?";   $tipos.='s'; $vals[]=$fTipo; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fDesde)) { $where.=" AND fecha>=?"; $tipos.='s'; $vals[]=$fDesde.' 00:00:00'; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fHasta)) { $where.=" AND fecha<=?"; $tipos.='s'; $vals[]=$fHasta.' 23:59:59'; }
 if ($fQ !== '') { $where.=" AND (titulo LIKE ? OR descripcion LIKE ? OR solicitante LIKE ?)"; $tipos.='sss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like); }
 
 $rows = [];
@@ -67,7 +71,8 @@ if ($gestiona) {
             elseif ($x['estado']==='Cerrado') $met['cerrado']=(int)$x['c'];
         }
     }
-    $r = $conexion->query("SELECT COUNT(*) c FROM tickets WHERE YEAR(fecha)=YEAR(CURDATE()) AND MONTH(fecha)=MONTH(CURDATE())");
+    // "Cerrados este mes" = trabajo entregado en el mes en curso (por fecha de cierre).
+    $r = $conexion->query("SELECT COUNT(*) c FROM tickets WHERE fecha_cierre IS NOT NULL AND YEAR(fecha_cierre)=YEAR(CURDATE()) AND MONTH(fecha_cierre)=MONTH(CURDATE())");
     if ($r) $met['mesTotal']=(int)$r->fetch_assoc()['c'];
 }
 
@@ -143,7 +148,7 @@ $jsv = @filemtime(__DIR__.'/js/tickets.js') ?: time();
                     <div class="small text-muted"><?php echo $en?'Closed':'Cerrados'; ?></div></div></div></div>
                 <div class="col-6 col-md"><div class="card shadow-sm text-center"><div class="card-body py-3">
                     <div class="h4 mb-0 text-primary"><?php echo $met['mesTotal']; ?></div>
-                    <div class="small text-muted"><?php echo $en?'This month':'Este mes'; ?></div></div></div></div>
+                    <div class="small text-muted"><?php echo $en?'Closed this month':'Cerrados este mes'; ?></div></div></div></div>
             </div>
             <?php endif; ?>
 
@@ -176,14 +181,22 @@ $jsv = @filemtime(__DIR__.'/js/tickets.js') ?: time();
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1"><?php echo $en?'From':'Desde'; ?></label>
+                        <input type="date" name="desde" class="form-control form-control-sm" value="<?php echo htmlspecialchars($fDesde); ?>">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1"><?php echo $en?'To':'Hasta'; ?></label>
+                        <input type="date" name="hasta" class="form-control form-control-sm" value="<?php echo htmlspecialchars($fHasta); ?>">
+                    </div>
+                    <div class="col-6 col-md-2">
                         <label class="form-label small mb-1"><?php echo $en?'Search':'Buscar'; ?></label>
                         <input type="text" name="q" class="form-control form-control-sm" value="<?php echo htmlspecialchars($fQ); ?>" placeholder="<?php echo $en?'Title / detail…':'Título / detalle…'; ?>">
                     </div>
-                    <div class="col-md-3 d-flex gap-2">
+                    <div class="col-md-12 d-flex gap-2 mt-1">
                         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-search"></i> <?php echo $en?'Filter':'Filtrar'; ?></button>
                         <a href="tickets.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> <?php echo $en?'Clear':'Limpiar'; ?></a>
-                        <?php if ($gestiona): $qsE=http_build_query(['estado'=>$fEstado,'modulo'=>$fModulo,'tipo'=>$fTipo,'q'=>$fQ]); ?>
+                        <?php if ($gestiona): $qsE=http_build_query(['estado'=>$fEstado,'modulo'=>$fModulo,'tipo'=>$fTipo,'q'=>$fQ,'desde'=>$fDesde,'hasta'=>$fHasta]); ?>
                         <a href="tickets_export.php?<?php echo htmlspecialchars($qsE); ?>" class="btn btn-success btn-sm ms-auto"><i class="bi bi-file-earmark-excel"></i> Excel</a>
                         <?php endif; ?>
                     </div>
