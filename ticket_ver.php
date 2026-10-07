@@ -53,12 +53,16 @@ if ($q = $conexion->prepare("SELECT id, usuario, rol, comentario, fecha FROM tic
     $q->close();
 }
 
+$GLOBALS['tkImgs'] = []; // lista ordenada de imágenes para el carrusel
 function adjChip($a, $en) {
     $esImg = strpos((string)$a['mime'], 'image/') === 0;
     $url = 'ticket_adjunto_ver.php?id='.(int)$a['id'];
     if ($esImg) {
-        return '<a href="'.$url.'" target="_blank" class="d-inline-block me-2 mb-2">'
-             . '<img src="'.$url.'" style="width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;"></a>';
+        $idx = count($GLOBALS['tkImgs']);
+        $GLOBALS['tkImgs'][] = ['url'=>$url, 'nombre'=>(string)($a['nombre_original'] ?: 'Imagen')];
+        // href como respaldo (sin JS); con JS abre el modal/carrusel.
+        return '<a href="'.$url.'" target="_blank" class="tk-img-thumb d-inline-block me-2 mb-2" data-idx="'.$idx.'">'
+             . '<img src="'.$url.'" style="width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:zoom-in;"></a>';
     }
     return '<a href="'.$url.'" target="_blank" class="btn btn-sm btn-outline-danger me-2 mb-2">'
          . '<i class="bi bi-file-earmark-pdf"></i> '.htmlspecialchars($a['nombre_original'] ?: 'PDF').'</a>';
@@ -216,8 +220,76 @@ $puedeComentar = $gestiona || ((int)$tk['id_solicitante'] === $idUser);
     </div>
 </div>
 
+<?php if (!empty($GLOBALS['tkImgs'])): ?>
+<!-- Modal lightbox con carrusel de imágenes -->
+<div class="modal fade" id="modalImg" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-0 py-2">
+        <span class="text-white-50 small" id="tkImgCaption"></span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div id="tkCarousel" class="carousel slide" data-bs-ride="false">
+          <div class="carousel-inner">
+            <?php foreach ($GLOBALS['tkImgs'] as $i => $im): ?>
+            <div class="carousel-item <?php echo $i===0?'active':''; ?>" data-nombre="<?php echo htmlspecialchars($im['nombre']); ?>">
+              <img src="<?php echo htmlspecialchars($im['url']); ?>" class="d-block mx-auto" style="max-height:78vh;max-width:100%;object-fit:contain;">
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php if (count($GLOBALS['tkImgs']) > 1): ?>
+          <button class="carousel-control-prev" type="button" data-bs-target="#tkCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span><span class="visually-hidden">Prev</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#tkCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span><span class="visually-hidden">Next</span>
+          </button>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="modal-footer border-0 py-2">
+        <a id="tkImgDownload" href="#" class="btn btn-sm btn-outline-light" download><i class="bi bi-download"></i> <?php echo $en?'Download':'Descargar'; ?></a>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/tickets.js?v=<?php echo $jsv; ?>"></script>
+<?php if (!empty($GLOBALS['tkImgs'])): ?>
+<script>
+(function () {
+    var carEl = document.getElementById('tkCarousel');
+    var modalEl = document.getElementById('modalImg');
+    if (!carEl || !modalEl) return;
+    var carousel = bootstrap.Carousel.getOrCreateInstance(carEl, { interval: false, ride: false });
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    var caption = document.getElementById('tkImgCaption');
+    var dl = document.getElementById('tkImgDownload');
+
+    function sync() {
+        var active = carEl.querySelector('.carousel-item.active');
+        if (!active) return;
+        if (caption) caption.textContent = active.getAttribute('data-nombre') || '';
+        var img = active.querySelector('img');
+        if (dl && img) dl.href = img.getAttribute('src') + '&dl=1';
+    }
+    carEl.addEventListener('slid.bs.carousel', sync);
+
+    document.querySelectorAll('.tk-img-thumb').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            e.preventDefault();
+            var idx = parseInt(a.getAttribute('data-idx'), 10) || 0;
+            carousel.to(idx);
+            sync();
+            modal.show();
+        });
+    });
+})();
+</script>
+<?php endif; ?>
 <script>
 <?php if ($gestiona): ?>
 document.getElementById('formEstado').addEventListener('submit', function (ev) {
