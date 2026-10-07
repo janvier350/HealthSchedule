@@ -359,6 +359,14 @@ $redirLang = $_SERVER['REQUEST_URI'] ?? 'home.php';
             </li>
             <?php endif; ?>
 
+            <!-- ══ SOLICITUDES / TICKETS (todos los roles) ═══════════ -->
+            <li class="app-sidebar__heading"><?php echo (current_lang()==='en'?'Support':'Soporte'); ?></li>
+            <li>
+                <a href="tickets.php" class="<?php echo menuActivo('tickets.php', $paginaActual); ?>">
+                    <i class="metismenu-icon bi bi-ticket-detailed"></i> <?php echo (current_lang()==='en'?'Requests / Tickets':'Solicitudes / Tickets'); ?>
+                </a>
+            </li>
+
             <!-- ══ AYUDA (todos los roles) ═══════════════════════════ -->
             <li class="app-sidebar__heading"><?php te('help.centerTitle'); ?></li>
             <li>
