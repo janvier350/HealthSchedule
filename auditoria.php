@@ -10,6 +10,7 @@ require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 require_once(__DIR__ . "/class/permisos.php");
+require_once(__DIR__ . "/class/geoip.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -23,6 +24,19 @@ $en = (current_lang() === 'en');
 $dbEsc  = $conexion->real_escape_string($conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db']);
 $existe = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria'")->fetch_assoc()['c'] > 0;
 
+// Asegurar columnas nuevas (dispositivo / user_agent) para instalaciones previas.
+$tieneDisp = false;
+if ($existe) {
+    $tieneDisp = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria' AND COLUMN_NAME='dispositivo'")->fetch_assoc()['c'] > 0;
+    if (!$tieneDisp) { @$conexion->query("ALTER TABLE auditoria ADD COLUMN dispositivo VARCHAR(20) NULL"); $tieneDisp = true; }
+    $tieneUA = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria' AND COLUMN_NAME='user_agent'")->fetch_assoc()['c'] > 0;
+    if (!$tieneUA) { @$conexion->query("ALTER TABLE auditoria ADD COLUMN user_agent VARCHAR(255) NULL"); }
+}
+
+// Zona horaria de la app (para etiqueta visible).
+$tzLabel = defined('APP_TZ') ? APP_TZ : date_default_timezone_get();
+try { $tzAbrev = (new DateTime('now', new DateTimeZone($tzLabel)))->format('T'); } catch (Exception $e) { $tzAbrev = ''; }
+
 // Filtros
 $fModulo = trim($_GET['modulo']  ?? '');
 $fAccion = trim($_GET['accion']  ?? '');
@@ -31,7 +45,7 @@ $fDesde  = trim($_GET['desde']   ?? '');
 $fHasta  = trim($_GET['hasta']   ?? '');
 $fQ      = trim($_GET['q']       ?? '');
 
-$modulos = []; $acciones = []; $usuarios = []; $rows = []; $total = 0; $pacNombre = []; $citaPac = [];
+$modulos = []; $acciones = []; $usuarios = []; $rows = []; $total = 0; $pacNombre = []; $citaPac = []; $geoMap = [];
 if ($existe) {
     // Opciones de filtro
     if ($r = $conexion->query("SELECT DISTINCT modulo FROM auditoria ORDER BY modulo")) while ($x=$r->fetch_assoc()) $modulos[]=$x['modulo'];
@@ -47,7 +61,7 @@ if ($existe) {
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fHasta)) { $where.=" AND fecha<=?"; $tipos.='s'; $vals[]=$fHasta.' 23:59:59'; }
     if ($fQ !== '') { $where.=" AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?)"; $tipos.='ssss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like,$like); }
 
-    $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip
+    $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip, dispositivo
             FROM auditoria $where ORDER BY fecha DESC, id DESC LIMIT 500";
     if ($stmt = $conexion->prepare($sql)) {
         if ($tipos !== '') $stmt->bind_param($tipos, ...$vals);
@@ -78,6 +92,21 @@ if ($existe) {
         if ($q = $conexion->query("SELECT A.IDCITA, CONCAT(P.NOMBRES,' ',P.APELLIDOS) nom FROM AG_CITA A INNER JOIN AG_PACIENTE P ON A.IDPACIENTE=P.IDPACIENTE WHERE A.IDCITA IN ($ids)"))
             while ($x = $q->fetch_assoc()) $citaPac[(int)$x['IDCITA']] = trim($x['nom']);
     }
+
+    // País/ciudad aproximados por IP (caché; tolerante a fallos).
+    $ipsUnicas = [];
+    foreach ($rows as $r) { if (!empty($r['ip'])) $ipsUnicas[$r['ip']] = true; }
+    if ($ipsUnicas) { $geoMap = geo_para_ips($conexion, array_keys($ipsUnicas)); }
+}
+
+/** Texto de ubicación (ciudad, país) a partir del mapa geo. */
+function ubicacionDeIp($ip, $geoMap) {
+    if (empty($ip)) return '';
+    $g = $geoMap[$ip] ?? null;
+    if (!$g) return '';
+    if (($g['pais'] ?? '') === 'Local') return 'Local';
+    $partes = array_filter([$g['ciudad'] ?? '', $g['pais'] ?? '']);
+    return $partes ? implode(', ', $partes) : '';
 }
 
 /** Nombre del paciente asociado a un registro de auditoría (o '' si no aplica). */
@@ -224,7 +253,12 @@ function accionBadge($a, $en) {
                     ]);
                 ?>
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted small"><?php echo ($en?'Showing ':'Mostrando ').count($rows).($en?' of ':' de ').$total.($en?' records (latest 500).':' registros (últimos 500).'); ?></span>
+                    <span class="text-muted small">
+                        <?php echo ($en?'Showing ':'Mostrando ').count($rows).($en?' of ':' de ').$total.($en?' records (latest 500).':' registros (últimos 500).'); ?>
+                        <span class="badge bg-light text-dark border ms-1" title="<?php echo htmlspecialchars($tzLabel); ?>">
+                            <i class="bi bi-clock"></i> <?php echo ($en?'Times in ':'Horas en ').htmlspecialchars($tzAbrev ?: $tzLabel); ?>
+                        </span>
+                    </span>
                     <a href="auditoria_export.php?<?php echo htmlspecialchars($qsExport); ?>" class="btn btn-success btn-sm">
                         <i class="bi bi-file-earmark-excel"></i> <?php echo $en?'Export to Excel':'Exportar a Excel'; ?>
                     </a>
@@ -240,12 +274,15 @@ function accionBadge($a, $en) {
                                 <th><?php echo $en?'Patient':'Paciente'; ?></th>
                                 <th><?php echo $en?'Action':'Acción'; ?></th>
                                 <th><?php echo $en?'Detail':'Detalle'; ?></th>
+                                <th><?php echo $en?'Device':'Dispositivo'; ?></th>
+                                <th><?php echo $en?'Location':'Ubicación'; ?></th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (!$rows): ?>
-                            <tr><td colspan="7" class="text-center text-muted py-4"><?php echo $en?'No records for these filters.':'No hay registros para estos filtros.'; ?></td></tr>
-                        <?php else: foreach ($rows as $r): $pac = pacienteDeFila($r, $pacNombre, $citaPac); ?>
+                            <tr><td colspan="9" class="text-center text-muted py-4"><?php echo $en?'No records for these filters.':'No hay registros para estos filtros.'; ?></td></tr>
+                        <?php else: foreach ($rows as $r): $pac = pacienteDeFila($r, $pacNombre, $citaPac); $ubic = ubicacionDeIp($r['ip'] ?? '', $geoMap);
+                            $dispIcon = ['Teléfono'=>'bi-phone','Computadora'=>'bi-laptop','Tablet'=>'bi-tablet'][$r['dispositivo'] ?? ''] ?? ''; ?>
                             <tr>
                                 <td class="small text-nowrap"><?php echo htmlspecialchars(date('m/d/Y H:i', strtotime($r['fecha']))); ?></td>
                                 <td class="small"><?php echo htmlspecialchars(trim($r['nombre']) ?: ($r['usuario'] ?: '—')); ?></td>
@@ -254,6 +291,15 @@ function accionBadge($a, $en) {
                                 <td class="small"><?php echo $pac !== '' ? htmlspecialchars($pac) : '<span class="text-muted">—</span>'; ?></td>
                                 <td><?php echo accionBadge($r['accion'], $en); ?></td>
                                 <td class="small"><?php echo htmlspecialchars($r['detalle'] ?: '—'); ?><?php echo $r['entidad_id']?' <span class="text-muted">(#'.htmlspecialchars($r['entidad_id']).')</span>':''; ?></td>
+                                <td class="small text-nowrap">
+                                    <?php if (!empty($r['dispositivo'])): ?>
+                                        <?php if ($dispIcon): ?><i class="bi <?php echo $dispIcon; ?>"></i> <?php endif; ?><?php echo htmlspecialchars($r['dispositivo']); ?>
+                                    <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                                </td>
+                                <td class="small">
+                                    <?php echo $ubic !== '' ? htmlspecialchars($ubic) : '<span class="text-muted">—</span>'; ?>
+                                    <?php if (!empty($r['ip'])): ?><div class="text-muted" style="font-size:.72rem;"><?php echo htmlspecialchars($r['ip']); ?></div><?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>

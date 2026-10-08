@@ -8,6 +8,7 @@ require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 require_once(__DIR__ . "/class/permisos.php");
+require_once(__DIR__ . "/class/geoip.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -17,6 +18,7 @@ requerir('panel.auditoria');
 
 $dbEsc  = $conexion->real_escape_string($conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db']);
 $existe = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria'")->fetch_assoc()['c'] > 0;
+$tieneDisp = $existe && (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria' AND COLUMN_NAME='dispositivo'")->fetch_assoc()['c'] > 0;
 
 // Filtros (idénticos a auditoria.php)
 $fModulo = trim($_GET['modulo']  ?? '');
@@ -36,7 +38,8 @@ if ($existe) {
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fHasta)) { $where.=" AND fecha<=?"; $tipos.='s'; $vals[]=$fHasta.' 23:59:59'; }
     if ($fQ !== '') { $where.=" AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?)"; $tipos.='ssss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like,$like); }
 
-    $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip
+    $colDisp = $tieneDisp ? ", dispositivo" : "";
+    $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip$colDisp
             FROM auditoria $where ORDER BY fecha DESC, id DESC LIMIT 50000";
     if ($stmt = $conexion->prepare($sql)) {
         if ($tipos !== '') $stmt->bind_param($tipos, ...$vals);
@@ -73,6 +76,18 @@ function _pacFila($r, $pacNombre, $citaPac) {
     return '';
 }
 
+// País/ciudad aproximados por IP (caché)
+$geoMap = [];
+$ipsUnicas = [];
+foreach ($rows as $r) { if (!empty($r['ip'])) $ipsUnicas[$r['ip']] = true; }
+if ($ipsUnicas) { $geoMap = geo_para_ips($conexion, array_keys($ipsUnicas)); }
+function _ubic($ip, $geoMap) {
+    if (empty($ip) || empty($geoMap[$ip])) return '';
+    $g = $geoMap[$ip];
+    if (($g['pais'] ?? '') === 'Local') return 'Local';
+    return trim(implode(', ', array_filter([$g['ciudad'] ?? '', $g['pais'] ?? ''])));
+}
+
 // ── Salida CSV (UTF-8 con BOM para Excel) ─────────────────────────────
 $fname = 'bitacora_' . date('Ymd_His') . '.csv';
 header('Content-Type: text/csv; charset=utf-8');
@@ -82,7 +97,7 @@ header('Expires: 0');
 
 $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 para que Excel muestre bien los acentos
-fputcsv($out, ['Fecha/hora', 'Usuario', 'Rol', 'Módulo', 'Paciente', 'Acción', 'Detalle', 'IP']);
+fputcsv($out, ['Fecha/hora', 'Usuario', 'Rol', 'Módulo', 'Paciente', 'Acción', 'Detalle', 'Dispositivo', 'Ubicación', 'IP']);
 foreach ($rows as $r) {
     fputcsv($out, [
         date('m/d/Y H:i', strtotime($r['fecha'])),
@@ -92,6 +107,8 @@ foreach ($rows as $r) {
         _pacFila($r, $pacNombre, $citaPac),
         $r['accion'],
         $r['detalle'] ?: '',
+        $r['dispositivo'] ?? '',
+        _ubic($r['ip'] ?? '', $geoMap),
         $r['ip'] ?: '',
     ]);
 }
