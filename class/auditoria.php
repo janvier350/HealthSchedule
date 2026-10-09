@@ -38,6 +38,24 @@ if (!function_exists('auditar_so')) {
     }
 }
 
+if (!function_exists('auditar_navegador')) {
+    /** Deduce el navegador a partir del User-Agent.
+     *  Nota: Brave se identifica como Chrome (oculta su identidad), así que
+     *  aparece como "Chrome". */
+    function auditar_navegador($ua) {
+        $ua = (string)$ua;
+        if ($ua === '') return '';
+        if (preg_match('/Edg(A|iOS)?\//i', $ua))      return 'Edge';
+        if (preg_match('/OPR\/|Opera/i', $ua))        return 'Opera';
+        if (preg_match('/SamsungBrowser/i', $ua))     return 'Samsung Internet';
+        if (preg_match('/Firefox\/|FxiOS/i', $ua))    return 'Firefox';
+        if (preg_match('/Chrome\/|CriOS\//i', $ua))   return 'Chrome';
+        if (preg_match('/Safari/i', $ua))             return 'Safari';
+        if (preg_match('/MSIE|Trident/i', $ua))       return 'Internet Explorer';
+        return '';
+    }
+}
+
 if (!function_exists('auditar')) {
     function auditar($conexion, $modulo, $accion, $entidad = '', $entidad_id = null, $detalle = '') {
         if (!$conexion) return;

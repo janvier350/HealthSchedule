@@ -11,6 +11,7 @@ require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 require_once(__DIR__ . "/class/permisos.php");
 require_once(__DIR__ . "/class/geoip.php");
+require_once(__DIR__ . "/class/auditoria.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -283,7 +284,9 @@ function accionBadge($a, $en) {
                             <tr><td colspan="9" class="text-center text-muted py-4"><?php echo $en?'No records for these filters.':'No hay registros para estos filtros.'; ?></td></tr>
                         <?php else: foreach ($rows as $r): $pac = pacienteDeFila($r, $pacNombre, $citaPac); $ubic = ubicacionDeIp($r['ip'] ?? '', $geoMap);
                             $dispIcon = ['Teléfono'=>'bi-phone','Computadora'=>'bi-laptop','Tablet'=>'bi-tablet'][$r['dispositivo'] ?? ''] ?? '';
-                            $soTxt = auditar_so($r['user_agent'] ?? ''); ?>
+                            $soTxt = auditar_so($r['user_agent'] ?? '');
+                            $navTxt = auditar_navegador($r['user_agent'] ?? '');
+                            $soNav = trim(implode(' · ', array_filter([$soTxt, $navTxt]))); ?>
                             <tr>
                                 <td class="small text-nowrap"><?php echo htmlspecialchars(date('m/d/Y H:i', strtotime($r['fecha']))); ?></td>
                                 <td class="small"><?php echo htmlspecialchars(trim($r['nombre']) ?: ($r['usuario'] ?: '—')); ?></td>
@@ -296,7 +299,7 @@ function accionBadge($a, $en) {
                                     <?php if (!empty($r['dispositivo'])): ?>
                                         <?php if ($dispIcon): ?><i class="bi <?php echo $dispIcon; ?>"></i> <?php endif; ?><?php echo htmlspecialchars($r['dispositivo']); ?>
                                     <?php else: ?><span class="text-muted">—</span><?php endif; ?>
-                                    <?php if ($soTxt !== ''): ?><div class="text-muted" style="font-size:.72rem;"><?php echo htmlspecialchars($soTxt); ?></div><?php endif; ?>
+                                    <?php if ($soNav !== ''): ?><div class="text-muted" style="font-size:.72rem;"><?php echo htmlspecialchars($soNav); ?></div><?php endif; ?>
                                 </td>
                                 <td class="small">
                                     <?php echo $ubic !== '' ? htmlspecialchars($ubic) : '<span class="text-muted">—</span>'; ?>
