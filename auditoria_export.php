@@ -100,7 +100,7 @@ header('Expires: 0');
 
 $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 para que Excel muestre bien los acentos
-fputcsv($out, ['Fecha/hora', 'Usuario', 'Rol', 'Módulo', 'Paciente', 'Acción', 'Detalle', 'Dispositivo', 'Sistema operativo', 'Ubicación', 'IP']);
+fputcsv($out, ['Fecha/hora', 'Usuario', 'Rol', 'Módulo', 'Paciente', 'Acción', 'Detalle', 'Dispositivo', 'Sistema operativo', 'Navegador', 'Ubicación', 'IP']);
 foreach ($rows as $r) {
     fputcsv($out, [
         date('m/d/Y H:i', strtotime($r['fecha'])),
@@ -112,6 +112,7 @@ foreach ($rows as $r) {
         $r['detalle'] ?: '',
         $r['dispositivo'] ?? '',
         auditar_so($r['user_agent'] ?? ''),
+        auditar_navegador($r['user_agent'] ?? ''),
         _ubic($r['ip'] ?? '', $geoMap),
         $r['ip'] ?: '',
     ]);
