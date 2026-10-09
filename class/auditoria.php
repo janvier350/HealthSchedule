@@ -23,6 +23,21 @@ if (!function_exists('auditar_dispositivo')) {
     }
 }
 
+if (!function_exists('auditar_so')) {
+    /** Deduce el sistema operativo a partir del User-Agent. */
+    function auditar_so($ua) {
+        $ua = (string)$ua;
+        if ($ua === '') return '';
+        if (preg_match('/Android/i', $ua))            return 'Android';
+        if (preg_match('/iPhone|iPad|iPod/i', $ua))   return 'iOS';
+        if (preg_match('/CrOS/i', $ua))               return 'ChromeOS';
+        if (preg_match('/Windows NT/i', $ua))         return 'Windows';
+        if (preg_match('/Macintosh|Mac OS X/i', $ua)) return 'macOS';
+        if (preg_match('/Linux/i', $ua))              return 'Linux';
+        return '';
+    }
+}
+
 if (!function_exists('auditar')) {
     function auditar($conexion, $modulo, $accion, $entidad = '', $entidad_id = null, $detalle = '') {
         if (!$conexion) return;

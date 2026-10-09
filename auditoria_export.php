@@ -9,6 +9,7 @@ require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");
 require_once(__DIR__ . "/class/permisos.php");
 require_once(__DIR__ . "/class/geoip.php");
+require_once(__DIR__ . "/class/auditoria.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
 
@@ -19,6 +20,7 @@ requerir('panel.auditoria');
 $dbEsc  = $conexion->real_escape_string($conexion->query("SELECT DATABASE() AS db")->fetch_assoc()['db']);
 $existe = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria'")->fetch_assoc()['c'] > 0;
 $tieneDisp = $existe && (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria' AND COLUMN_NAME='dispositivo'")->fetch_assoc()['c'] > 0;
+$tieneUA   = $existe && (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbEsc' AND TABLE_NAME='auditoria' AND COLUMN_NAME='user_agent'")->fetch_assoc()['c'] > 0;
 
 // Filtros (idénticos a auditoria.php)
 $fModulo = trim($_GET['modulo']  ?? '');
@@ -39,7 +41,8 @@ if ($existe) {
     if ($fQ !== '') { $where.=" AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?)"; $tipos.='ssss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like,$like); }
 
     $colDisp = $tieneDisp ? ", dispositivo" : "";
-    $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip$colDisp
+    $colUA   = $tieneUA   ? ", user_agent" : "";
+    $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip$colDisp$colUA
             FROM auditoria $where ORDER BY fecha DESC, id DESC LIMIT 50000";
     if ($stmt = $conexion->prepare($sql)) {
         if ($tipos !== '') $stmt->bind_param($tipos, ...$vals);
@@ -97,7 +100,7 @@ header('Expires: 0');
 
 $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 para que Excel muestre bien los acentos
-fputcsv($out, ['Fecha/hora', 'Usuario', 'Rol', 'Módulo', 'Paciente', 'Acción', 'Detalle', 'Dispositivo', 'Ubicación', 'IP']);
+fputcsv($out, ['Fecha/hora', 'Usuario', 'Rol', 'Módulo', 'Paciente', 'Acción', 'Detalle', 'Dispositivo', 'Sistema operativo', 'Ubicación', 'IP']);
 foreach ($rows as $r) {
     fputcsv($out, [
         date('m/d/Y H:i', strtotime($r['fecha'])),
@@ -108,6 +111,7 @@ foreach ($rows as $r) {
         $r['accion'],
         $r['detalle'] ?: '',
         $r['dispositivo'] ?? '',
+        auditar_so($r['user_agent'] ?? ''),
         _ubic($r['ip'] ?? '', $geoMap),
         $r['ip'] ?: '',
     ]);
