@@ -1036,6 +1036,31 @@ if ((int)($conexion->query("SHOW TABLES LIKE 'ausencias_doctor'")->num_rows ?? 0
                         <i class="bi bi-info-circle"></i> <?php te('plist.alertNotSavedPre'); ?> <strong><?php te('pf.alert'); ?></strong> <?php te('plist.alertNotSavedMid'); ?>
                         <a href="migrar_notas_paciente.php" target="_blank"><?php te('plist.notesMigration'); ?></a>.
                     </div>
+
+                    <!-- 📞 Contactos adicionales: teléfonos/correos extra -->
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-2"><i class="bi bi-telephone-plus"></i> <?php te('pcreate.extraContacts'); ?></h6>
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1"><?php te('pcreate.ct.type'); ?></label>
+                            <select id="pcTipo" class="form-select form-select-sm">
+                                <option value="telefono"><?php te('pf.phone'); ?></option>
+                                <option value="email"><?php te('pf.email'); ?></option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label small mb-1"><?php te('pcreate.ct.value'); ?></label>
+                            <input type="text" id="pcValor" class="form-control form-control-sm" maxlength="160">
+                        </div>
+                        <div class="col-8 col-md-3">
+                            <label class="form-label small mb-1"><?php te('pcreate.ct.label'); ?></label>
+                            <input type="text" id="pcEtiqueta" class="form-control form-control-sm" maxlength="60" placeholder="<?php te('pcreate.ct.labelPh'); ?>">
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <button type="button" class="btn btn-sm btn-success w-100" onclick="agregarContacto()"><?php te('pcreate.addBtn'); ?></button>
+                        </div>
+                    </div>
+                    <div id="pcLista"><div class="text-muted small">—</div></div>
                 </form>
             </div>
             <div class="modal-footer py-2">
@@ -1511,6 +1536,9 @@ function editarPacienteDesdeCita() {
 
             document.getElementById('epAlertaAviso').classList.toggle('d-none', p._tieneAlerta !== false);
 
+            // Teléfonos/correos adicionales del paciente
+            cargarContactos(idPaciente);
+
             // Ocultar el modal de cita para que no se monten los backdrops
             const evtModalEl = document.getElementById('eventModal');
             const evtModal   = bootstrap.Modal.getInstance(evtModalEl);
@@ -1554,6 +1582,59 @@ function guardarPacienteCita() {
         alert(TC.connError);
         btn.disabled = false;
     });
+}
+
+// ── Contactos adicionales (teléfonos / correos extra) en el modal de cita ──
+function _ctEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const CT = {
+    none:      <?php echo json_encode(current_lang()==='en'?'No additional contacts.':'Sin contactos adicionales.'); ?>,
+    loading:   <?php echo json_encode(current_lang()==='en'?'Loading…':'Cargando…'); ?>,
+    remove:    <?php echo json_encode(current_lang()==='en'?'Remove':'Quitar'); ?>,
+    valueReq:  <?php echo json_encode(current_lang()==='en'?'Enter the phone or email.':'Escribe el teléfono o correo.'); ?>,
+    confirmDel:<?php echo json_encode(current_lang()==='en'?'Remove this contact?':'¿Quitar este contacto?'); ?>,
+    saveError: <?php echo json_encode(current_lang()==='en'?'Could not save: ':'No se pudo guardar: '); ?>,
+    connError: <?php echo json_encode(current_lang()==='en'?'Connection error.':'Error de conexión.'); ?>
+};
+function renderContactos(list){
+    const cont = document.getElementById('pcLista'); if(!cont) return;
+    if(!list || !list.length){ cont.innerHTML = '<div class="text-muted small">'+_ctEsc(CT.none)+'</div>'; return; }
+    let html = '<ul class="list-group list-group-flush">';
+    list.forEach(function(c){
+        const icon = c.tipo === 'email' ? 'bi-envelope' : 'bi-telephone';
+        const etq  = c.etiqueta ? ' <span class="badge bg-light text-dark border ms-1">'+_ctEsc(c.etiqueta)+'</span>' : '';
+        html += '<li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">'
+             +  '<span><i class="bi '+icon+' me-2 text-muted"></i>'+_ctEsc(c.valor)+etq+'</span>'
+             +  '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="'+_ctEsc(CT.remove)+'" onclick="eliminarContacto('+parseInt(c.id,10)+')"><i class="bi bi-x"></i></button>'
+             +  '</li>';
+    });
+    html += '</ul>'; cont.innerHTML = html;
+}
+function cargarContactos(idPaciente){
+    const cont = document.getElementById('pcLista'); if(!cont) return;
+    cont.innerHTML = '<div class="text-muted small">'+_ctEsc(CT.loading)+'</div>';
+    $.getJSON('paciente_contactos.php', { accion:'listar', idPaciente: idPaciente })
+        .done(function(res){ if(res && res.ok) renderContactos(res.lista); else cont.innerHTML = '<div class="text-muted small">—</div>'; })
+        .fail(function(){ cont.innerHTML = '<div class="text-danger small">'+_ctEsc(CT.connError)+'</div>'; });
+}
+function agregarContacto(){
+    const idPaciente = document.getElementById('epId').value;
+    const tipo  = document.getElementById('pcTipo').value;
+    const valor = document.getElementById('pcValor').value.trim();
+    const etiqueta = document.getElementById('pcEtiqueta').value.trim();
+    if(!idPaciente) return;
+    if(valor === ''){ alert(CT.valueReq); return; }
+    $.post('paciente_contactos.php', { accion:'agregar', idPaciente: idPaciente, tipo: tipo, valor: valor, etiqueta: etiqueta }, function(res){
+        if(res && res.ok){ renderContactos(res.lista); document.getElementById('pcValor').value=''; document.getElementById('pcEtiqueta').value=''; }
+        else { alert(CT.saveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(CT.connError); });
+}
+function eliminarContacto(id){
+    const idPaciente = document.getElementById('epId').value;
+    if(!confirm(CT.confirmDel)) return;
+    $.post('paciente_contactos.php', { accion:'eliminar', idPaciente: idPaciente, id: id }, function(res){
+        if(res && res.ok){ renderContactos(res.lista); }
+        else { alert(CT.saveError + (res && res.error ? res.error : '')); }
+    }, 'json').fail(function(){ alert(CT.connError); });
 }
 
 const ESTADOS_CANCELACION = ['Cancelada','Cancelado','Cancelación Tardía','Cancelado por Profesional','No Asistió'];
