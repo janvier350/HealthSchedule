@@ -57,6 +57,18 @@ if ($pac && $tieneIcd10 && !empty($pac['IDICD10'])) {
 
 if (!$pac) { echo '<p class="text-danger p-3">Paciente no encontrado.</p>'; exit; }
 
+// Teléfonos secundarios (contactos adicionales) para poder llamar sin entrar a editar.
+$telefonosExtra = [];
+$tablaCont = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='paciente_contactos'")->fetch_assoc()['c'] > 0;
+if ($tablaCont) {
+    if ($sc = $conexion->prepare("SELECT valor, etiqueta FROM paciente_contactos WHERE IDPACIENTE=? AND tipo='telefono' ORDER BY id ASC")) {
+        $sc->bind_param('i', $idPaciente); $sc->execute();
+        $rc = $sc->get_result();
+        while ($x = $rc->fetch_assoc()) $telefonosExtra[] = $x;
+        $sc->close();
+    }
+}
+
 // Talla más reciente registrada en atenciones
 $stmtT = $conexion->prepare(
     "SELECT H.TALLA FROM AG_HISTORIAL H
@@ -237,6 +249,11 @@ function imcColor($imc) {
                     <span><i class="bi bi-gender-ambiguous text-muted me-1"></i><?php echo htmlspecialchars($mostrar); ?></span>
                 <?php endif; ?>
                 <span><i class="bi bi-telephone text-muted me-1"></i><?php echo htmlspecialchars($pac['TELEFONO'] ?? '—'); ?></span>
+                <?php foreach ($telefonosExtra as $tx): ?>
+                    <span title="<?php echo current_lang()==='en'?'Additional phone':'Teléfono adicional'; ?>">
+                        <i class="bi bi-telephone-plus text-success me-1"></i><?php echo htmlspecialchars($tx['valor']); ?><?php if (!empty($tx['etiqueta'])): ?> <span class="text-muted">(<?php echo htmlspecialchars($tx['etiqueta']); ?>)</span><?php endif; ?>
+                    </span>
+                <?php endforeach; ?>
                 <span><i class="bi bi-envelope text-muted me-1"></i><?php echo htmlspecialchars($pac['EMAIL'] ?? '—'); ?></span>
                 <?php if (!empty($pac['FECHA_REGISTRO'])): ?>
                     <span><i class="bi bi-calendar-plus text-muted me-1"></i><?php te('hp.registered'); ?>: <?php echo date('m/d/Y', strtotime($pac['FECHA_REGISTRO'])); ?></span>
