@@ -337,11 +337,23 @@ $totalRows = $result ? $result->num_rows : 0;
                             <label class="form-label small fw-semibold"><?php te('pf.gender'); ?></label>
                             <input type="text" id="epGender" name="gender" class="form-control">
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label small fw-semibold"><?php te('pf.address'); ?></label>
                             <input type="text" id="epAddress" name="address" class="form-control">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold"><?php te('pf.city'); ?></label>
+                            <input type="text" id="epCity" name="city" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold"><?php te('pf.state'); ?></label>
+                            <input type="text" id="epState" name="state" class="form-control">
+                        </div>
                         <div class="col-md-4">
+                            <label class="form-label small fw-semibold"><?php te('pf.zip'); ?></label>
+                            <input type="text" id="epZip" name="zip" class="form-control" maxlength="15">
+                        </div>
+                        <div class="col-md-8">
                             <label class="form-label small fw-semibold"><i class="bi bi-translate"></i> <?php te('pf.language'); ?></label>
                             <select id="epIdioma" name="idioma" class="form-select">
                                 <option value="es"><?php te('lang.spanish'); ?></option>
@@ -518,6 +530,9 @@ function editarPaciente(idPaciente) {
             document.getElementById('epSex').value       = p.SEX       || '';
             document.getElementById('epGender').value    = p.GENDER    || '';
             document.getElementById('epAddress').value   = p.ADDRESS   || '';
+            document.getElementById('epCity').value      = p.CITY      || '';
+            document.getElementById('epState').value     = p.STATE     || '';
+            document.getElementById('epZip').value       = p.ZIP       || '';
             document.getElementById('epIdioma').value    = (p.IDIOMA === 'en') ? 'en' : 'es';
             document.getElementById('epAlerta').value    = p.ALERTA    || '';
             document.getElementById('epNotes').value     = p.NOTES     || '';
