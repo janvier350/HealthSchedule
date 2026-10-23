@@ -1010,8 +1010,25 @@ var EVOL_PESO = {
 };
 function insertarEvolucionPeso(){
     (function(){
-        var d = EVOL_PESO;
-        if (!d || !d.labels || d.labels.length === 0) { alert(ATT.weightChart.noData); return; }
+        var d = EVOL_PESO || {};
+        var labels = (d.labels||[]).slice(), pesos = (d.pesos||[]).slice(), imcs = (d.imcs||[]).slice();
+        // Incluir el peso/IMC de la consulta ACTUAL (lo que se acaba de ingresar),
+        // para que se pueda insertar aunque el paciente aún no tenga histórico.
+        var uPeso = ($('input[name="unidadPeso"]:checked').val()) || 'kg';
+        var pesoInput = parseFloat((document.getElementById('peso')||{}).value) || 0;
+        var pesoKgNow = uPeso === 'lbs' ? pesoInput * 0.453592 : pesoInput;
+        var imcNow = parseFloat((document.getElementById('imc')||{}).value) || 0;
+        if (pesoKgNow > 0) {
+            var h = new Date();
+            var hoyLbl = ('0'+(h.getMonth()+1)).slice(-2)+'/'+('0'+h.getDate()).slice(-2)+'/'+h.getFullYear();
+            if (labels.length && labels[labels.length-1] === hoyLbl) {
+                pesos[pesos.length-1] = Math.round(pesoKgNow*10)/10;
+                if (imcNow > 0) imcs[imcs.length-1] = Math.round(imcNow*10)/10;
+            } else {
+                labels.push(hoyLbl); pesos.push(Math.round(pesoKgNow*10)/10); imcs.push(imcNow>0 ? Math.round(imcNow*10)/10 : null);
+            }
+        }
+        if (labels.length === 0) { alert(ATT.weightChart.noData); return; }
         if (typeof Chart === 'undefined') { window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank'); return; }
         var canvas = document.getElementById('chartEvolucionOculto');
         if (_chartEvolucion) { try { _chartEvolucion.destroy(); } catch(e){} }
@@ -1019,9 +1036,9 @@ function insertarEvolucionPeso(){
         var fondoBlanco = { id:'fondoBlanco', beforeDraw:function(c){ var ctx=c.canvas.getContext('2d'); ctx.save(); ctx.globalCompositeOperation='destination-over'; ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height); ctx.restore(); } };
         _chartEvolucion = new Chart(canvas.getContext('2d'), {
             type:'line',
-            data:{ labels:d.labels, datasets:[
-                { label:'Peso (kg)', data:d.pesos, yAxisID:'yPeso', borderColor:'#3d5af1', backgroundColor:'rgba(61,90,241,.12)', tension:.3, spanGaps:true, pointRadius:3, fill:true },
-                { label:'IMC', data:d.imcs, yAxisID:'yImc', borderColor:'#e67e22', backgroundColor:'rgba(230,126,34,.10)', tension:.3, spanGaps:true, pointRadius:3, fill:false }
+            data:{ labels:labels, datasets:[
+                { label:'Peso (kg)', data:pesos, yAxisID:'yPeso', borderColor:'#3d5af1', backgroundColor:'rgba(61,90,241,.12)', tension:.3, spanGaps:true, pointRadius:3, fill:true },
+                { label:'IMC', data:imcs, yAxisID:'yImc', borderColor:'#e67e22', backgroundColor:'rgba(230,126,34,.10)', tension:.3, spanGaps:true, pointRadius:3, fill:false }
             ]},
             options:{ responsive:false, animation:false, plugins:{ legend:{ position:'top' }, title:{ display:true, text:ATT.weightChart.title } },
                 scales:{ yPeso:{ type:'linear', position:'left', title:{display:true,text:'Peso (kg)'} },
