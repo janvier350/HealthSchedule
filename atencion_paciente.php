@@ -130,6 +130,23 @@ if ($sp3 = $conexion->prepare(
     $sp3->close();
 }
 
+// ── Borrador de la nota guardado EN EL SERVIDOR (autoguardado por cita) ────
+// Permite recuperar lo que se estaba escribiendo en cualquier dispositivo,
+// incluso tras cerrarse la sesión (no depende del localStorage del navegador).
+$srvDraftHtml = ''; $srvDraftTsMs = 0;
+@$conexion->query("CREATE TABLE IF NOT EXISTS atencion_borradores (
+    id_cita INT NOT NULL PRIMARY KEY,
+    id_paciente INT NULL,
+    id_usuario INT NULL,
+    informe LONGTEXT NULL,
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+if ($bb = @$conexion->prepare("SELECT informe, UNIX_TIMESTAMP(fecha) ts FROM atencion_borradores WHERE id_cita=? LIMIT 1")) {
+    $bb->bind_param('i', $idCitaInt); $bb->execute();
+    if ($rbb = $bb->get_result()->fetch_assoc()) { $srvDraftHtml = (string)$rbb['informe']; $srvDraftTsMs = ((int)$rbb['ts']) * 1000; }
+    $bb->close();
+}
+
 // ── Diagnósticos ICD-10: catálogo + los ya asignados al paciente ──────────
 $catIcd10 = [];
 $icdTieneActivo = (int)$conexion->query("SELECT COUNT(*) c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ENFE_DIAG_COD' AND COLUMN_NAME='ACTIVO'")->fetch_assoc()['c'] > 0;
@@ -713,6 +730,8 @@ const DATOS_CITA = {
     prevFecha:       <?php echo json_encode($prevFecha ? date('m/d/Y', strtotime($prevFecha)) : ''); ?>,
     prevTipo:        <?php echo json_encode($prevTipo); ?>
 };
+// Borrador autoguardado en el SERVIDOR (para recuperar en cualquier dispositivo).
+const SRV_DRAFT = { html: <?php echo json_encode($srvDraftHtml); ?>, ts: <?php echo (int)$srvDraftTsMs; ?> };
 
 // ── Textos traducibles (i18n) ────────────────────────────────────────
 const ATT = {
@@ -1116,29 +1135,34 @@ $(document).ready(function(){
     // Si existe un borrador local para esta cita y difiere de lo cargado,
     // se restaura automáticamente (recupera lo que la Dra. estaba escribiendo
     // aunque se haya cerrado la sesión o la página).
+    // Elegir el borrador MÁS RECIENTE entre el del servidor y el local.
     try {
-        var raw = localStorage.getItem(_draftKey);
-        if (raw) {
-            var d = JSON.parse(raw);
+        var mejor = null;
+        if (window.SRV_DRAFT && SRV_DRAFT.html && SRV_DRAFT.ts) mejor = { html: SRV_DRAFT.html, ts: SRV_DRAFT.ts };
+        try {
+            var raw = localStorage.getItem(_draftKey);
+            if (raw) { var dl = JSON.parse(raw); if (dl && dl.html && (!mejor || (dl.ts || 0) > mejor.ts)) mejor = { html: dl.html, ts: dl.ts }; }
+        } catch (e) {}
+        if (mejor) {
             var cargado  = ($('#editorInforme').summernote('code') || '').replace(/\s+/g, '');
-            var borrador = (d && d.html ? d.html : '').replace(/\s+/g, '');
-            var borradorTxt = (d && d.html ? d.html : '').replace(/<[^>]*>/g, '').trim();
+            var borrador = (mejor.html || '').replace(/\s+/g, '');
+            var borradorTxt = (mejor.html || '').replace(/<[^>]*>/g, '').trim();
             if (borradorTxt.length > 0 && borrador !== cargado) {
-                $('#editorInforme').summernote('code', d.html);
-                $('#avisoBorradorTxt').text((ATT.draft.restored || '').replace('%t', _fmtHoraBorrador(d.ts)));
+                $('#editorInforme').summernote('code', mejor.html);
+                $('#avisoBorradorTxt').text((ATT.draft.restored || '').replace('%t', _fmtHoraBorrador(mejor.ts)));
                 document.getElementById('btnDescartarBorradorTxt').textContent = ATT.draft.discard || '';
                 $('#avisoBorrador').removeClass('d-none').addClass('d-flex');
             }
         }
     } catch (e) {}
 
-    // Guardar el borrador al escribir (con rebote) y periódicamente.
+    // Guardar el borrador al escribir (local, con rebote) y periódicamente (local + servidor).
     $('#editorInforme').on('summernote.change', function () {
         clearTimeout(_draftTimer);
         _draftTimer = setTimeout(_guardarBorrador, 1200);
     });
-    setInterval(_guardarBorrador, 5000);
-    window.addEventListener('beforeunload', _guardarBorrador);
+    setInterval(function () { _guardarBorrador(); _guardarBorradorServidor(false); }, 8000);
+    window.addEventListener('beforeunload', function () { _guardarBorrador(); _guardarBorradorServidor(true); });
 });
 
 // ── Helpers de autoguardado local (borrador de la nota) ──────────────
@@ -1161,13 +1185,31 @@ function _guardarBorrador() {
         }
     } catch (e) {}
 }
+// Guarda el borrador EN EL SERVIDOR (sobrevive al cierre de sesión y a cambiar
+// de dispositivo). Se llama periódicamente y al salir de la página.
+function _guardarBorradorServidor(viaBeacon) {
+    try {
+        var html = $('#editorInforme').summernote('code') || '';
+        if (html.replace(/<[^>]*>/g, '').trim().length === 0) return;
+        if (viaBeacon && navigator.sendBeacon) {
+            var params = 'accion=guardar&idCita=' + encodeURIComponent(DATOS_CITA.idCita)
+                       + '&idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente)
+                       + '&informe=' + encodeURIComponent(html);
+            navigator.sendBeacon('borrador_atencion.php', new Blob([params], { type: 'application/x-www-form-urlencoded' }));
+        } else {
+            $.post('borrador_atencion.php', { accion: 'guardar', idCita: DATOS_CITA.idCita, idPaciente: DATOS_CITA.idPaciente, informe: html });
+        }
+    } catch (e) {}
+}
 function descartarBorrador() {
     try { localStorage.removeItem(_draftKey); } catch (e) {}
+    try { $.post('borrador_atencion.php', { accion: 'descartar', idCita: DATOS_CITA.idCita }); } catch (e) {}
     var b = document.getElementById('avisoBorrador');
     if (b) { b.classList.add('d-none'); b.classList.remove('d-flex'); }
 }
 function _limpiarBorrador() {
     try { localStorage.removeItem(_draftKey); } catch (e) {}
+    try { $.post('borrador_atencion.php', { accion: 'descartar', idCita: DATOS_CITA.idCita }); } catch (e) {}
 }
 
 // Carga (o recarga) la nota de la consulta anterior en el editor.
