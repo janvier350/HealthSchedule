@@ -1163,6 +1163,13 @@ $(document).ready(function(){
     });
     setInterval(function () { _guardarBorrador(); _guardarBorradorServidor(false); }, 8000);
     window.addEventListener('beforeunload', function () { _guardarBorrador(); _guardarBorradorServidor(true); });
+    // iOS/Safari: en segundo plano el temporizador se congela y 'beforeunload' no
+    // es confiable en móvil. Guardar también cuando la pestaña se oculta o se
+    // descarga — se dispara justo cuando la Dra. cambia de app/pestaña.
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') { _guardarBorrador(); _guardarBorradorServidor(true); }
+    });
+    window.addEventListener('pagehide', function () { _guardarBorrador(); _guardarBorradorServidor(true); });
 });
 
 // ── Helpers de autoguardado local (borrador de la nota) ──────────────
