@@ -610,6 +610,9 @@ $prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '')
             <button type="button" class="btn btn-sm btn-outline-primary" onclick="insertarEvolucionPeso()">
                 <i class="bi bi-graph-up-arrow"></i> <?php te('att.insertWeightChart'); ?>
             </button>
+            <button type="button" class="btn btn-sm btn-success" onclick="guardarBorradorManual()">
+                <i class="bi bi-cloud-arrow-up"></i> <?php echo (current_lang()==='en' ? 'Save draft' : 'Guardar borrador'); ?>
+            </button>
         </div>
         <canvas id="chartEvolucionOculto" width="760" height="380" style="display:none;"></canvas>
         <div class="mb-1">
@@ -1159,7 +1162,9 @@ $(document).ready(function(){
     // Guardar el borrador al escribir (local, con rebote) y periódicamente (local + servidor).
     $('#editorInforme').on('summernote.change', function () {
         clearTimeout(_draftTimer);
-        _draftTimer = setTimeout(_guardarBorrador, 1200);
+        _draftTimer = setTimeout(_guardarBorrador, 1200);                 // local (rápido)
+        clearTimeout(_draftTimerSrv);
+        _draftTimerSrv = setTimeout(function () { _guardarBorradorServidor(false); }, 3000); // servidor
     });
     setInterval(function () { _guardarBorrador(); _guardarBorradorServidor(false); }, 8000);
     window.addEventListener('beforeunload', function () { _guardarBorrador(); _guardarBorradorServidor(true); });
@@ -1173,27 +1178,45 @@ $(document).ready(function(){
 });
 
 // ── Helpers de autoguardado local (borrador de la nota) ──────────────
-var _draftKey   = 'att_draft_' + DATOS_CITA.idCita;
-var _draftTimer = null;
+var _draftKey      = 'att_draft_' + DATOS_CITA.idCita;
+var _draftTimer    = null;   // rebote guardado local
+var _draftTimerSrv = null;   // rebote guardado en servidor
+var _DRAFT_TXT = {
+    savingSrv: <?php echo json_encode(current_lang()==='en' ? 'Saving…' : 'Guardando…'); ?>,
+    savedSrv:  <?php echo json_encode(current_lang()==='en' ? 'Draft saved on server at %t' : 'Borrador guardado en el servidor a las %t'); ?>,
+    errSrv:    <?php echo json_encode(current_lang()==='en' ? 'Could not save on the server — press "Save draft"' : 'No se pudo guardar en el servidor — pulsa "Guardar borrador"'); ?>
+};
 function _fmtHoraBorrador(ts) {
     try { return new Date(ts).toLocaleTimeString(); } catch (e) { return ''; }
 }
+// Indicador honesto: refleja el guardado EN EL SERVIDOR (ok / guardando / error).
+function _indicadorBorrador(estado, tsOrTxt) {
+    var box = document.getElementById('draftStatus');
+    var txt = document.getElementById('draftStatusTxt');
+    if (!box || !txt) return;
+    box.classList.remove('d-none');
+    if (estado === 'ok') {
+        txt.textContent = _DRAFT_TXT.savedSrv.replace('%t', _fmtHoraBorrador(tsOrTxt || Date.now()));
+        box.classList.remove('text-danger'); box.classList.add('text-muted');
+    } else if (estado === 'saving') {
+        txt.textContent = _DRAFT_TXT.savingSrv;
+        box.classList.remove('text-danger'); box.classList.add('text-muted');
+    } else { // error
+        txt.textContent = _DRAFT_TXT.errSrv;
+        box.classList.remove('text-muted'); box.classList.add('text-danger');
+    }
+}
+// Guarda SOLO en el navegador (respaldo instantáneo). No toca el indicador:
+// el indicador lo maneja el guardado en servidor (para no engañar).
 function _guardarBorrador() {
     try {
         var html = $('#editorInforme').summernote('code') || '';
         if (html.replace(/<[^>]*>/g, '').trim().length === 0) return;   // no guardar vacío
-        var ts = Date.now();
-        localStorage.setItem(_draftKey, JSON.stringify({ html: html, ts: ts }));
-        var box = document.getElementById('draftStatus');
-        var txt = document.getElementById('draftStatusTxt');
-        if (box && txt) {
-            txt.textContent = (ATT.draft.saved || '').replace('%t', _fmtHoraBorrador(ts));
-            box.classList.remove('d-none');
-        }
+        localStorage.setItem(_draftKey, JSON.stringify({ html: html, ts: Date.now() }));
     } catch (e) {}
 }
 // Guarda el borrador EN EL SERVIDOR (sobrevive al cierre de sesión y a cambiar
-// de dispositivo). Se llama periódicamente y al salir de la página.
+// de dispositivo). viaBeacon=true al salir/ocultar la página (no da respuesta).
 function _guardarBorradorServidor(viaBeacon) {
     try {
         var html = $('#editorInforme').summernote('code') || '';
@@ -1204,9 +1227,17 @@ function _guardarBorradorServidor(viaBeacon) {
                        + '&informe=' + encodeURIComponent(html);
             navigator.sendBeacon('borrador_atencion.php', new Blob([params], { type: 'application/x-www-form-urlencoded' }));
         } else {
-            $.post('borrador_atencion.php', { accion: 'guardar', idCita: DATOS_CITA.idCita, idPaciente: DATOS_CITA.idPaciente, informe: html });
+            $.post('borrador_atencion.php', { accion: 'guardar', idCita: DATOS_CITA.idCita, idPaciente: DATOS_CITA.idPaciente, informe: html }, null, 'json')
+                .done(function (res) { _indicadorBorrador(res && res.ok ? 'ok' : 'error'); })
+                .fail(function () { _indicadorBorrador('error'); });
         }
-    } catch (e) {}
+    } catch (e) { _indicadorBorrador('error'); }
+}
+// Botón manual "Guardar borrador": guarda en el servidor de inmediato y avisa.
+function guardarBorradorManual() {
+    _guardarBorrador();                 // respaldo local
+    _indicadorBorrador('saving');
+    _guardarBorradorServidor(false);    // actualiza el indicador según la respuesta
 }
 function descartarBorrador() {
     try { localStorage.removeItem(_draftKey); } catch (e) {}
