@@ -1184,7 +1184,9 @@ var _draftTimerSrv = null;   // rebote guardado en servidor
 var _DRAFT_TXT = {
     savingSrv: <?php echo json_encode(current_lang()==='en' ? 'Saving…' : 'Guardando…'); ?>,
     savedSrv:  <?php echo json_encode(current_lang()==='en' ? 'Draft saved on server at %t' : 'Borrador guardado en el servidor a las %t'); ?>,
-    errSrv:    <?php echo json_encode(current_lang()==='en' ? 'Could not save on the server — press "Save draft"' : 'No se pudo guardar en el servidor — pulsa "Guardar borrador"'); ?>
+    errSrv:    <?php echo json_encode(current_lang()==='en' ? 'Could not save on the server — press "Save draft"' : 'No se pudo guardar en el servidor — pulsa "Guardar borrador"'); ?>,
+    okAlert:   <?php echo json_encode(current_lang()==='en' ? 'Draft saved on the server ✓ (%t)' : 'Borrador guardado en el servidor ✓ (%t)'); ?>,
+    errAlert:  <?php echo json_encode(current_lang()==='en' ? 'Could not save the draft on the server. Check your connection and try again.' : 'No se pudo guardar el borrador en el servidor. Revisa tu conexión e inténtalo de nuevo.'); ?>
 };
 function _fmtHoraBorrador(ts) {
     try { return new Date(ts).toLocaleTimeString(); } catch (e) { return ''; }
@@ -1237,7 +1239,31 @@ function _guardarBorradorServidor(viaBeacon) {
 function guardarBorradorManual() {
     _guardarBorrador();                 // respaldo local
     _indicadorBorrador('saving');
-    _guardarBorradorServidor(false);    // actualiza el indicador según la respuesta
+    try {
+        var html = $('#editorInforme').summernote('code') || '';
+        $.post('borrador_atencion.php', {
+            accion: 'guardar',
+            idCita: DATOS_CITA.idCita,
+            idPaciente: DATOS_CITA.idPaciente,
+            informe: html
+        }, null, 'json')
+        .done(function (res) {
+            if (res && res.ok) {
+                _indicadorBorrador('ok');
+                alert(_DRAFT_TXT.okAlert.replace('%t', _fmtHoraBorrador(Date.now())));
+            } else {
+                _indicadorBorrador('error');
+                alert(_DRAFT_TXT.errAlert);
+            }
+        })
+        .fail(function () {
+            _indicadorBorrador('error');
+            alert(_DRAFT_TXT.errAlert);
+        });
+    } catch (e) {
+        _indicadorBorrador('error');
+        alert(_DRAFT_TXT.errAlert);
+    }
 }
 function descartarBorrador() {
     try { localStorage.removeItem(_draftKey); } catch (e) {}
