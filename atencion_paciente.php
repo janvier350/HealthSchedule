@@ -949,9 +949,6 @@ const ATT = {
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<!-- Guardar la referencia a Chart.js v4 ANTES de que el bundle del tema
-     (assets/scripts/main.js) sobrescriba window.Chart con su Chart.js v2. -->
-<script>try { if (window.Chart) { window.__ChartV4 = window.Chart; } } catch (e) {}</script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
@@ -1057,52 +1054,96 @@ function insertarEvolucionPeso(){
             }
         }
         if (labels.length === 0) { alert(ATT.weightChart.noData); return; }
-        // IMPORTANTE: usar la referencia a Chart.js v4 preservada (window.__ChartV4).
-        // El bundle del tema (assets/scripts/main.js) sobrescribe window.Chart con
-        // su Chart.js v2, incompatible con esta configuración v4 → por eso el botón
-        // fallaba con "Cannot read properties of undefined (reading 'options')".
-        var ChartLib = window.__ChartV4 || window.Chart;
-        if (typeof ChartLib !== 'function') { window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank'); return; }
-        var canvas = document.getElementById('chartEvolucionOculto');
-        if (_chartEvolucion) { try { _chartEvolucion.destroy(); } catch(e){} }
-        // Plugin para fondo blanco (si no, la imagen sale con fondo transparente/negro al imprimir)
-        var fondoBlanco = { id:'fondoBlanco', beforeDraw:function(c){ var ctx=c.canvas.getContext('2d'); ctx.save(); ctx.globalCompositeOperation='destination-over'; ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height); ctx.restore(); } };
-        _chartEvolucion = new ChartLib(canvas.getContext('2d'), {
-            type:'line',
-            data:{ labels:labels, datasets:[
-                { label:'Peso (kg)', data:pesos, yAxisID:'yPeso', borderColor:'#3d5af1', backgroundColor:'rgba(61,90,241,.12)', tension:.3, spanGaps:true, pointRadius:3, fill:true },
-                { label:'IMC', data:imcs, yAxisID:'yImc', borderColor:'#e67e22', backgroundColor:'rgba(230,126,34,.10)', tension:.3, spanGaps:true, pointRadius:3, fill:false }
-            ]},
-            options:{ responsive:false, animation:false, plugins:{ legend:{ position:'top' }, title:{ display:true, text:ATT.weightChart.title } },
-                scales:{ yPeso:{ type:'linear', position:'left', title:{display:true,text:'Peso (kg)'} },
-                         yImc:{ type:'linear', position:'right', title:{display:true,text:'IMC'}, grid:{drawOnChartArea:false} } } },
-            plugins:[fondoBlanco]
-        });
-        // animation:false => ya está renderizada; tomar la imagen.
-        var dataUrl = canvas.toDataURL('image/png', 1.0);
-        var html = '<div style="text-align:center;margin:8px 0;">'
-                 + '<img src="'+dataUrl+'" style="max-width:100%;height:auto;" alt="'+ATT.weightChart.title+'">'
-                 + '<br><small>'+ATT.weightChart.title+'</small></div>';
-        var $ed = $('#editorInforme');
-        var inserted = false;
-        try {
-            var cur = $ed.summernote('code') || '';
-            $ed.summernote('code', cur + '<p><br></p>' + html);
-            inserted = true;
-        } catch (e) {
-            try { $ed.summernote('focus'); $ed.summernote('pasteHTML', html); inserted = true; } catch (e2) {}
-        }
-        try { _chartEvolucion.destroy(); } catch(e){} _chartEvolucion = null;
-        // Nunca quedar "sin hacer nada": si no se pudo insertar en la nota,
-        // avisar y abrir la gráfica en una pestaña para no perder el dato.
-        if (!inserted) {
-            alert(ATT.weightChart.insertError);
-            window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank');
-        }
+
+        // La gráfica se genera dentro de un IFRAME AISLADO que carga su propio
+        // Chart.js v4 limpio. Así no depende de window.Chart de esta página, que
+        // el bundle del tema (assets/scripts/main.js) sobrescribe con su Chart.js v2
+        // incompatible (causa del error "reading 'options'"). El iframe es del mismo
+        // origen, por lo que podemos leer su imagen (toDataURL) sin problemas.
+        _generarGraficaPesoAislada(labels, pesos, imcs, ATT.weightChart.title);
     })();
   } catch (err) {
     alert((ATT.weightChart.error || 'Error') + '\n' + (err && err.message ? err.message : err));
   }
+}
+
+// Inserta en la nota la imagen PNG de la gráfica (o avisa y abre la gráfica aparte).
+function _insertarImagenGrafica(png, titulo){
+    if (!png || png.indexOf('data:image') !== 0) {
+        alert(ATT.weightChart.insertError);
+        window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank');
+        return;
+    }
+    var html = '<div style="text-align:center;margin:8px 0;">'
+             + '<img src="'+png+'" style="max-width:100%;height:auto;" alt="'+titulo+'">'
+             + '<br><small>'+titulo+'</small></div>';
+    var $ed = $('#editorInforme');
+    var inserted = false;
+    try {
+        var cur = $ed.summernote('code') || '';
+        $ed.summernote('code', cur + '<p><br></p>' + html);
+        inserted = true;
+    } catch (e) {
+        try { $ed.summernote('focus'); $ed.summernote('pasteHTML', html); inserted = true; } catch (e2) {}
+    }
+    if (!inserted) {
+        alert(ATT.weightChart.insertError);
+        window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank');
+    }
+}
+
+// Renderiza la gráfica en un iframe aislado (Chart.js v4 limpio) y devuelve el PNG.
+function _generarGraficaPesoAislada(labels, pesos, imcs, titulo){
+    var datos = { labels: labels, pesos: pesos, imcs: imcs, title: titulo };
+    var frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:430px;border:0;visibility:hidden;';
+    var terminado = false;
+    var timer = null;
+    function limpiar(){
+        try { window.removeEventListener('message', onMsg); } catch(e){}
+        try { if (frame.parentNode) frame.parentNode.removeChild(frame); } catch(e){}
+        if (timer) { clearTimeout(timer); timer = null; }
+    }
+    function fallback(){
+        if (terminado) return; terminado = true; limpiar();
+        _insertarImagenGrafica(null, titulo); // avisa y abre la gráfica aparte
+    }
+    function onMsg(ev){
+        if (!ev.data || ev.data.__wchart !== true) return;
+        if (frame.contentWindow && ev.source && ev.source !== frame.contentWindow) return;
+        if (terminado) return; terminado = true; limpiar();
+        _insertarImagenGrafica(ev.data.png, titulo);
+    }
+    window.addEventListener('message', onMsg);
+
+    var fuenteChart = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+    var srcdoc =
+        '<!doctype html><html><head><meta charset="utf-8">'
+      + '<scr' + 'ipt src="' + fuenteChart + '"></scr' + 'ipt></head>'
+      + '<body style="margin:0"><canvas id="c" width="760" height="380"></canvas>'
+      + '<scr' + 'ipt>(function(){'
+      +   'var D=' + JSON.stringify(datos).replace(/</g, '\\u003c') + ';'
+      +   'function post(p){ try{ parent.postMessage({__wchart:true,png:p},"*"); }catch(e){} }'
+      +   'var n=0;'
+      +   'function draw(){'
+      +     'if(typeof Chart==="undefined"){ if(++n>120){post("");return;} return setTimeout(draw,50); }'
+      +     'try{'
+      +       'var fondo={id:"fondo",beforeDraw:function(c){var x=c.canvas.getContext("2d");x.save();x.globalCompositeOperation="destination-over";x.fillStyle="#ffffff";x.fillRect(0,0,c.width,c.height);x.restore();}};'
+      +       'var ctx=document.getElementById("c").getContext("2d");'
+      +       'new Chart(ctx,{type:"line",data:{labels:D.labels,datasets:['
+      +         '{label:"Peso (kg)",data:D.pesos,yAxisID:"yPeso",borderColor:"#3d5af1",backgroundColor:"rgba(61,90,241,.12)",tension:.3,spanGaps:true,pointRadius:3,fill:true},'
+      +         '{label:"IMC",data:D.imcs,yAxisID:"yImc",borderColor:"#e67e22",backgroundColor:"rgba(230,126,34,.10)",tension:.3,spanGaps:true,pointRadius:3,fill:false}]},'
+      +       'options:{responsive:false,animation:false,plugins:{legend:{position:"top"},title:{display:true,text:D.title}},'
+      +       'scales:{yPeso:{type:"linear",position:"left",title:{display:true,text:"Peso (kg)"}},yImc:{type:"linear",position:"right",title:{display:true,text:"IMC"},grid:{drawOnChartArea:false}}}},plugins:[fondo]});'
+      +       'setTimeout(function(){ try{ post(document.getElementById("c").toDataURL("image/png",1.0)); }catch(e){ post(""); } },80);'
+      +     '}catch(e){ post(""); }'
+      +   '}'
+      +   'draw();'
+      + '})();</scr' + 'ipt></body></html>';
+    frame.srcdoc = srcdoc;
+    document.body.appendChild(frame);
+    timer = setTimeout(fallback, 9000); // si el CDN no responde, no quedarse colgado
 }
 function insertarNcp(){
     var html = ncpBuildHtml(); if(!html) return;
