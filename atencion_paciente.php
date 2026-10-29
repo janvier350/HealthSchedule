@@ -821,7 +821,9 @@ const ATT = {
     },
     weightChart: {
         noData: <?php echo json_encode(t('att.js.weightChartNoData')); ?>,
-        title:  <?php echo json_encode(t('att.js.weightChartTitle')); ?>
+        title:  <?php echo json_encode(t('att.js.weightChartTitle')); ?>,
+        insertError: <?php echo json_encode(current_lang()==='en' ? 'The chart could not be inserted into the note; it will open in a new tab instead.' : 'No se pudo insertar la gráfica en la nota; se abrirá en una pestaña nueva.'); ?>,
+        error: <?php echo json_encode(current_lang()==='en' ? 'Could not generate the weight chart' : 'No se pudo generar la gráfica de peso'); ?>
     }
 };
 </script>
@@ -1031,6 +1033,7 @@ var EVOL_PESO = {
     imcs:   <?php echo json_encode($evolImcs); ?>
 };
 function insertarEvolucionPeso(){
+  try {
     (function(){
         var d = EVOL_PESO || {};
         var labels = (d.labels||[]).slice(), pesos = (d.pesos||[]).slice(), imcs = (d.imcs||[]).slice();
@@ -1073,14 +1076,25 @@ function insertarEvolucionPeso(){
                  + '<img src="'+dataUrl+'" style="max-width:100%;height:auto;" alt="'+ATT.weightChart.title+'">'
                  + '<br><small>'+ATT.weightChart.title+'</small></div>';
         var $ed = $('#editorInforme');
+        var inserted = false;
         try {
             var cur = $ed.summernote('code') || '';
             $ed.summernote('code', cur + '<p><br></p>' + html);
+            inserted = true;
         } catch (e) {
-            try { $ed.summernote('pasteHTML', html); } catch (e2) {}
+            try { $ed.summernote('focus'); $ed.summernote('pasteHTML', html); inserted = true; } catch (e2) {}
         }
         try { _chartEvolucion.destroy(); } catch(e){} _chartEvolucion = null;
+        // Nunca quedar "sin hacer nada": si no se pudo insertar en la nota,
+        // avisar y abrir la gráfica en una pestaña para no perder el dato.
+        if (!inserted) {
+            alert(ATT.weightChart.insertError);
+            window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank');
+        }
     })();
+  } catch (err) {
+    alert((ATT.weightChart.error || 'Error') + '\n' + (err && err.message ? err.message : err));
+  }
 }
 function insertarNcp(){
     var html = ncpBuildHtml(); if(!html) return;
