@@ -949,6 +949,9 @@ const ATT = {
 
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Guardar la referencia a Chart.js v4 ANTES de que el bundle del tema
+     (assets/scripts/main.js) sobrescriba window.Chart con su Chart.js v2. -->
+<script>try { if (window.Chart) { window.__ChartV4 = window.Chart; } } catch (e) {}</script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./assets/scripts/main.js"></script>
@@ -1054,12 +1057,17 @@ function insertarEvolucionPeso(){
             }
         }
         if (labels.length === 0) { alert(ATT.weightChart.noData); return; }
-        if (typeof Chart === 'undefined') { window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank'); return; }
+        // IMPORTANTE: usar la referencia a Chart.js v4 preservada (window.__ChartV4).
+        // El bundle del tema (assets/scripts/main.js) sobrescribe window.Chart con
+        // su Chart.js v2, incompatible con esta configuración v4 → por eso el botón
+        // fallaba con "Cannot read properties of undefined (reading 'options')".
+        var ChartLib = window.__ChartV4 || window.Chart;
+        if (typeof ChartLib !== 'function') { window.open('evolucion_peso.php?idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente), '_blank'); return; }
         var canvas = document.getElementById('chartEvolucionOculto');
         if (_chartEvolucion) { try { _chartEvolucion.destroy(); } catch(e){} }
         // Plugin para fondo blanco (si no, la imagen sale con fondo transparente/negro al imprimir)
         var fondoBlanco = { id:'fondoBlanco', beforeDraw:function(c){ var ctx=c.canvas.getContext('2d'); ctx.save(); ctx.globalCompositeOperation='destination-over'; ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height); ctx.restore(); } };
-        _chartEvolucion = new Chart(canvas.getContext('2d'), {
+        _chartEvolucion = new ChartLib(canvas.getContext('2d'), {
             type:'line',
             data:{ labels:labels, datasets:[
                 { label:'Peso (kg)', data:pesos, yAxisID:'yPeso', borderColor:'#3d5af1', backgroundColor:'rgba(61,90,241,.12)', tension:.3, spanGaps:true, pointRadius:3, fill:true },
