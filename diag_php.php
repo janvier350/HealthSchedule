@@ -27,6 +27,14 @@ $maxExec     = ini_get('max_execution_time');
 $postMax     = ini_get('post_max_size');
 $uploadMax   = ini_get('upload_max_filesize');
 $sessGc      = ini_get('session.gc_maxlifetime');
+$sessCookie  = ini_get('session.cookie_lifetime');
+$sessSave    = session_save_path() ?: ini_get('session.save_path');
+$sapi        = php_sapi_name();
+$userIniNm   = ini_get('user_ini.filename');
+$userIniTtl  = ini_get('user_ini.cache_ttl');
+$scannedIni  = php_ini_scanned_files();
+// ¿El SAPI honra .user.ini? Solo CGI/FastCGI/FPM; el módulo de Apache NO.
+$honorsUserIni = (stripos($sapi, 'apache') === false);
 $defCharset  = ini_get('default_charset');
 $dispErrors  = ini_get('display_errors');
 $errorLog    = ini_get('log_errors');
@@ -65,10 +73,22 @@ if ($conexion) {
 <tr><th>max_execution_time</th><td><?= h($maxExec) ?> s <span class="text-muted">(≥ 60)</span></td></tr>
 <tr><th>post_max_size</th><td><?= h($postMax) ?></td></tr>
 <tr><th>upload_max_filesize</th><td><?= h($uploadMax) ?></td></tr>
-<tr><th>session.gc_maxlifetime</th><td><?= h($sessGc) ?> s</td></tr>
+<tr><th>session.gc_maxlifetime</th><td><?= h($sessGc) ?> s <span class="text-muted">(debería ser 86400 = 24 h)</span></td></tr>
 <tr><th>default_charset</th><td><?= h($defCharset) ?></td></tr>
 <tr><th>display_errors</th><td><?= h($dispErrors) ?> <span class="text-muted">(debería estar Off en producción)</span></td></tr>
 <tr><th>log_errors</th><td><?= h($errorLog) ?></td></tr>
+</table>
+
+<h5 class="mt-3">Sesión / .user.ini (cierre de sesión)</h5>
+<table class="table table-sm table-bordered">
+<tr><th style="width:260px;">php_sapi_name()</th><td><?= h($sapi) ?></td></tr>
+<tr><th>¿Honra .user.ini?</th>
+    <td><?php if ($honorsUserIni): ?><span class="text-success fw-bold">Sí (CGI/FPM)</span><?php else: ?><span class="text-danger fw-bold">NO — es módulo de Apache; .user.ini se ignora</span><?php endif; ?></td></tr>
+<tr><th>session.cookie_lifetime</th><td><?= h($sessCookie) ?> s <span class="text-muted">(debería ser 86400)</span></td></tr>
+<tr><th>session.save_path</th><td><?= h($sessSave) ?> <span class="text-muted">(si es carpeta compartida del host, su recolector borra la sesión)</span></td></tr>
+<tr><th>user_ini.filename</th><td><?= h($userIniNm) ?></td></tr>
+<tr><th>user_ini.cache_ttl</th><td><?= h($userIniTtl) ?> s</td></tr>
+<tr><th>Archivos .ini extra cargados</th><td style="word-break:break-all;"><?= h($scannedIni ?: '—') ?></td></tr>
 </table>
 
 <h5 class="mt-3">OPcache</h5>
