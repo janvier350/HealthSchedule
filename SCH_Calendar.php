@@ -1,6 +1,7 @@
 <?php
 ob_start();
-session_start();
+require_once(__DIR__ . "/class/sesion.php");
+iniciar_sesion_persistente(); // cookie persistente 24 h (ver class/sesion.php)
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once(__DIR__ . "/lang/i18n.php");

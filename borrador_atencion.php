@@ -7,7 +7,8 @@
  *   accion=descartar (POST idCita)                      -> {ok}
  * Requiere sesión. La tabla se auto-crea.
  */
-session_start();
+require_once(__DIR__ . "/class/sesion.php");
+iniciar_sesion_persistente(); // refresca la cookie 24 h en cada autoguardado (keep-alive)
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 $conexion = conectarse();
