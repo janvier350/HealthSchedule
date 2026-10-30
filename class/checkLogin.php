@@ -3,6 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 require_once("funciones.php");
 require_once("conexionBD.php");
+require_once(__DIR__ . "/sesion.php");
 require_once(__DIR__ . "/auditoria.php");
 require_once(__DIR__ . "/../lang/i18n.php");
 $conexion = conectarse();
@@ -24,8 +25,8 @@ $result = $conexion->query($sql);
 if ($result->num_rows > 0) {
     $row = mysqli_fetch_array($result);
     $PASS = $row['CONTRASENA'];
-    if (password_verify($password, $row['CONTRASENA'])) { 
-        session_start();
+    if (password_verify($password, $row['CONTRASENA'])) {
+        iniciar_sesion_persistente(); // cookie persistente 24 h (ver class/sesion.php)
         $_SESSION['loggedin'] = true;
         $_SESSION['username'] = $username;
         $_SESSION['iduser'] = $row['IDADM_USUARIO'];
