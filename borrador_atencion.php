@@ -11,9 +11,15 @@ require_once(__DIR__ . "/class/sesion.php");
 iniciar_sesion_persistente(); // refresca la cookie 24 h en cada autoguardado (keep-alive)
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
-$conexion = conectarse();
-if ($conexion) { $conexion->set_charset('utf8mb4'); }
 header('Content-Type: application/json; charset=utf-8');
+
+$conexion = conectarse();
+if (!$conexion) {
+    // Hosting saturó las conexiones ('max_user_connections'). El borrador local
+    // sigue como respaldo; aquí avisamos para no fingir que se guardó.
+    echo json_encode(['ok'=>false,'error'=>'DB_OCUPADA']); exit;
+}
+$conexion->set_charset('utf8mb4');
 
 if (!isset($_SESSION['rol'])) { echo json_encode(['ok'=>false,'error'=>'SIN_SESION']); exit; }
 if (isset($_SESSION['expire']) && time() > $_SESSION['expire']) { echo json_encode(['ok'=>false,'error'=>'SIN_SESION']); exit; }
@@ -52,4 +58,5 @@ if (!$st) { echo json_encode(['ok'=>false,'error'=>'DB']); exit; }
 $st->bind_param('iiis', $idCita, $idPac, $idUser, $informe);
 $ok = $st->execute(); $st->close();
 
+@$conexion->close(); // liberar la conexión cuanto antes (menos presión sobre el límite del hosting)
 echo json_encode(['ok'=>(bool)$ok, 'ts'=>time()*1000]);

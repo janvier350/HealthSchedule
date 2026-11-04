@@ -1249,6 +1249,8 @@ var _DRAFT_TXT = {
     savingSrv: <?php echo json_encode(current_lang()==='en' ? 'Saving…' : 'Guardando…'); ?>,
     savedSrv:  <?php echo json_encode(current_lang()==='en' ? 'Draft saved on server at %t' : 'Borrador guardado en el servidor a las %t'); ?>,
     errSrv:    <?php echo json_encode(current_lang()==='en' ? 'Could not save on the server — press "Save draft"' : 'No se pudo guardar en el servidor — pulsa "Guardar borrador"'); ?>,
+    errSesion: <?php echo json_encode(current_lang()==='en' ? 'Your session expired — log in again (your text is kept on this device)' : 'Tu sesión expiró — vuelve a iniciar sesión (tu texto queda en este dispositivo)'); ?>,
+    errOcupada:<?php echo json_encode(current_lang()==='en' ? 'Server busy right now — it will retry; or press "Save draft"' : 'Servidor ocupado en este momento — reintentará; o pulsa "Guardar borrador"'); ?>,
     okAlert:   <?php echo json_encode(current_lang()==='en' ? 'Draft saved on the server ✓ (%t)' : 'Borrador guardado en el servidor ✓ (%t)'); ?>,
     errAlert:  <?php echo json_encode(current_lang()==='en' ? 'Could not save the draft on the server. Check your connection and try again.' : 'No se pudo guardar el borrador en el servidor. Revisa tu conexión e inténtalo de nuevo.'); ?>
 };
@@ -1268,7 +1270,10 @@ function _indicadorBorrador(estado, tsOrTxt) {
         txt.textContent = _DRAFT_TXT.savingSrv;
         box.classList.remove('text-danger'); box.classList.add('text-muted');
     } else { // error
-        txt.textContent = _DRAFT_TXT.errSrv;
+        var motivo = (typeof tsOrTxt === 'string') ? tsOrTxt : '';
+        if (motivo === 'SIN_SESION')      txt.textContent = _DRAFT_TXT.errSesion;
+        else if (motivo === 'DB_OCUPADA') txt.textContent = _DRAFT_TXT.errOcupada;
+        else                              txt.textContent = _DRAFT_TXT.errSrv;
         box.classList.remove('text-muted'); box.classList.add('text-danger');
     }
 }
@@ -1294,7 +1299,7 @@ function _guardarBorradorServidor(viaBeacon) {
             navigator.sendBeacon('borrador_atencion.php', new Blob([params], { type: 'application/x-www-form-urlencoded' }));
         } else {
             $.post('borrador_atencion.php', { accion: 'guardar', idCita: DATOS_CITA.idCita, idPaciente: DATOS_CITA.idPaciente, informe: html }, null, 'json')
-                .done(function (res) { _indicadorBorrador(res && res.ok ? 'ok' : 'error'); })
+                .done(function (res) { _indicadorBorrador(res && res.ok ? 'ok' : 'error', (res && res.error) || ''); })
                 .fail(function () { _indicadorBorrador('error'); });
         }
     } catch (e) { _indicadorBorrador('error'); }

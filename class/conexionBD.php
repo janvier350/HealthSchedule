@@ -12,8 +12,23 @@ function conectarse()
     $db_user   = "srossnut_agenda";
     $db_pass   = "nAGTDbMpym6nNv9aedHJ";
 
-    $link = mysqli_connect($db_host, $db_user, $db_pass);
-    mysqli_select_db($link, $db_nombre) or die("Error seleccionando la base de datos.");
+    // Reintentos cortos: el hosting limita las conexiones por usuario
+    // ('max_user_connections'). Cuando se alcanza el tope, mysqli_connect falla
+    // de forma transitoria; esperar unos ms permite que se libere una conexión
+    // y evita que la página se caiga (500) o que el autoguardado falle.
+    $link = false;
+    for ($intento = 0; $intento < 5; $intento++) {
+        $link = @mysqli_connect($db_host, $db_user, $db_pass);
+        if ($link) break;
+        usleep(150000); // 150 ms
+    }
+    if (!$link) {
+        // Sigue sin poder conectar: devolver false para que el que llama lo
+        // maneje (los endpoints AJAX responden JSON; las páginas, un aviso),
+        // en vez de un error fatal poco claro.
+        return false;
+    }
+    if (!@mysqli_select_db($link, $db_nombre)) { return false; }
     mysqli_set_charset($link, 'utf8mb4');   // ← línea correcta, procedural
 
     // Zona horaria de la aplicación — configurable por base de datos desde la
