@@ -1223,14 +1223,18 @@ $(document).ready(function(){
         }
     } catch (e) {}
 
-    // Guardar el borrador al escribir (local, con rebote) y periódicamente (local + servidor).
+    // Guardar el borrador al escribir. El respaldo LOCAL (navegador) es rápido y
+    // no toca la red. El guardado en SERVIDOR es MUCHO menos frecuente y solo
+    // cuando de verdad cambió el texto, para que el cortafuegos del hosting
+    // (cPGuard) no confunda el autoguardado con tráfico de bot y lo bloquee.
     $('#editorInforme').on('summernote.change', function () {
         clearTimeout(_draftTimer);
         _draftTimer = setTimeout(_guardarBorrador, 1200);                 // local (rápido)
         clearTimeout(_draftTimerSrv);
-        _draftTimerSrv = setTimeout(function () { _guardarBorradorServidor(false); }, 3000); // servidor
+        _draftTimerSrv = setTimeout(function () { _guardarBorradorServidor(false); }, 15000); // servidor (tras ~15 s sin escribir)
     });
-    setInterval(function () { _guardarBorrador(); _guardarBorradorServidor(false); }, 8000);
+    // Red de seguridad poco frecuente (solo guarda si hubo cambios).
+    setInterval(function () { _guardarBorrador(); _guardarBorradorServidor(false); }, 60000);
     window.addEventListener('beforeunload', function () { _guardarBorrador(); _guardarBorradorServidor(true); });
     // iOS/Safari: en segundo plano el temporizador se congela y 'beforeunload' no
     // es confiable en móvil. Guardar también cuando la pestaña se oculta o se
@@ -1245,6 +1249,7 @@ $(document).ready(function(){
 var _draftKey      = 'att_draft_' + DATOS_CITA.idCita;
 var _draftTimer    = null;   // rebote guardado local
 var _draftTimerSrv = null;   // rebote guardado en servidor
+var _ultimoGuardadoSrv = null; // último contenido enviado al servidor (evita POSTs repetidos)
 var _DRAFT_TXT = {
     savingSrv: <?php echo json_encode(current_lang()==='en' ? 'Saving…' : 'Guardando…'); ?>,
     savedSrv:  <?php echo json_encode(current_lang()==='en' ? 'Draft saved on server at %t' : 'Borrador guardado en el servidor a las %t'); ?>,
@@ -1288,18 +1293,26 @@ function _guardarBorrador() {
 }
 // Guarda el borrador EN EL SERVIDOR (sobrevive al cierre de sesión y a cambiar
 // de dispositivo). viaBeacon=true al salir/ocultar la página (no da respuesta).
-function _guardarBorradorServidor(viaBeacon) {
+function _guardarBorradorServidor(viaBeacon, forzar) {
     try {
         var html = $('#editorInforme').summernote('code') || '';
         if (html.replace(/<[^>]*>/g, '').trim().length === 0) return;
+        // No reenviar si no cambió desde el último guardado en servidor: así el
+        // autoguardado solo manda datos cuando de verdad hay cambios (muchas
+        // menos peticiones → el cortafuegos del hosting no lo toma por un bot).
+        if (!forzar && html === _ultimoGuardadoSrv) return;
         if (viaBeacon && navigator.sendBeacon) {
             var params = 'accion=guardar&idCita=' + encodeURIComponent(DATOS_CITA.idCita)
                        + '&idPaciente=' + encodeURIComponent(DATOS_CITA.idPaciente)
                        + '&informe=' + encodeURIComponent(html);
             navigator.sendBeacon('borrador_atencion.php', new Blob([params], { type: 'application/x-www-form-urlencoded' }));
+            _ultimoGuardadoSrv = html; // optimista: el beacon no devuelve respuesta
         } else {
             $.post('borrador_atencion.php', { accion: 'guardar', idCita: DATOS_CITA.idCita, idPaciente: DATOS_CITA.idPaciente, informe: html }, null, 'json')
-                .done(function (res) { _indicadorBorrador(res && res.ok ? 'ok' : 'error', (res && res.error) || ''); })
+                .done(function (res) {
+                    if (res && res.ok) { _ultimoGuardadoSrv = html; _indicadorBorrador('ok'); }
+                    else { _indicadorBorrador('error', (res && res.error) || ''); }
+                })
                 .fail(function () { _indicadorBorrador('error'); });
         }
     } catch (e) { _indicadorBorrador('error'); }
@@ -1318,10 +1331,11 @@ function guardarBorradorManual() {
         }, null, 'json')
         .done(function (res) {
             if (res && res.ok) {
+                _ultimoGuardadoSrv = html;
                 _indicadorBorrador('ok');
                 alert(_DRAFT_TXT.okAlert.replace('%t', _fmtHoraBorrador(Date.now())));
             } else {
-                _indicadorBorrador('error');
+                _indicadorBorrador('error', (res && res.error) || '');
                 alert(_DRAFT_TXT.errAlert);
             }
         })
