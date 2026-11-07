@@ -131,6 +131,50 @@ if ($sp3 = $conexion->prepare(
     $sp3->close();
 }
 
+// ── Signos y laboratorio (glucosa, presión arterial, perfil lipídico) ──────
+// Se guardan como números por cita para poder graficar su evolución por fecha,
+// igual que el peso. Tabla self-healing (no requiere migración).
+@$conexion->query("CREATE TABLE IF NOT EXISTS atencion_signos (
+    id_cita INT NOT NULL PRIMARY KEY,
+    id_paciente INT NULL,
+    glucosa DECIMAL(6,1) NULL,
+    hba1c DECIMAL(4,1) NULL,
+    pa_sistolica SMALLINT NULL,
+    pa_diastolica SMALLINT NULL,
+    col_total SMALLINT NULL,
+    col_ldl SMALLINT NULL,
+    col_hdl SMALLINT NULL,
+    triglic SMALLINT NULL,
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+$_sigCols = ['glucosa','hba1c','pa_sistolica','pa_diastolica','col_total','col_ldl','col_hdl','triglic'];
+// Valores ya guardados para ESTA cita (para precargar el panel).
+$sig = array_fill_keys($_sigCols, '');
+if ($ss = @$conexion->prepare("SELECT glucosa,hba1c,pa_sistolica,pa_diastolica,col_total,col_ldl,col_hdl,triglic FROM atencion_signos WHERE id_cita=? LIMIT 1")) {
+    $ss->bind_param('i', $idCitaInt); $ss->execute();
+    if ($r = $ss->get_result()->fetch_assoc()) {
+        foreach ($_sigCols as $k) { $sig[$k] = ($r[$k] !== null) ? $r[$k] : ''; }
+    }
+    $ss->close();
+}
+// Histórico del paciente (todas las citas con algún valor) para el gráfico.
+$evSig = ['labels' => []];
+foreach ($_sigCols as $k) { $evSig[$k] = []; }
+if ($sq = @$conexion->prepare(
+    "SELECT C.FECHA_CITA fecha, s.glucosa, s.hba1c, s.pa_sistolica, s.pa_diastolica, s.col_total, s.col_ldl, s.col_hdl, s.triglic
+       FROM atencion_signos s INNER JOIN AG_CITA C ON C.IDCITA = s.id_cita
+      WHERE C.IDPACIENTE = ?
+      ORDER BY C.FECHA_CITA ASC, C.HORA_INICIO ASC")) {
+    $sq->bind_param('i', $idPacienteA); $sq->execute();
+    $rsg = $sq->get_result();
+    while ($rg = $rsg->fetch_assoc()) {
+        $evSig['labels'][] = date('m/d/Y', strtotime($rg['fecha']));
+        foreach ($_sigCols as $k) { $evSig[$k][] = ($rg[$k] !== null) ? (float)$rg[$k] : null; }
+    }
+    $sq->close();
+}
+
 // ── Borrador de la nota guardado EN EL SERVIDOR (autoguardado por cita) ────
 // Permite recuperar lo que se estaba escribiendo en cualquier dispositivo,
 // incluso tras cerrarse la sesión (no depende del localStorage del navegador).
@@ -466,6 +510,66 @@ $prevMedidas = trim($prevPesoTxt . ($prevPesoTxt && $prevTallaTxt ? ' · ' : '')
                         <option value="<?php echo $p['id']; ?>"><?php echo htmlspecialchars($p['nombre_plantilla']); ?></option>
                         <?php endwhile; ?>
                     </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SIGNOS Y LABORATORIO (opcional) ───────────────────────── -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body py-2">
+                <button class="btn btn-link text-decoration-none p-0 att-tile-label d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#panelSignos" aria-expanded="false">
+                    <i class="bi bi-heart-pulse me-1"></i>
+                    <?php echo current_lang()==='en' ? 'Vitals &amp; labs (optional) — glucose, blood pressure, lipids' : 'Signos y laboratorio (opcional) — glucosa, presión, lípidos'; ?>
+                    <i class="bi bi-chevron-down ms-2"></i>
+                </button>
+                <div class="collapse mt-3" id="panelSignos">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1"><?php echo current_lang()==='en'?'Fasting glucose (mg/dL)':'Glucosa en ayunas (mg/dL)'; ?></label>
+                            <input type="number" step="0.1" min="0" id="sgGlucosa" class="form-control" value="<?php echo htmlspecialchars($sig['glucosa']); ?>" placeholder="—">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">HbA1c (%)</label>
+                            <input type="number" step="0.1" min="0" id="sgHba1c" class="form-control" value="<?php echo htmlspecialchars($sig['hba1c']); ?>" placeholder="—">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1"><?php echo current_lang()==='en'?'Blood pressure (mmHg)':'Presión arterial (mmHg)'; ?></label>
+                            <div class="input-group">
+                                <input type="number" min="0" id="sgPaSis" class="form-control" value="<?php echo htmlspecialchars($sig['pa_sistolica']); ?>" placeholder="sys">
+                                <span class="input-group-text">/</span>
+                                <input type="number" min="0" id="sgPaDia" class="form-control" value="<?php echo htmlspecialchars($sig['pa_diastolica']); ?>" placeholder="dia">
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1"><?php echo current_lang()==='en'?'Triglycerides (mg/dL)':'Triglicéridos (mg/dL)'; ?></label>
+                            <input type="number" min="0" id="sgTriglic" class="form-control" value="<?php echo htmlspecialchars($sig['triglic']); ?>" placeholder="—">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1"><?php echo current_lang()==='en'?'Total cholesterol (mg/dL)':'Colesterol total (mg/dL)'; ?></label>
+                            <input type="number" min="0" id="sgColTotal" class="form-control" value="<?php echo htmlspecialchars($sig['col_total']); ?>" placeholder="—">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">LDL (mg/dL)</label>
+                            <input type="number" min="0" id="sgColLdl" class="form-control" value="<?php echo htmlspecialchars($sig['col_ldl']); ?>" placeholder="—">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">HDL (mg/dL)</label>
+                            <input type="number" min="0" id="sgColHdl" class="form-control" value="<?php echo htmlspecialchars($sig['col_hdl']); ?>" placeholder="—">
+                        </div>
+                        <div class="col-6 col-md-3 d-flex align-items-end">
+                            <div class="dropdown w-100">
+                                <button class="btn btn-outline-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-graph-up-arrow"></i> <?php echo current_lang()==='en'?'Insert evolution':'Insertar evolución'; ?>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="insertarEvolucionSignos('glucosa');return false;"><?php echo current_lang()==='en'?'Glucose + HbA1c':'Glucosa + HbA1c'; ?></a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="insertarEvolucionSignos('presion');return false;"><?php echo current_lang()==='en'?'Blood pressure':'Presión arterial'; ?></a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="insertarEvolucionSignos('lipidos');return false;"><?php echo current_lang()==='en'?'Lipid profile':'Perfil lipídico'; ?></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-text"><?php echo current_lang()==='en'?'Optional. Saved when you finish the consultation. The chart builds over time by date.':'Opcional. Se guarda al finalizar la atención. El gráfico se arma por fecha con el tiempo.'; ?></div>
                 </div>
             </div>
         </div>
@@ -1033,6 +1137,23 @@ var EVOL_PESO = {
     pesos:  <?php echo json_encode($evolPesos); ?>,
     imcs:   <?php echo json_encode($evolImcs); ?>
 };
+// Histórico de signos/laboratorio del paciente (glucosa, presión, lípidos).
+var EVOL_SIGNOS = <?php echo json_encode($evSig); ?>;
+// Definición de cada gráfico de signos: qué columnas, color, eje y unidad.
+var SG_DEF = {
+    glucosa: { titulo: <?php echo json_encode(current_lang()==='en'?'Glucose / HbA1c evolution':'Evolución de glucosa / HbA1c'); ?>, metr: [
+        { col:'glucosa', label: <?php echo json_encode(current_lang()==='en'?'Glucose (mg/dL)':'Glucosa (mg/dL)'); ?>, color:'#d9534f', axis:'y1', unit:'mg/dL' },
+        { col:'hba1c',   label:'HbA1c (%)', color:'#6f42c1', axis:'y2', unit:'%' } ]},
+    presion: { titulo: <?php echo json_encode(current_lang()==='en'?'Blood pressure evolution':'Evolución de presión arterial'); ?>, metr: [
+        { col:'pa_sistolica',  label: <?php echo json_encode(current_lang()==='en'?'Systolic (mmHg)':'Sistólica (mmHg)'); ?>, color:'#d9534f', axis:'y1', unit:'mmHg' },
+        { col:'pa_diastolica', label: <?php echo json_encode(current_lang()==='en'?'Diastolic (mmHg)':'Diastólica (mmHg)'); ?>, color:'#2f6fb0', axis:'y1', unit:'mmHg' } ]},
+    lipidos: { titulo: <?php echo json_encode(current_lang()==='en'?'Lipid profile evolution':'Evolución del perfil lipídico'); ?>, metr: [
+        { col:'col_total', label: <?php echo json_encode(current_lang()==='en'?'Total cholesterol':'Colesterol total'); ?>, color:'#d9534f', axis:'y1', unit:'mg/dL' },
+        { col:'col_ldl',   label:'LDL', color:'#e0962f', axis:'y1', unit:'mg/dL' },
+        { col:'col_hdl',   label:'HDL', color:'#2e9e5b', axis:'y1', unit:'mg/dL' },
+        { col:'triglic',   label: <?php echo json_encode(current_lang()==='en'?'Triglycerides':'Triglicéridos'); ?>, color:'#2f6fb0', axis:'y1', unit:'mg/dL' } ]}
+};
+var SG_TXT = { noData: <?php echo json_encode(current_lang()==='en'?'No values yet to chart. Enter values and finish consultations over time.':'Aún no hay valores para graficar. Ingresa valores y finaliza consultas con el tiempo.'); ?> };
 function insertarEvolucionPeso(){
   try {
     (function(){
@@ -1145,6 +1266,96 @@ function _generarGraficaPesoAislada(labels, pesos, imcs, titulo){
     frame.srcdoc = srcdoc;
     document.body.appendChild(frame);
     timer = setTimeout(fallback, 9000); // si el CDN no responde, no quedarse colgado
+}
+
+// ── Evolución de signos/laboratorio (glucosa, presión, lípidos) ──────
+function _sgNum(id){ var v = parseFloat((document.getElementById(id) || {}).value); return (isFinite(v) && v > 0) ? v : null; }
+function _sgHoy(){ var h = new Date(); return ('0'+(h.getMonth()+1)).slice(-2)+'/'+('0'+h.getDate()).slice(-2)+'/'+h.getFullYear(); }
+function _sgValoresActuales(){
+    return {
+        glucosa:_sgNum('sgGlucosa'), hba1c:_sgNum('sgHba1c'),
+        pa_sistolica:_sgNum('sgPaSis'), pa_diastolica:_sgNum('sgPaDia'),
+        col_total:_sgNum('sgColTotal'), col_ldl:_sgNum('sgColLdl'), col_hdl:_sgNum('sgColHdl'), triglic:_sgNum('sgTriglic')
+    };
+}
+function insertarEvolucionSignos(tipo){
+  try {
+    var def = SG_DEF[tipo]; if (!def) return;
+    var E = EVOL_SIGNOS || { labels: [] };
+    var labs = (E.labels || []).slice();
+    var data = {};
+    def.metr.forEach(function (m) { data[m.col] = (E[m.col] || []).slice(); });
+    // Agregar el punto de la consulta ACTUAL (lo que se acaba de ingresar).
+    var act = _sgValoresActuales();
+    var hayActual = def.metr.some(function (m) { return act[m.col] != null; });
+    if (hayActual) {
+        var hoy = _sgHoy();
+        if (labs.length && labs[labs.length - 1] === hoy) {
+            def.metr.forEach(function (m) { if (act[m.col] != null) data[m.col][data[m.col].length - 1] = act[m.col]; });
+        } else {
+            labs.push(hoy);
+            def.metr.forEach(function (m) { data[m.col].push(act[m.col] != null ? act[m.col] : null); });
+        }
+    }
+    // Quedarse solo con las métricas que tienen al menos un valor.
+    var activos = def.metr.filter(function (m) { return data[m.col].some(function (v) { return v != null; }); });
+    if (activos.length === 0) { alert(SG_TXT.noData); return; }
+    var usaY2 = activos.some(function (m) { return m.axis === 'y2'; });
+    function unidadEje(ax){ for (var i = 0; i < activos.length; i++) { if (activos[i].axis === ax) return activos[i].unit; } return ''; }
+    var scales = { y1: { type:'linear', position:'left', title:{ display:true, text: unidadEje('y1') } } };
+    if (usaY2) scales.y2 = { type:'linear', position:'right', title:{ display:true, text: unidadEje('y2') }, grid:{ drawOnChartArea:false } };
+    var cfg = {
+        type:'line',
+        data:{ labels: labs, datasets: activos.map(function (m) {
+            return { label:m.label, data:data[m.col], yAxisID:m.axis, borderColor:m.color, backgroundColor:m.color+'22', tension:.3, spanGaps:true, pointRadius:3, fill:false };
+        })},
+        options:{ responsive:false, animation:false, plugins:{ legend:{ position:'top' }, title:{ display:true, text:def.titulo } }, scales: scales }
+    };
+    _generarGraficaGenericaAislada(cfg, def.titulo);
+  } catch (err) {
+    alert((ATT.weightChart.error || 'Error') + '\n' + (err && err.message ? err.message : err));
+  }
+}
+// Igual que la gráfica de peso, pero recibe una configuración de Chart.js completa
+// (sirve para cualquier gráfico) y la dibuja en un iframe aislado con Chart.js v4.
+function _generarGraficaGenericaAislada(config, titulo){
+    var frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:430px;border:0;visibility:hidden;';
+    var terminado = false, timer = null;
+    function limpiar(){ try{window.removeEventListener('message',onMsg);}catch(e){} try{if(frame.parentNode)frame.parentNode.removeChild(frame);}catch(e){} if(timer){clearTimeout(timer);timer=null;} }
+    function fallback(){ if(terminado)return; terminado=true; limpiar(); _insertarImagenGrafica(null, titulo); }
+    function onMsg(ev){
+        if (!ev.data || ev.data.__wchart !== true) return;
+        if (frame.contentWindow && ev.source && ev.source !== frame.contentWindow) return;
+        if (terminado) return; terminado = true; limpiar();
+        _insertarImagenGrafica(ev.data.png, titulo);
+    }
+    window.addEventListener('message', onMsg);
+    var fuenteChart = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+    var srcdoc =
+        '<!doctype html><html><head><meta charset="utf-8">'
+      + '<scr' + 'ipt src="' + fuenteChart + '"></scr' + 'ipt></head>'
+      + '<body style="margin:0"><canvas id="c" width="760" height="380"></canvas>'
+      + '<scr' + 'ipt>(function(){'
+      +   'var CFG=' + JSON.stringify(config).replace(/</g, '\\u003c') + ';'
+      +   'function post(p){ try{ parent.postMessage({__wchart:true,png:p},"*"); }catch(e){} }'
+      +   'var n=0;'
+      +   'function draw(){'
+      +     'if(typeof Chart==="undefined"){ if(++n>120){post("");return;} return setTimeout(draw,50); }'
+      +     'try{'
+      +       'var fondo={id:"fondo",beforeDraw:function(c){var x=c.canvas.getContext("2d");x.save();x.globalCompositeOperation="destination-over";x.fillStyle="#ffffff";x.fillRect(0,0,c.width,c.height);x.restore();}};'
+      +       'CFG.plugins=[fondo];'
+      +       'var ctx=document.getElementById("c").getContext("2d");'
+      +       'new Chart(ctx,CFG);'
+      +       'setTimeout(function(){ try{ post(document.getElementById("c").toDataURL("image/png",1.0)); }catch(e){ post(""); } },80);'
+      +     '}catch(e){ post(""); }'
+      +   '}'
+      +   'draw();'
+      + '})();</scr' + 'ipt></body></html>';
+    frame.srcdoc = srcdoc;
+    document.body.appendChild(frame);
+    timer = setTimeout(fallback, 9000);
 }
 function insertarNcp(){
     var html = ncpBuildHtml(); if(!html) return;
@@ -1715,10 +1926,15 @@ function guardarAtencion(){
     const tallaCm = getTallaCm();   // canónico en cm (soporta cm/m/ft+in)
     const imcVal  = parseFloat($('#imc').val()) || 0;
     if(!confirm(ATT.confirmFinish)) return;
+    var sg = _sgValoresActuales();
     $.ajax({
         url: 'guardar_atencion.php', type: 'POST',
         data: { idCita: DATOS_CITA.idCita, informe: contenido,
-                peso: pesoKg.toFixed(2), talla: tallaCm.toFixed(1), imc: imcVal },
+                peso: pesoKg.toFixed(2), talla: tallaCm.toFixed(1), imc: imcVal,
+                idPaciente: DATOS_CITA.idPaciente,
+                sg_glucosa: sg.glucosa, sg_hba1c: sg.hba1c,
+                sg_pa_sistolica: sg.pa_sistolica, sg_pa_diastolica: sg.pa_diastolica,
+                sg_col_total: sg.col_total, sg_col_ldl: sg.col_ldl, sg_col_hdl: sg.col_hdl, sg_triglic: sg.triglic },
         success: function(res){
             var r = (res || '').trim();
             if (r === 'OK') {
