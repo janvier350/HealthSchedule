@@ -39,6 +39,15 @@ if (!function_exists('iniciar_sesion_persistente')) {
         // Ventana deslizante: si ya hay sesión iniciada, refrescar la cookie en
         // cada carga para que los 24 h se cuenten desde la última actividad.
         if (isset($_SESSION['rol'])) {
+            // Expiración DESLIZANTE del lado del servidor: mientras la sesión siga
+            // válida, se renueva a 24 h desde AHORA (última actividad), en vez del
+            // tope fijo de 24 h desde el login que la cortaba a mitad de jornada.
+            // Si YA expiró, no se revive: la deja vencer para que la página cierre.
+            // Además, escribir en $_SESSION fuerza a reescribir el archivo de sesión
+            // (actualiza su fecha), evitando que el recolector de PHP lo borre.
+            if (!isset($_SESSION['expire']) || time() <= $_SESSION['expire']) {
+                $_SESSION['expire'] = time() + $dur;
+            }
             if (PHP_VERSION_ID >= 70300) {
                 @setcookie(session_name(), session_id(), [
                     'expires'  => time() + $dur,

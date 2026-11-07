@@ -1235,6 +1235,12 @@ $(document).ready(function(){
     });
     // Red de seguridad poco frecuente (solo guarda si hubo cambios).
     setInterval(function () { _guardarBorrador(); _guardarBorradorServidor(false); }, 60000);
+    // Keep-alive de sesión (cada 10 min): mantiene viva la sesión en consultas
+    // largas aunque no se escriba. Es 1 petición cada 10 min, nada "de bot".
+    setInterval(function () {
+        $.post('borrador_atencion.php', { accion: 'ping' }, null, 'json')
+            .done(function (res) { if (res && res.ok === false) _indicadorBorrador('error', 'SIN_SESION'); });
+    }, 600000);
     window.addEventListener('beforeunload', function () { _guardarBorrador(); _guardarBorradorServidor(true); });
     // iOS/Safari: en segundo plano el temporizador se congela y 'beforeunload' no
     // es confiable en móvil. Guardar también cuando la pestaña se oculta o se

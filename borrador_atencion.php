@@ -13,6 +13,15 @@ require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 header('Content-Type: application/json; charset=utf-8');
 
+// Keep-alive ligero: el helper de arriba ya renovó la sesión (ventana deslizante);
+// aquí solo respondemos si sigue válida, SIN tocar la base de datos. Lo usa la
+// página de atención cada pocos minutos para que no se cierre en consultas largas.
+if (($_REQUEST['accion'] ?? '') === 'ping') {
+    $viva = isset($_SESSION['rol']) && (!isset($_SESSION['expire']) || time() <= $_SESSION['expire']);
+    echo json_encode(['ok' => $viva]);
+    exit;
+}
+
 $conexion = conectarse();
 if (!$conexion) {
     // Hosting saturó las conexiones ('max_user_connections'). El borrador local
