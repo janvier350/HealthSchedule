@@ -586,7 +586,7 @@ return array(
     'plist.reportTitle'        => 'Visit Report',
     'hp.years'                 => 'years',
     'hp.registered'            => 'Registered',
-    'hp.weightProgress'        => 'Weight progress',
+    'hp.weightProgress'        => 'Progress charts',
     'hp.totalAppts'            => 'Total appts',
     'hp.attended'              => 'Attended',
     'hp.pending'               => 'Pending',
