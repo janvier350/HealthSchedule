@@ -1473,6 +1473,7 @@ var _DRAFT_TXT = {
     errSrv:    <?php echo json_encode(current_lang()==='en' ? 'Could not save on the server — press "Save draft"' : 'No se pudo guardar en el servidor — pulsa "Guardar borrador"'); ?>,
     errSesion: <?php echo json_encode(current_lang()==='en' ? 'Your session expired — log in again (your text is kept on this device)' : 'Tu sesión expiró — vuelve a iniciar sesión (tu texto queda en este dispositivo)'); ?>,
     errOcupada:<?php echo json_encode(current_lang()==='en' ? 'Server busy right now — it will retry; or press "Save draft"' : 'Servidor ocupado en este momento — reintentará; o pulsa "Guardar borrador"'); ?>,
+    errWaf:    <?php echo json_encode(current_lang()==='en' ? 'The host firewall blocked the save. Your text is kept on this device. Try "Save draft" again in a few seconds (or use the computer).' : 'El cortafuegos del hosting bloqueó el guardado. Tu texto queda en este equipo. Intenta "Guardar borrador" otra vez en unos segundos (o usa la computadora).'); ?>,
     okAlert:   <?php echo json_encode(current_lang()==='en' ? 'Draft saved on the server ✓ (%t)' : 'Borrador guardado en el servidor ✓ (%t)'); ?>,
     errAlert:  <?php echo json_encode(current_lang()==='en' ? 'Could not save the draft on the server. Check your connection and try again.' : 'No se pudo guardar el borrador en el servidor. Revisa tu conexión e inténtalo de nuevo.'); ?>
 };
@@ -1495,9 +1496,18 @@ function _indicadorBorrador(estado, tsOrTxt) {
         var motivo = (typeof tsOrTxt === 'string') ? tsOrTxt : '';
         if (motivo === 'SIN_SESION')      txt.textContent = _DRAFT_TXT.errSesion;
         else if (motivo === 'DB_OCUPADA') txt.textContent = _DRAFT_TXT.errOcupada;
+        else if (motivo === 'WAF')        txt.textContent = _DRAFT_TXT.errWaf;
         else                              txt.textContent = _DRAFT_TXT.errSrv;
         box.classList.remove('text-muted'); box.classList.add('text-danger');
     }
+}
+// Detecta si la respuesta fue el reto del cortafuegos del hosting (cPGuard)
+// en lugar de nuestro JSON: así podemos explicar el bloqueo en vez de un error vago.
+function _esRespuestaWaf(xhr) {
+    try {
+        var t = (xhr && xhr.responseText) ? String(xhr.responseText) : '';
+        return /cpguard|verify you are human|unusual traffic|human verification/i.test(t);
+    } catch (e) { return false; }
 }
 // Guarda SOLO en el navegador (respaldo instantáneo). No toca el indicador:
 // el indicador lo maneja el guardado en servidor (para no engañar).
@@ -1530,7 +1540,7 @@ function _guardarBorradorServidor(viaBeacon, forzar) {
                     if (res && res.ok) { _ultimoGuardadoSrv = html; _indicadorBorrador('ok'); }
                     else { _indicadorBorrador('error', (res && res.error) || ''); }
                 })
-                .fail(function () { _indicadorBorrador('error'); });
+                .fail(function (xhr) { _indicadorBorrador('error', _esRespuestaWaf(xhr) ? 'WAF' : ''); });
         }
     } catch (e) { _indicadorBorrador('error'); }
 }
@@ -1556,9 +1566,9 @@ function guardarBorradorManual() {
                 alert(_DRAFT_TXT.errAlert);
             }
         })
-        .fail(function () {
-            _indicadorBorrador('error');
-            alert(_DRAFT_TXT.errAlert);
+        .fail(function (xhr) {
+            if (_esRespuestaWaf(xhr)) { _indicadorBorrador('error', 'WAF'); alert(_DRAFT_TXT.errWaf); }
+            else { _indicadorBorrador('error'); alert(_DRAFT_TXT.errAlert); }
         });
     } catch (e) {
         _indicadorBorrador('error');
