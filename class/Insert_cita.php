@@ -5,6 +5,7 @@ require_once("email_cita.php");
 require_once(__DIR__ . "/auditoria.php");
 $conexion = conectarse();
 session_start();
+$sesionValidaCita = isset($_SESSION['rol']); // para registrar intentos sin sesión válida
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -147,6 +148,7 @@ $stmt_insert = $conexion->prepare(
 $primeraIdCita     = 0;
 $primeraFechaOK    = '';
 $creadas           = 0;
+$fallosInsert      = 0;   // inserciones que fallaron (error de BD), para la bitácora
 $saltadasPorChoque = [];
 $saltadasDetalle   = [];
 
@@ -170,6 +172,7 @@ foreach ($fechasSerie as $f) {
         $f, $timeIni, $timeFin, $IdAgencia
     );
     if (!$stmt_insert->execute()) {
+        $fallosInsert++;
         continue;
     }
     $creadas++;
@@ -182,6 +185,15 @@ $stmt_valida->close();
 $stmt_insert->close();
 
 if ($creadas === 0) {
+    // Registrar en la bitácora si no se creó por un ERROR real (de BD o sin
+    // sesión válida), no cuando fue solo por horario ocupado. Así un intento
+    // fallido deja rastro para distinguir "falla de app" de "no lo hizo".
+    if ($fallosInsert > 0 || !$sesionValidaCita) {
+        $motivoFallo = $fallosInsert > 0 ? 'error al guardar' : 'sin sesión válida';
+        auditar($conexion, 'Agenda', 'fallo', 'AG_CITA', null,
+            'No se pudo crear la cita (paciente #' . (int)$IdPaciente . ', ' .
+            ($primeraFechaOK ?: $fechafactura) . ' ' . $timeIni . ') — ' . $motivoFallo);
+    }
     $lineas0 = [];
     foreach ($saltadasDetalle as $s) {
         $d0 = DateTime::createFromFormat('Y-m-d', $s['fecha']);

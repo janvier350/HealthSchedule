@@ -15,9 +15,15 @@ require_once("class/funciones.php");
 require_once("class/conexionBD.php");
 require_once("class/auditoria.php");
 $conexion = conectarse();
-if ($conexion) { $conexion->set_charset('utf8mb4'); }
+if (!$conexion) { echo 'ERROR: sin conexión a la base de datos'; exit; }
+$conexion->set_charset('utf8mb4');
 
-if (!isset($_SESSION["rol"])) { echo 'SIN_SESION'; exit; }
+if (!isset($_SESSION["rol"])) {
+    // Dejar rastro: intento de guardar la nota con la sesión ya vencida.
+    auditar($conexion, 'Atención', 'fallo', 'AG_HISTORIAL', (isset($_POST['idCita'])?(int)$_POST['idCita']:null),
+        'Intento de guardar la nota con la sesión vencida');
+    echo 'SIN_SESION'; exit;
+}
 
 $idCita  = isset($_POST['idCita'])  ? (int)$_POST['idCita']  : 0;
 $informe = isset($_POST['informe']) ? (string)$_POST['informe'] : '';
@@ -57,8 +63,10 @@ if (!$stmt->execute()) {
     // NO marcar la cita como Atendida si el informe no se pudo guardar
     $err = $stmt->error;
     $stmt->close();
+    // Dejar rastro en la bitácora del intento fallido (antes de cerrar la conexión).
+    auditar($conexion, 'Atención', 'fallo', 'AG_HISTORIAL', $idCita,
+        'No se pudo guardar la nota (error al guardar)');
     $conexion->close();
-    // Log opcional para diagnosticar
     error_log('guardar_atencion.php - fallo al guardar informe idCita=' . $idCita . ' err=' . $err);
     echo 'ERROR: ' . $err;
     exit;

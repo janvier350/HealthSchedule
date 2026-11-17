@@ -68,7 +68,13 @@ if ($existe) {
     $sql = "INSERT INTO AG_PACIENTE (NOMBRES, APELLIDOS, EMAIL, FECHANACIMIENTO, TELEFONO, CEDULA, TITLE, SEX, GENDER, ESTADO, ADDRESS, NOTES, ADDNOTES".$colIdioma.$colIcd10.")
             VALUES ('".$nombres."', '".$apellidos."', '".$email."', '".$feNac."', '".$telefono."', '".$cedula."', '".$title."', '".$sex."', '".$gender."', 'A','".$address."', '".$notes."', '".$addNotes."'".$valIdioma.$valIcd10.")";
 
-    $consulta = $conexion->query($sql) or die("Problemas al insertar datos:<br>".mysqli_error($conexion));
+    $consulta = $conexion->query($sql);
+    if (!$consulta) {
+        // Dejar rastro en la bitácora del intento fallido de crear el paciente.
+        auditar($conexion, 'Pacientes', 'fallo', 'AG_PACIENTE', null,
+            'No se pudo crear el paciente: '.trim($nombres.' '.$apellidos).' — error al guardar');
+        die("Problemas al insertar datos:<br>".mysqli_error($conexion));
+    }
 
     // Insert status
     if ($consulta) {
