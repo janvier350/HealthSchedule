@@ -133,6 +133,7 @@ function accionBadge($a, $en) {
         'login'         => ['info',   $en?'Login':'Ingresó'],
         'logout'        => ['secondary',$en?'Logout':'Salió'],
         'login_fallido' => ['danger', $en?'Failed login':'Login fallido'],
+        'fallo'         => ['danger', $en?'Failed':'Falló'],
         'agregar'       => ['success',$en?'Added':'Agregó'],
         'quitar'        => ['warning',$en?'Removed':'Quitó'],
         'ver'           => ['info',   $en?'Viewed':'Consultó'],
