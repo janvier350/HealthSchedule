@@ -144,7 +144,10 @@ if ($stmt->execute()) {
     auditar($conexion, 'Pacientes', 'editar', 'AG_PACIENTE', $id, $detalle);
     echo $tieneAlerta ? 'OK' : 'OK_SIN_ALERTA';
 } else {
-    echo 'ERROR: ' . $stmt->error;
+    $errUpd = $stmt->error;
+    auditar($conexion, 'Pacientes', 'fallo', 'AG_PACIENTE', $id,
+        'No se pudo editar el paciente: '.trim($nombres.' '.$apellidos).' — error al guardar');
+    echo 'ERROR: ' . $errUpd;
 }
 
 $stmt->close();

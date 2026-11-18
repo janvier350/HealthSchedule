@@ -1,6 +1,7 @@
 <?php
 require_once("funciones.php");
 require_once("conexionBD.php");
+require_once(__DIR__ . "/auditoria.php");
 $conexion = conectarse();
 session_start();
      
@@ -41,13 +42,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param($tipos, ...$vals);
 
-    if ($stmt->execute()) {
+    $okUpd = $stmt->execute();
+    $errUpd = $okUpd ? '' : $stmt->error;
+    $stmt->close();
+
+    // Registrar en la bitácora quién editó la ficha del paciente (y si falló).
+    $nomPac = trim(($nombres ?? '') . ' ' . ($apellidos ?? ''));
+    if ($okUpd) {
+        auditar($conexion, 'Pacientes', 'editar', 'AG_PACIENTE', (int)$idPaciente,
+            'Editó la ficha del paciente: ' . $nomPac);
         echo "Paciente actualizado correctamente";
     } else {
-        echo "Error al actualizar: " . $stmt->error;
+        auditar($conexion, 'Pacientes', 'fallo', 'AG_PACIENTE', (int)$idPaciente,
+            'No se pudo editar la ficha del paciente: ' . $nomPac . ' — error al guardar');
+        echo "Error al actualizar: " . $errUpd;
     }
-
-    $stmt->close();
 }
 
 
