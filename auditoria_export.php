@@ -38,7 +38,15 @@ if ($existe) {
     if ($fUser   >  0)   { $where.=" AND id_usuario=?"; $tipos.='i'; $vals[]=$fUser; }
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fDesde)) { $where.=" AND fecha>=?"; $tipos.='s'; $vals[]=$fDesde.' 00:00:00'; }
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fHasta)) { $where.=" AND fecha<=?"; $tipos.='s'; $vals[]=$fHasta.' 23:59:59'; }
-    if ($fQ !== '') { $where.=" AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?)"; $tipos.='ssss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like,$like); }
+    if ($fQ !== '') {
+        // Igual que en auditoria.php: también busca por nombre del paciente.
+        $like = '%'.$fQ.'%';
+        $where .= " AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?"
+                . " OR (entidad='AG_PACIENTE' AND entidad_id IN (SELECT IDPACIENTE FROM AG_PACIENTE WHERE CONCAT(NOMBRES,' ',APELLIDOS) LIKE ?))"
+                . " OR (entidad='AG_CITA' AND entidad_id IN (SELECT A.IDCITA FROM AG_CITA A INNER JOIN AG_PACIENTE P ON A.IDPACIENTE=P.IDPACIENTE WHERE CONCAT(P.NOMBRES,' ',P.APELLIDOS) LIKE ?)))";
+        $tipos .= 'ssssss';
+        array_push($vals, $like, $like, $like, $like, $like, $like);
+    }
 
     $colDisp = $tieneDisp ? ", dispositivo" : "";
     $colUA   = $tieneUA   ? ", user_agent" : "";

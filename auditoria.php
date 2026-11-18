@@ -60,7 +60,18 @@ if ($existe) {
     if ($fUser   >  0)   { $where.=" AND id_usuario=?"; $tipos.='i'; $vals[]=$fUser; }
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fDesde)) { $where.=" AND fecha>=?"; $tipos.='s'; $vals[]=$fDesde.' 00:00:00'; }
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/',$fHasta)) { $where.=" AND fecha<=?"; $tipos.='s'; $vals[]=$fHasta.' 23:59:59'; }
-    if ($fQ !== '') { $where.=" AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?)"; $tipos.='ssss'; $like='%'.$fQ.'%'; array_push($vals,$like,$like,$like,$like); }
+    if ($fQ !== '') {
+        // Busca en: nombre/usuario (quién), detalle, entidad_id, y TAMBIÉN en el
+        // nombre del PACIENTE (que no está en la tabla de auditoría: se resuelve
+        // por entidad_id contra AG_PACIENTE / AG_CITA). Antes el nombre de
+        // paciente no se podía buscar.
+        $like = '%'.$fQ.'%';
+        $where .= " AND (nombre LIKE ? OR usuario LIKE ? OR detalle LIKE ? OR entidad_id LIKE ?"
+                . " OR (entidad='AG_PACIENTE' AND entidad_id IN (SELECT IDPACIENTE FROM AG_PACIENTE WHERE CONCAT(NOMBRES,' ',APELLIDOS) LIKE ?))"
+                . " OR (entidad='AG_CITA' AND entidad_id IN (SELECT A.IDCITA FROM AG_CITA A INNER JOIN AG_PACIENTE P ON A.IDPACIENTE=P.IDPACIENTE WHERE CONCAT(P.NOMBRES,' ',P.APELLIDOS) LIKE ?)))";
+        $tipos .= 'ssssss';
+        array_push($vals, $like, $like, $like, $like, $like, $like);
+    }
 
     $sql = "SELECT fecha, id_usuario, usuario, nombre, rol, modulo, accion, entidad, entidad_id, detalle, ip, dispositivo, user_agent
             FROM auditoria $where ORDER BY fecha DESC, id DESC LIMIT 500";
@@ -239,7 +250,7 @@ function accionBadge($a, $en) {
                         <button class="btn btn-primary btn-sm w-100" type="submit"><i class="bi bi-search"></i></button>
                     </div>
                     <div class="col-md-6">
-                        <input type="text" name="q" class="form-control form-control-sm" placeholder="<?php echo $en?'Search in name / detail…':'Buscar en nombre / detalle…'; ?>" value="<?php echo htmlspecialchars($fQ); ?>">
+                        <input type="text" name="q" class="form-control form-control-sm" placeholder="<?php echo $en?'Search by patient, user or detail…':'Buscar por paciente, usuario o detalle…'; ?>" value="<?php echo htmlspecialchars($fQ); ?>">
                     </div>
                     <div class="col-md-6 text-md-end">
                         <a href="auditoria.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> <?php echo $en?'Clear':'Limpiar'; ?></a>
