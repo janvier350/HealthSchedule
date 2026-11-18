@@ -5,6 +5,7 @@ iniciar_sesion_persistente(); // cookie persistente 24 h: evita que la saque al 
 
 require_once("class/funciones.php");
 require_once("class/conexionBD.php");
+require_once(__DIR__ . "/class/auditoria.php");
 require_once(__DIR__ . "/lang/i18n.php");
 $conexion = conectarse();
 if ($conexion) { $conexion->set_charset('utf8mb4'); }
@@ -75,6 +76,16 @@ $d = $res->fetch_assoc();
 // ── Nota de ESTA cita (si ya fue atendida antes) y de la consulta ANTERIOR ──
 $idCitaInt   = (int)$idCita;
 $idPacienteA = (int)$d['IDPACIENTE'];
+
+// Bitácora: registrar que se ABRIÓ la atención (inicio). Permite seguir el
+// patrón de uso —p. ej. una atención "Abrió" sin su "Guardó" después indica una
+// sesión perdida; varias aperturas de la misma cita, que se tuvo que rehacer— y
+// calcular la duración al guardar. Se guarda la hora de apertura en la sesión.
+if (isset($_SESSION['rol'])) {
+    $nomPacA = trim(($d['NOMBRES'] ?? '') . ' ' . ($d['APELLIDOS'] ?? ''));
+    auditar($conexion, 'Atención', 'abrir', 'AG_CITA', $idCitaInt, 'Abrió la atención de ' . $nomPacA);
+    $_SESSION['att_open_' . $idCitaInt] = time();
+}
 
 // Nota ya guardada para esta misma cita (permite reabrir/editar una atención)
 $informeActual = '';
