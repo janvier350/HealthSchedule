@@ -125,7 +125,15 @@ if (!$updCita->execute()) {
 }
 $updCita->close();
 
-auditar($conexion, 'Atención', 'atender', 'AG_CITA', $idCita, 'Guardó la nota de consulta y marcó la cita como Atendida.');
+// Duración de la consulta (desde que se abrió la atención hasta que se guardó),
+// para seguir el "tiempo de sesión por paciente".
+$durTxt = '';
+if (isset($_SESSION['att_open_' . $idCita])) {
+    $mins = max(0, (int)round((time() - (int)$_SESSION['att_open_' . $idCita]) / 60));
+    $durTxt = ' (duración: ' . $mins . ' min)';
+    unset($_SESSION['att_open_' . $idCita]);
+}
+auditar($conexion, 'Atención', 'atender', 'AG_CITA', $idCita, 'Guardó la nota de consulta y marcó la cita como Atendida.' . $durTxt);
 
 $conexion->close();
 

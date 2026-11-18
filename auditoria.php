@@ -140,6 +140,7 @@ function accionBadge($a, $en) {
         'restaurar' => ['info',    $en?'Restored':'Restauró'],
         'reagendar' => ['secondary',$en?'Rescheduled':'Reagendó'],
         'atender'   => ['success', $en?'Attended':'Atendió'],
+        'abrir'     => ['secondary', $en?'Opened':'Abrió'],
         'estado'    => ['secondary',$en?'Status':'Estado'],
         'login'         => ['info',   $en?'Login':'Ingresó'],
         'logout'        => ['secondary',$en?'Logout':'Salió'],
