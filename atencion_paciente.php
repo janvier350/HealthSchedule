@@ -1951,6 +1951,14 @@ function guardarAtencion(){
     const imcVal  = parseFloat($('#imc').val()) || 0;
     if(!confirm(ATT.confirmFinish)) return;
     var sg = _sgValoresActuales();
+    // Mensajes claros si falla el "Guardar y finalizar": siempre recordando que
+    // el texto quedó como borrador en el servidor (no se pierde).
+    var _MSG_FINISH_FAIL = <?php echo json_encode(current_lang()==='en'
+        ? 'Could not finish the consultation right now. Your text IS saved as a draft on the server — try "Save & Finish" again, or finish it from the computer (the draft is recovered there).'
+        : 'No se pudo finalizar la consulta en este momento. Tu texto SÍ quedó guardado como borrador en el servidor — intenta "Guardar y finalizar" otra vez, o finalízala desde la computadora (ahí se recupera el borrador).'); ?>;
+    var _MSG_FINISH_WAF = <?php echo json_encode(current_lang()==='en'
+        ? 'The host firewall blocked finishing the consultation. Your text is saved as a draft — wait a few seconds and press "Save & Finish" again, or finish it from the computer.'
+        : 'El cortafuegos del hosting bloqueó el finalizar la consulta. Tu texto está guardado como borrador — espera unos segundos y vuelve a pulsar "Guardar y finalizar", o finalízala desde la computadora.'); ?>;
     $.ajax({
         url: 'guardar_atencion.php', type: 'POST',
         data: { idCita: DATOS_CITA.idCita, informe: contenido,
@@ -1976,10 +1984,13 @@ function guardarAtencion(){
                 alert(ATT.saveConnError);
                 window.location.href = 'index.php';
             } else {
-                alert(ATT.saveError + ' ' + r);
+                alert(_MSG_FINISH_FAIL + '\n\n(' + r + ')');
             }
         },
-        error: function(){ alert(ATT.saveConnError); }
+        error: function(xhr){
+            if (typeof _esRespuestaWaf === 'function' && _esRespuestaWaf(xhr)) alert(_MSG_FINISH_WAF);
+            else alert(_MSG_FINISH_FAIL);
+        }
     });
 }
 
