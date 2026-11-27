@@ -1227,7 +1227,10 @@ function _insertarImagenGrafica(png, titulo){
 
 // Renderiza la gráfica en un iframe aislado (Chart.js v4 limpio) y devuelve el PNG.
 function _generarGraficaPesoAislada(labels, pesos, imcs, titulo){
-    var datos = { labels: labels, pesos: pesos, imcs: imcs, title: titulo };
+    // Etiquetas según el idioma del usuario: BMI/Weight en inglés, IMC/Peso en español.
+    var datos = { labels: labels, pesos: pesos, imcs: imcs, title: titulo,
+        pesoLbl: <?php echo json_encode(current_lang()==='en' ? 'Weight (kg)' : 'Peso (kg)'); ?>,
+        imcLbl:  <?php echo json_encode(current_lang()==='en' ? 'BMI' : 'IMC'); ?> };
     var frame = document.createElement('iframe');
     frame.setAttribute('aria-hidden', 'true');
     frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:430px;border:0;visibility:hidden;';
@@ -1265,10 +1268,10 @@ function _generarGraficaPesoAislada(labels, pesos, imcs, titulo){
       +       'var fondo={id:"fondo",beforeDraw:function(c){var x=c.canvas.getContext("2d");x.save();x.globalCompositeOperation="destination-over";x.fillStyle="#ffffff";x.fillRect(0,0,c.width,c.height);x.restore();}};'
       +       'var ctx=document.getElementById("c").getContext("2d");'
       +       'new Chart(ctx,{type:"line",data:{labels:D.labels,datasets:['
-      +         '{label:"Peso (kg)",data:D.pesos,yAxisID:"yPeso",borderColor:"#3d5af1",backgroundColor:"rgba(61,90,241,.12)",tension:.3,spanGaps:true,pointRadius:3,fill:true},'
-      +         '{label:"IMC",data:D.imcs,yAxisID:"yImc",borderColor:"#e67e22",backgroundColor:"rgba(230,126,34,.10)",tension:.3,spanGaps:true,pointRadius:3,fill:false}]},'
+      +         '{label:D.pesoLbl,data:D.pesos,yAxisID:"yPeso",borderColor:"#3d5af1",backgroundColor:"rgba(61,90,241,.12)",tension:.3,spanGaps:true,pointRadius:3,fill:true},'
+      +         '{label:D.imcLbl,data:D.imcs,yAxisID:"yImc",borderColor:"#e67e22",backgroundColor:"rgba(230,126,34,.10)",tension:.3,spanGaps:true,pointRadius:3,fill:false}]},'
       +       'options:{responsive:false,animation:false,plugins:{legend:{position:"top"},title:{display:true,text:D.title}},'
-      +       'scales:{yPeso:{type:"linear",position:"left",title:{display:true,text:"Peso (kg)"}},yImc:{type:"linear",position:"right",title:{display:true,text:"IMC"},grid:{drawOnChartArea:false}}}},plugins:[fondo]});'
+      +       'scales:{yPeso:{type:"linear",position:"left",title:{display:true,text:D.pesoLbl}},yImc:{type:"linear",position:"right",title:{display:true,text:D.imcLbl},grid:{drawOnChartArea:false}}}},plugins:[fondo]});'
       +       'setTimeout(function(){ try{ post(document.getElementById("c").toDataURL("image/png",1.0)); }catch(e){ post(""); } },80);'
       +     '}catch(e){ post(""); }'
       +   '}'

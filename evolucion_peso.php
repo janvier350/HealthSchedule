@@ -138,7 +138,7 @@ $hayAlgo = $hayDatos || $hayGlu || $hayPre || $hayLip;
             <input type="radio" class="btn-check" name="modo" id="mPeso" value="peso" onchange="setModo('peso')">
             <label class="btn btn-outline-primary" for="mPeso"><?php echo $en?'Weight':'Peso'; ?></label>
             <input type="radio" class="btn-check" name="modo" id="mImc" value="imc" onchange="setModo('imc')">
-            <label class="btn btn-outline-primary" for="mImc">IMC</label>
+            <label class="btn btn-outline-primary" for="mImc"><?php echo $en?'BMI':'IMC'; ?></label>
         </div>
         <canvas id="chartPeso"></canvas>
     </div>
@@ -175,7 +175,7 @@ const PESOS  = <?php echo json_encode($pesos); ?>;
 const IMCS   = <?php echo json_encode($imcs); ?>;
 const T = {
     peso: <?php echo json_encode($en ? 'Weight (kg)' : 'Peso (kg)'); ?>,
-    imc:  'IMC'
+    imc:  <?php echo json_encode($en ? 'BMI' : 'IMC'); ?>
 };
 const chart = new Chart(document.getElementById('chartPeso').getContext('2d'), {
     type: 'line',
@@ -186,7 +186,7 @@ const chart = new Chart(document.getElementById('chartPeso').getContext('2d'), {
     options: { responsive:true, interaction:{mode:'index',intersect:false}, plugins:{legend:{position:'top'}},
         scales: {
             yPeso: { type:'linear', position:'left',  title:{display:true, text:T.peso} },
-            yImc:  { type:'linear', position:'right', title:{display:true, text:'IMC'}, grid:{drawOnChartArea:false} }
+            yImc:  { type:'linear', position:'right', title:{display:true, text:T.imc}, grid:{drawOnChartArea:false} }
         } }
 });
 function setModo(m) {
